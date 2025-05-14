@@ -8,8 +8,7 @@
 </head>
 <body>
     <div id="login-container">
-        <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo [Nom de votre entreprise]" id="login-logo" class="company-logo">
-        <h2>Connexion Client</h2>
+        <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo"> <h2>Connexion Client</h2>
         <form id="login-form">
             <div>
                 <label for="email">E-mail :</label>
@@ -26,8 +25,7 @@
 
     <div id="app-container" style="display: none;">
         <header class="app-header">
-            <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo [Nom de votre entreprise]" id="app-logo" class="company-logo">
-            <h1>Suivi de vos chantiers</h1>
+            <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="app-logo" class="company-logo"> <h1>Suivi de vos chantiers</h1>
             <button id="logout-button">Se déconnecter</button>
         </header>
 
@@ -47,21 +45,25 @@
         </form>
 
         <div id="upload-photo-container" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; display: none;">
-            <h3>Ajouter une photo à un chantier</h3>
-            <p><small><em>Note: Assurez-vous que l'ID du chantier correspond à un de vos chantiers existants.</em></small></p>
-            <form id="upload-photo-form">
-                <div>
-                    <label for="chantier-id">ID du chantier :</label>
-                    <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
-                </div>
-                <div>
-                    <label for="photo-file">Sélectionner une photo :</label>
-                    <input type="file" id="photo-file" accept="image/*" required>
-                </div>
-                <button type="submit">Envoyer la photo</button>
-                <p id="upload-status" style="display: none;"></p>
-            </form>
-        </div>
+            <h3>Ajouter une photo à un chantier</h3>
+            <p><small><em>Note: L'administrateur doit entrer l'UID du client propriétaire et l'ID exact du chantier.</em></small></p>
+            <form id="upload-photo-form">
+                <div>
+                    <label for="client-uid">UID du Client :</label>
+                    <input type="text" id="client-uid" required placeholder="UID du propriétaire du chantier">
+                </div>
+                <div>
+                    <label for="chantier-id">ID du chantier :</label>
+                    <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
+                </div>
+                <div>
+                    <label for="photo-file">Sélectionner une photo :</label>
+                    <input type="file" id="photo-file" accept="image/*" required>
+                </div>
+                <button type="submit">Envoyer la photo</button>
+                <p id="upload-status" style="display: none;"></p>
+            </form>
+        </div>
 
         <div id="admin-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--company-orange);">
             <h2>Section Administration</h2>

@@ -1,5 +1,5 @@
-// Importez collectionGroup et documentId en plus des autres fonctions Firestore
-import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, deleteField, getDoc as firebaseGetDoc, collectionGroup, documentId, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// Importations Firestore nécessaires pour les opérations directes (setDoc, doc, etc.)
+import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, deleteField, getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -24,6 +24,8 @@ const questionForm = document.getElementById('question-form');
 const questionText = document.getElementById('question-text');
 const questionConfirmation = document.getElementById('question-confirmation');
 const uploadPhotoForm = document.getElementById('upload-photo-form');
+// Nouvelle variable pour le champ UID client
+const clientUidInput = document.getElementById('client-uid'); // <-- Nouveau
 const chantierIdInput = document.getElementById('chantier-id');
 const photoFileInput = document.getElementById('photo-file');
 const uploadStatus = document.getElementById('upload-status');
@@ -184,7 +186,9 @@ questionForm.addEventListener('submit', async (e) => {
 
 uploadPhotoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const chantierId = chantierIdInput.value.trim(); // Trim whitespace
+    // Récupérer les valeurs des deux champs : UID du client et ID du chantier
+    const clientUid = clientUidInput.value.trim(); // <-- Nouveau
+    const chantierId = chantierIdInput.value.trim();
     const file = photoFileInput.files[0];
     const user = auth.currentUser;
 
@@ -200,63 +204,38 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
         uploadStatus.style.display = 'block';
         return;
     }
-    if (!chantierId) {
-        uploadStatus.textContent = 'Erreur : ID du chantier manquant.';
+    // Vérifier que les deux champs nécessaires sont remplis
+    if (!clientUid || !chantierId) { // <-- Modification pour vérifier les deux
+        uploadStatus.textContent = 'Erreur : L\'UID du client et l\'ID du chantier sont nécessaires.';
         uploadStatus.style.color = 'red';
         uploadStatus.style.display = 'block';
-        console.error("Erreur : L'ID du chantier est vide.");
+        console.error("Erreur : UID client ou ID chantier manquant.");
         return;
     }
 
-    uploadStatus.textContent = 'Recherche du chantier...'; // Nouveau statut
+    // Construire la référence directe au document chantier en utilisant l'UID du client et l'ID du chantier
+    // On revient à une référence de document standard
+    const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId); // <-- Modification
+
+    uploadStatus.textContent = 'Vérification du chantier...'; // Statut mis à jour
     uploadStatus.style.color = 'orange';
     uploadStatus.style.display = 'block';
 
     try {
-        // Utiliser une requête de groupe de collections pour trouver le document chantier par son ID
-        const chantierQuery = query(collectionGroup(db, 'chantier'), where(documentId(), '==', chantierId));
-        const querySnapshot = await getDocs(chantierQuery);
+        // Vérifier que le document chantier existe bien à ce chemin avant d'uploader
+        const docSnapBeforeUpload = await firebaseGetDoc(chantierRef); // <-- Modification (retour à getDoc standard)
 
-        let chantierDocSnap;
-        let clientOwnerUid;
-
-        if (querySnapshot.docs.length === 1) {
-            // Un seul chantier trouvé avec cet ID - c'est le bon
-            chantierDocSnap = querySnapshot.docs[0];
-            // Extraire l'UID du client propriétaire à partir du chemin du document
-            // Le chemin sera sous la forme "clients/UID_CLIENT/chantier/ID_CHANTIER"
-            const pathSegments = chantierDocSnap.ref.path.split('/');
-            if (pathSegments.length >= 3 && pathSegments[0] === 'clients' && pathSegments[2] === 'chantier') {
-                clientOwnerUid = pathSegments[1]; // L'UID du client est le deuxième segment
-            } else {
-                // Format de chemin inattendu - erreur interne
-                console.error("Erreur interne: format de chemin de chantier inattendu.", chantierDocSnap.ref.path);
-                uploadStatus.textContent = 'Erreur interne lors de la recherche du chantier.';
-                uploadStatus.style.color = 'red';
-                return;
-            }
-
-        } else if (querySnapshot.docs.length > 1) {
-            // Plusieurs chantiers trouvés avec le même ID (ne devrait pas arriver si les ID sont uniques globalement)
-            console.error("Erreur: Plusieurs chantiers trouvés avec l'ID:", chantierId);
-            uploadStatus.textContent = 'Erreur : Plusieurs chantiers trouvés avec cet ID. Les ID de chantier doivent être uniques.';
+        if (!docSnapBeforeUpload.exists()) {
+            console.error("Erreur : Le document chantier n'existe pas au chemin spécifié.", chantierRef.path); // Message mis à jour
+            uploadStatus.textContent = 'Erreur : Le chantier spécifié n\'existe pas ou l\'UID client est incorrect.'; // Message mis à jour
             uploadStatus.style.color = 'red';
-            return;
-        } else {
-            // Aucun document trouvé avec cet ID
-            console.warn("Chantier non trouvé avec l'ID:", chantierId);
-            uploadStatus.textContent = 'Erreur : Le chantier spécifié n\'existe pas.';
-            uploadStatus.style.color = 'red';
-            return;
+            return; // Arrête l'exécution si le chantier n'existe pas
         }
 
-        // Si nous arrivons ici, un chantier unique a été trouvé et son propriétaire identifié.
+        // Si le document existe, procéder à l'upload et à la mise à jour
 
-        // Utiliser la référence du document chantier trouvé pour la mise à jour
-        const chantierRef = chantierDocSnap.ref;
-
-        // Construire la référence de stockage en utilisant l'UID du client propriétaire réel
-        const storageRef = ref(storage, `chantier-photos/${chantierId}/${clientOwnerUid}-${Date.now()}-${file.name}`); // Utilise l'UID du client propriétaire
+        // Construire la référence de stockage en utilisant l'UID du client (celui entré dans le champ)
+        const storageRef = ref(storage, `chantier-photos/${chantierId}/${clientUid}-${Date.now()}-${file.name}`); // <-- Modification pour utiliser clientUid
 
         uploadStatus.textContent = 'Upload de la photo en cours...'; // Mettre à jour le statut
         uploadStatus.style.color = 'orange';
@@ -266,7 +245,7 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
         const uploadResult = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(uploadResult.ref);
 
-        await updateDoc(chantierRef, {
+        await updateDoc(chantierRef, { // Utilise la référence chantierRef correcte construite plus tôt
             photos: arrayUnion(downloadURL) // Ajoute l'URL à un tableau existant (ou crée le tableau)
         });
 
@@ -277,7 +256,7 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
         setTimeout(() => { uploadStatus.style.display = 'none'; }, 3000); // Cache le statut après 3 secondes
 
     } catch (error) {
-        console.error("Erreur lors de l'upload de la photo ou de la recherche du chantier : ", error);
+        console.error("Erreur lors de l'upload de la photo ou de la vérification du chantier : ", error); // Message mis à jour
         // Afficher le message d'erreur à l'utilisateur
         uploadStatus.textContent = 'Erreur lors de l\'opération : ' + error.message;
         uploadStatus.style.color = 'red';
@@ -522,7 +501,7 @@ adminQuestionsContainer.addEventListener('click', async (event) => {
                 } else {
                     alert('Erreur lors de l\'opération.'); // Fallback if no status element
                 }
-            }
+        }
         } else {
             if(replyStatus) { // Show warning if reply is empty
                 replyStatus.textContent = 'Veuillez saisir une réponse.';
