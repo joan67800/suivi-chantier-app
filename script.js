@@ -108,7 +108,7 @@ async function loadClientData(uid) {
                 <p>Avancement : ${chantierData.pourcentageAvancement}%</p>
                 <h4>Photos :</h4>
                 <div class="photos-container">
-                    ${chantierData.photos ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" width="100">`).join('') : 'Aucune photo pour le moment.'}
+                    ${chantierData.photos ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" width="100">`).join('') : 'Aucune photo pour le moment.'} // <-- Correction ici
                 </div>
             `;
             chantiersList.appendChild(chantierDiv);
@@ -163,7 +163,7 @@ questionForm.addEventListener('submit', async (e) => {
             questionConfirmation.style.color = 'red'; // Style error
             questionConfirmation.style.display = 'block';
             // alert("Erreur lors de l'envoi de la question."); // Optionnel: afficher aussi une alerte
-        }
+    }
     } else if (!question.trim()) {
         // alert("Veuillez saisir une question."); // Laissez l'alerte ou utilisez le même élément de confirmation
         questionConfirmation.textContent = 'Veuillez saisir une question.';
