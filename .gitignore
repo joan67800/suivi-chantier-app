@@ -67,3 +67,6 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Editor directories (VS Code, etc.)
+.vscode/ # <-- AJOUT DE CETTE LIGNE POUR IGNORER LE REPERTOIRE VS CODE

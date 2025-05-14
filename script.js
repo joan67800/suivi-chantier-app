@@ -306,25 +306,68 @@ function loadClientQuestions(uid) {
 
 // --- Fonctions Admin (chargement de TOUTES les questions) ---
 
+// Rendre la fonction async car elle va maintenant faire des requêtes Firestore pour chaque nom de client
 function loadAdminQuestions() {
     // Cette fonction ne doit être appelée que si l'utilisateur est admin
     const questionsRef = collection(db, 'questions'); // Récupère toutes les questions (pas de filtre userId)
 
-    onSnapshot(questionsRef, (snapshot) => {
+    onSnapshot(questionsRef, async (snapshot) => { // Le callback onSnapshot DOIT être async ici
         adminQuestionsContainer.innerHTML = ''; // Vide le conteneur avant de le remplir
-        if (!snapshot.empty) {
-            snapshot.forEach((docSnap) => {
-                const questionData = docSnap.data();
-                const questionId = docSnap.id; // ID du document question
-                const questionDiv = document.createElement('div');
-                questionDiv.classList.add('admin-question-item');
-                const replyFormId = `reply-form-${questionId}`;
-                const replyStatusId = `reply-status-${questionId}`;
 
-                questionDiv.innerHTML = `
-                  <p><strong>ID Utilisateur :</strong> ${questionData.userId}</p>
-                  <p><strong>Question :</strong> ${questionData.question}</p>
-                  <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+        if (snapshot.empty) {
+            adminQuestionsContainer.innerHTML = '<p>Aucune question en attente.</p>';
+            return; // Sortir si pas de questions
+        }
+
+        // 1. Collecter les UID uniques des utilisateurs ayant posé des questions
+        const uniqueUserIds = new Set();
+        snapshot.forEach(docSnap => {
+            const questionData = docSnap.data();
+            if (questionData.userId) { // S'assurer que userId existe
+                uniqueUserIds.add(questionData.userId);
+            }
+        });
+
+        // 2. Récupérer les noms des clients correspondants depuis Firestore
+        // On suppose ici que les profils clients (avec le nom) sont dans une collection 'clients' à la racine,
+        // et que l'ID du document est l'UID de l'utilisateur.
+        const userNameMap = new Map();
+        const fetchPromises = Array.from(uniqueUserIds).map(async userId => {
+            const clientDocRef = doc(db, 'clients', userId); // Référence au document client
+            try {
+                const clientDocSnap = await firebaseGetDoc(clientDocRef);
+                // Stocker le nom si disponible, sinon un fallback
+                if (clientDocSnap.exists() && clientDocSnap.data().nom) {
+                    userNameMap.set(userId, clientDocSnap.data().nom);
+                } else {
+                    userNameMap.set(userId, `Client inconnu (${userId})`); // Nom de secours si doc ou nom manquant
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération du nom client pour UID:", userId, error);
+                userNameMap.set(userId, `Erreur nom (${userId})`); // Nom de secours en cas d'erreur
+            }
+        });
+
+        // Attendre que toutes les récupérations de noms soient terminées
+        await Promise.all(fetchPromises);
+
+        // 3. Afficher les questions en utilisant les noms récupérés
+        snapshot.forEach((docSnap) => {
+            const questionData = docSnap.data();
+            const questionId = docSnap.id;
+            const userId = questionData.userId;
+            // Récupère le nom de la Map, avec un fallback si l'UID n'a pas été trouvé (ce qui ne devrait pas arriver si userId était dans le Set)
+            const clientName = userNameMap.get(userId) || `UID: ${userId}`;
+
+            const questionDiv = document.createElement('div');
+            questionDiv.classList.add('admin-question-item');
+            const replyFormId = `reply-form-${questionId}`;
+            const replyStatusId = `reply-status-${questionId}`;
+
+            questionDiv.innerHTML = `
+                <p><strong>Client :</strong> ${clientName}</p> // <-- Afficher le nom ici
+                <p><strong>Question :</strong> ${questionData.question}</p>
+                <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
 
                   ${questionData.reponse ? // Si une réponse existe déjà
                       `<div class="reponse-admin">
