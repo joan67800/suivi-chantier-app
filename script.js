@@ -108,7 +108,7 @@ async function loadClientData(uid) {
                 <p>Avancement : ${chantierData.pourcentageAvancement}%</p>
                 <h4>Photos :</h4>
                 <div class="photos-container">
-                    ${chantierData.photos ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" width="100">`).join('') : 'Aucune photo pour le moment.'} // <-- Correction appliquée ici
+                    ${chantierData.photos ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" width="100">`).join('') : 'Aucune photo pour le moment.'}
                 </div>
             `;
             chantiersList.appendChild(chantierDiv);
