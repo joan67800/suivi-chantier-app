@@ -337,7 +337,6 @@ function loadAdminQuestions() {
                       `<button class="reply-button" data-question-id="${questionId}">Répondre</button>`
                   }
 
-                  // Formulaire de réponse/modification (initialement caché) <-- C'est cette ligne qu'il faut supprimer
                   <div id="${replyFormId}" style="display: none; margin-top: 10px;">
                       <textarea placeholder="Votre réponse" style="width: 95%; min-height: 60px;"></textarea>
                       <button class="submit-reply-button" data-question-id="${questionId}">Envoyer la réponse</button>
