@@ -84,12 +84,18 @@ function loadClientData(uid) {
 
     loadClientQuestions(uid);
 
-    if (ADMIN_UIDS.includes(uid)) {
-        adminSection.style.display = 'block';
-        loadAdminQuestions();
-    } else {
-        adminSection.style.display = 'none';
-    }
+    const uploadPhotoContainer = document.getElementById('upload-photo-container'); // Assurez-vous que cette variable est définie ou récupérez l'élément ici
+
+if (ADMIN_UIDS.includes(uid)) {
+    // Si l'utilisateur est admin
+    adminSection.style.display = 'block'; // Affiche la section admin
+    uploadPhotoContainer.style.display = 'block'; // Affiche la section d'upload de photos
+    loadAdminQuestions(); // Charge les questions admin
+} else {
+    // Si l'utilisateur est un client standard
+    adminSection.style.display = 'none'; // Cache la section admin
+    uploadPhotoContainer.style.display = 'none'; // Cache la section d'upload de photos
+}
 }
 
 questionForm.addEventListener('submit', async (e) => {

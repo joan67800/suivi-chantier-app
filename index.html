@@ -46,22 +46,22 @@
             <p id="question-confirmation" class="success" style="display: none;">Votre question a été envoyée.</p>
         </form>
 
-        <div id="upload-photo-container" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc;">
-            <h3>Ajouter une photo à un chantier</h3>
-            <p><small><em>Note: Assurez-vous que l'ID du chantier correspond à un de vos chantiers existants.</em></small></p>
-            <form id="upload-photo-form">
-                <div>
-                    <label for="chantier-id">ID du chantier :</label>
-                    <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
-                </div>
-                <div>
-                    <label for="photo-file">Sélectionner une photo :</label>
-                    <input type="file" id="photo-file" accept="image/*" required>
-                </div>
-                <button type="submit">Envoyer la photo</button>
-                <p id="upload-status" style="display: none;"></p>
-            </form>
-        </div>
+        <div id="upload-photo-container" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; display: none;">
+            <h3>Ajouter une photo à un chantier</h3>
+            <p><small><em>Note: Assurez-vous que l'ID du chantier correspond à un de vos chantiers existants.</em></small></p>
+            <form id="upload-photo-form">
+                <div>
+                    <label for="chantier-id">ID du chantier :</label>
+                    <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
+                </div>
+                <div>
+                    <label for="photo-file">Sélectionner une photo :</label>
+                    <input type="file" id="photo-file" accept="image/*" required>
+                </div>
+                <button type="submit">Envoyer la photo</button>
+                <p id="upload-status" style="display: none;"></p>
+            </form>
+        </div>
 
         <div id="admin-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--company-orange);">
             <h2>Section Administration</h2>
