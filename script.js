@@ -3,9 +3,9 @@ import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, server
 import { getAuth, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// Supprimez la ligne : const ADMIN_UIDS = [...]
+// Supprimez la ligne : const ADMIN_UIDS = [...] // Cette ligne a été supprimée dans la version précédente
 
-const questionsContainer = document.getElementById('questions-container'); // Assurez-vous que cet élément existe dans votre HTML, il semble manquer dans votre code initial
+const questionsContainer = document.getElementById('questions-container'); // Assurez-vous que cet élément existe dans votre HTML
 const adminSection = document.getElementById('admin-section');
 const adminQuestionsContainer = document.getElementById('admin-questions-container');
 
@@ -81,7 +81,7 @@ async function loadClientData(uid) {
         } else {
             console.warn("Document utilisateur non trouvé dans Firestore pour l'UID :", uid);
             // Gérer le cas où le document 'users' n'existe pas (ex: nouvel utilisateur)
-            // Par défaut, si le document n'existe pas, l'utilisateur n'est pas admin (isAdmin reste false)
+            // Par défaut, si le document n'existe pas ou n'a pas de rôle 'admin', isAdmin reste false
             // Vous pourriez vouloir créer un document user par défaut ici si nécessaire
         }
     } catch (error) {
@@ -188,12 +188,12 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
     const file = photoFileInput.files[0];
     const user = auth.currentUser;
 
-    // Optionnel (pour UI seulement): Vérification côté client si l'utilisateur est admin avant de commencer l'upload
-    // La vraie sécurité vient des règles de Storage !
-    // Pour que cette vérification client soit possible, vous devriez stocker le rôle utilisateur dans une variable accessible ici,
-    // par exemple en la définissant globalement ou en la passant en paramètre.
-    // Pour simplifier ici, on se repose sur les règles de Storage pour la sécurité.
-    // Vous avez déjà les checks pour l'utilisateur connecté, le fichier et l'ID du chantier.
+    // Optionnel (pour UI seulement): Vérification côté client si l'utilisateur est admin avant de commencer l'upload
+    // La vraie sécurité vient des règles de Storage !
+    // Pour que cette vérification client soit possible, vous devriez stocker le rôle utilisateur dans une variable accessible ici,
+    // par exemple en la définissant globalement ou en la passant en paramètre.
+    // Pour simplifier ici, on se repose sur les règles de Storage pour la sécurité.
+    // Vous avez déjà les checks pour l'utilisateur connecté, le fichier et l'ID du chantier.
 
     if (!user) {
         uploadStatus.textContent = 'Vous devez être connecté pour uploader des photos.';
@@ -215,22 +215,22 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    // Référence au chantier spécifique de L'UTILISATEUR CONNECTÉ (même si l'admin upload, il upload POUR un client spécifique)
-    // ATTENTION : Si l'admin peut uploader pour n'importe quel client, cette ligne doit être modifiée
-    // pour pointer vers le document du client CIBLE, pas de l'admin uploadant.
-    // Pour l'instant, le code semble supposer que l'admin upload pour son propre compte client,
-    // ce qui est probablement incorrect pour une app d'admin.
-    // Si l'admin uploade pour le client dont l'UID est dans la collection 'clients', il faudrait le savoir ici.
-    // Pour l'exemple actuel, je garde la logique existante qui lie à user.uid, mais sachez que c'est potentiellement un point à ajuster.
+    // Référence au chantier spécifique de L'UTILISATEUR CONNECTÉ (même si l'admin upload, il upload POUR un client spécifique)
+    // ATTENTION : Si l'admin peut uploader pour n'importe quel client, cette ligne doit être modifiée
+    // pour pointer vers le document du client CIBLE, pas de l'admin uploadant.
+    // Pour l'instant, le code semble supposer que l'admin upload pour son propre compte client,
+    // ce qui est probablement incorrect pour une app d'admin.
+    // Si l'admin uploade pour le client dont l'UID est dans la collection 'clients', il faudrait le savoir ici.
+    // Pour l'exemple actuel, je garde la logique existante qui lie à user.uid, mais sachez que c'est potentiellement un point à ajuster.
     const chantierRef = doc(db, 'clients', user.uid, 'chantier', chantierId);
-     const storageRef = ref(storage, `chantier-photos/${chantierId}/${user.uid}-${Date.now()}-${file.name}`); // Ajout UID et timestamp pour unicité
+     const storageRef = ref(storage, `chantier-photos/${chantierId}/${user.uid}-${Date.now()}-${file.name}`); // Ajout UID et timestamp pour unicité
 
     uploadStatus.textContent = 'Upload en cours...';
     uploadStatus.style.color = 'orange';
     uploadStatus.style.display = 'block';
 
     try {
-        // Vérification que le document chantier existe AVANT de tenter l'upload
+        // Vérification que le document chantier existe AVANT de tenter l'upload
         const docSnapBeforeUpload = await firebaseGetDoc(chantierRef);
         if (!docSnapBeforeUpload.exists()) {
             console.error("Erreur : Le document chantier n'existe pas AVANT l'upload.", chantierRef.path);
@@ -239,17 +239,17 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
             return; // Arrête l'exécution si le chantier n'existe pas
         }
 
-        // Lancer l'upload du fichier
+        // Lancer l'upload du fichier
         const uploadResult = await uploadBytes(storageRef, file);
-        // Obtenir l'URL de téléchargement une fois l'upload terminé
+        // Obtenir l'URL de téléchargement une fois l'upload terminé
         const downloadURL = await getDownloadURL(uploadResult.ref);
 
-        // Mettre à jour le document chantier dans Firestore avec la nouvelle URL de photo
+        // Mettre à jour le document chantier dans Firestore avec la nouvelle URL de photo
         await updateDoc(chantierRef, {
             photos: arrayUnion(downloadURL) // Ajoute l'URL à un tableau existant (ou crée le tableau)
         });
 
-        // Indiquer le succès et réinitialiser le formulaire
+        // Indiquer le succès et réinitialiser le formulaire
         uploadStatus.textContent = 'Photo uploadée avec succès !';
         uploadStatus.style.color = 'green';
         uploadPhotoForm.reset(); // Réinitialise le formulaire après succès
@@ -286,6 +286,7 @@ function loadClientQuestions(uid) {
                       `<div class="reponse-admin">
                            <p><strong>Réponse :</strong> ${questionData.reponse}</p>
                            <p><em>Répondu le : ${questionData.timestampReponse ? new Date(questionData.timestampReponse.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                           
                        </div>`
                     : '<p><em>En attente de réponse...</em></p>'
                   }
@@ -336,7 +337,7 @@ function loadAdminQuestions() {
                       `<button class="reply-button" data-question-id="${questionId}">Répondre</button>`
                   }
 
-                  // Formulaire de réponse/modification (initialement caché)
+                  // Formulaire de réponse/modification (initialement caché) <-- C'est cette ligne qu'il faut supprimer
                   <div id="${replyFormId}" style="display: none; margin-top: 10px;">
                       <textarea placeholder="Votre réponse" style="width: 95%; min-height: 60px;"></textarea>
                       <button class="submit-reply-button" data-question-id="${questionId}">Envoyer la réponse</button>
@@ -436,40 +437,40 @@ adminQuestionsContainer.addEventListener('click', async (event) => {
             try {
                 await updateDoc(questionRef, {
                     reponse: replyText,
-                    reponduParAdmin: true, // Marque comme répondu par l'admin
-                    timestampReponse: serverTimestamp() // Date de la réponse/modification
+                    reponduParAdmin: true, // Mark as replied by admin
+                    timestampReponse: serverTimestamp() // Date of reply/modification
                 });
                 console.log(`Réponse ${isModification ? 'modifiée' : 'envoyée'} avec succès pour ID : ${questionId}`);
 
-                // Cache le formulaire et affiche un message de statut temporaire
-                textarea.value = ''; // Vide le textarea
-                replyForm.style.display = 'none'; // Cache le formulaire
+                // Cache the form and show a temporary status message
+                textarea.value = ''; // Clear the textarea
+                replyForm.style.display = 'none'; // Hide the form
 
-                if(replyStatus) { // Afficher le statut si l'élément existe
+                if(replyStatus) { // Show status if element exists
                     replyStatus.textContent = isModification ? 'Réponse modifiée.' : 'Réponse envoyée.';
                     replyStatus.style.color = 'green';
                     replyStatus.style.display = 'block';
-                    setTimeout(() => { replyStatus.style.display = 'none'; }, 3000); // Cacher après 3s
+                    setTimeout(() => { replyStatus.style.display = 'none'; }, 3000); // Hide after 3s
                 }
 
             } catch (error) {
                 console.error("Erreur lors de l'envoi/modification de la réponse : ", error);
-                 if(replyStatus) { // Afficher l'erreur si l'élément existe
+                 if(replyStatus) { // Show error if element exists
                     replyStatus.textContent = 'Erreur lors de l\'opération.';
                     replyStatus.style.color = 'red';
                     replyStatus.style.display = 'block';
                  } else {
-                    alert('Erreur lors de l\'opération.'); // Fallback si pas d'élément statut
+                    alert('Erreur lors de l\'opération.'); // Fallback if no status element
                  }
             }
         } else {
-            if(replyStatus) { // Afficher un avertissement si la réponse est vide
+            if(replyStatus) { // Show warning if reply is empty
                 replyStatus.textContent = 'Veuillez saisir une réponse.';
                 replyStatus.style.color = 'orange';
                 replyStatus.style.display = 'block';
-                setTimeout(() => { replyStatus.style.display = 'none'; }, 3000); // Cacher après 3s
+                setTimeout(() => { replyStatus.style.display = 'none'; }, 3000); // Hide after 3s
             } else {
-                alert('Veuillez saisir une réponse.'); // Fallback si pas d'élément statut
+                alert('Veuillez saisir une réponse.'); // Fallback if no status element
             }
         }
     }
