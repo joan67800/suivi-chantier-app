@@ -23,9 +23,14 @@ const logoutButton = document.getElementById('logout-button');
 const questionForm = document.getElementById('question-form');
 const questionText = document.getElementById('question-text');
 const questionConfirmation = document.getElementById('question-confirmation');
+
+// Récupère l'élément du formulaire d'upload
 const uploadPhotoForm = document.getElementById('upload-photo-form');
-// Nouvelle variable pour le champ UID client
-const clientUidInput = document.getElementById('client-uid'); // <-- Nouveau
+// --- NOUVEAU LOG --- Vérifie si l'élément du formulaire a été trouvé au chargement du script
+console.log("SCRIPT LOAD CHECK: Element 'upload-photo-form' found?", uploadPhotoForm);
+
+// Variables pour les champs du formulaire d'upload (déplacées ici pour être sûres qu'elles sont définies)
+const clientUidInput = document.getElementById('client-uid');
 const chantierIdInput = document.getElementById('chantier-id');
 const photoFileInput = document.getElementById('photo-file');
 const uploadStatus = document.getElementById('upload-status');
@@ -184,110 +189,124 @@ questionForm.addEventListener('submit', async (e) => {
 
 // --- Fonction d'upload de photo pour Admin ---
 
-uploadPhotoForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    // Récupérer les valeurs des deux champs : UID du client et ID du chantier
-    const clientUid = clientUidInput.value.trim(); // <-- Nouveau
-    const chantierId = chantierIdInput.value.trim();
-    const file = photoFileInput.files[0];
-    const user = auth.currentUser;
+// Attache l'écouteur d'événement submit AU formulaire d'upload
+if (uploadPhotoForm) { // --- NOUVEAU CHECK --- S'assurer que le formulaire a été trouvé
+    uploadPhotoForm.addEventListener('submit', async (e) => {
+        // --- NOUVEAU LOG --- Vérifie si l'écouteur d'événement a été déclenché
+        console.log("UPLOAD EVENT CHECK: Submit event listener triggered for upload form.");
 
-    // --- AJOUT DES LOGS DE DIAGNOSTIC ---
-    if (user) {
-        console.log("UPLOAD DIAGNOSTIC: Tentative d'upload par l'utilisateur UID:", user.uid);
-        try {
-             const userDocRef = doc(db, 'users', user.uid);
-             const userDocSnap = await firebaseGetDoc(userDocRef);
-             if (userDocSnap.exists()) {
-                 const userData = userDocSnap.data();
-                 console.log("UPLOAD DIAGNOSTIC: Document utilisateur trouvé dans /users. Données:", userData);
-                 if (userData.role === 'admin') {
-                     console.log("UPLOAD DIAGNOSTIC: Rôle 'admin' trouvé. L'utilisateur devrait être admin.");
+        e.preventDefault();
+        // Récupérer les valeurs des deux champs : UID du client et ID du chantier
+        const clientUid = clientUidInput.value.trim(); // <-- Nouveau
+        const chantierId = chantierIdInput.value.trim();
+        const file = photoFileInput.files[0];
+        const user = auth.currentUser;
+
+        // --- AJOUT DES LOGS DE DIAGNOSTIC (keep these) ---
+        if (user) {
+            console.log("UPLOAD DIAGNOSTIC: Tentative d'upload par l'utilisateur UID:", user.uid);
+            try {
+                 const userDocRef = doc(db, 'users', user.uid);
+                 const userDocSnap = await firebaseGetDoc(userDocRef);
+                 if (userDocSnap.exists()) {
+                     const userData = userDocSnap.data();
+                     console.log("UPLOAD DIAGNOSTIC: Document utilisateur trouvé dans /users. Données:", userData);
+                     if (userData.role === 'admin') {
+                         console.log("UPLOAD DIAGNOSTIC: Rôle 'admin' trouvé. L'utilisateur devrait être admin.");
+                     } else {
+                         console.warn("UPLOAD DIAGNOSTIC: Rôle NON 'admin' trouvé ou champ 'role' absent.", userData.role);
+                     }
                  } else {
-                     console.warn("UPLOAD DIAGNOSTIC: Rôle NON 'admin' trouvé ou champ 'role' absent.", userData.role);
+                     console.warn("UPLOAD DIAGNOSTIC: Document utilisateur NON trouvé dans /users pour l'UID:", user.uid);
                  }
-             } else {
-                 console.warn("UPLOAD DIAGNOSTIC: Document utilisateur NON trouvé dans /users pour l'UID:", user.uid);
-             }
-        } catch (firestoreError) {
-             console.error("UPLOAD DIAGNOSTIC: Erreur lors de la récupération du document utilisateur pour le diagnostic:", firestoreError);
+            } catch (firestoreError) {
+                 console.error("UPLOAD DIAGNOSTIC: Erreur lors de la récupération du document utilisateur pour le diagnostic:", firestoreError);
+            }
+        } else {
+            console.log("UPLOAD DIAGNOSTIC: Aucune utilisateur connecté.");
         }
-    } else {
-        console.log("UPLOAD DIAGNOSTIC: Aucune utilisateur connecté.");
-    }
-    // --- FIN DES LOGS DE DIAGNOSTIC ---
+        // --- FIN DES LOGS DE DIAGNOSTIC ---
 
 
-    if (!user) {
-        uploadStatus.textContent = 'Vous devez être connecté pour uploader des photos.';
-        uploadStatus.style.color = 'red';
-        uploadStatus.style.display = 'block';
-        return;
-    }
-    if (!file) {
-        uploadStatus.textContent = 'Veuillez sélectionner un fichier photo.';
-        uploadStatus.style.color = 'red';
-        uploadStatus.style.display = 'block';
-        return;
-    }
-    // Vérifier que les deux champs nécessaires sont remplis
-    if (!clientUid || !chantierId) { // <-- Modification pour vérifier les deux
-        uploadStatus.textContent = 'Erreur : L\'UID du client et l\'ID du chantier sont nécessaires.';
-        uploadStatus.style.color = 'red';
-        uploadStatus.style.display = 'block';
-        console.error("Erreur : UID client ou ID chantier manquant.");
-        return;
-    }
+        if (!user) {
+            uploadStatus.textContent = 'Vous devez être connecté pour uploader des photos.';
+            uploadStatus.style.color = 'red';
+            uploadStatus.style.display = 'block';
+            return;
+        }
+        if (!file) {
+            uploadStatus.textContent = 'Veuillez sélectionner un fichier photo.';
+            uploadStatus.style.color = 'red';
+            uploadStatus.style.display = 'block';
+            return;
+        }
+        // Vérifier que les deux champs nécessaires sont remplis
+        if (!clientUid || !chantierId) { // <-- Modification pour vérifier les deux
+            uploadStatus.textContent = 'Erreur : L\'UID du client et l\'ID du chantier sont nécessaires.';
+            uploadStatus.style.color = 'red';
+            uploadStatus.style.display = 'block';
+            console.error("Erreur : UID client ou ID chantier manquant.");
+            return;
+        }
 
-    // Construire la référence directe au document chantier en utilisant l'UID du client et l'ID du chantier
-    // On revient à une référence de document standard
-    const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId); // <-- Modification
+        // Construire la référence directe au document chantier en utilisant l'UID du client et l'ID du chantier
+        // On revient à une référence de document standard
+        const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId); // <-- Modification
 
-    uploadStatus.textContent = 'Vérification du chantier...'; // Statut mis à jour
-    uploadStatus.style.color = 'orange';
-    uploadStatus.style.display = 'block';
+        uploadStatus.textContent = 'Vérification du chantier...'; // Statut mis à jour
+        uploadStatus.style.color = 'orange';
+        uploadStatus.style.display = 'block';
 
-    try {
-        // Vérifier que le document chantier existe bien à ce chemin avant d'uploader
-        const docSnapBeforeUpload = await firebaseGetDoc(chantierRef); // <-- Modification (retour à getDoc standard)
+        try {
+            // Vérifier que le document chantier existe bien à ce chemin avant d'uploader
+            const docSnapBeforeUpload = await firebaseGetDoc(chantierRef); // <-- Modification (retour à getDoc standard)
 
-        if (!docSnapBeforeUpload.exists()) {
-            console.error("Erreur : Le document chantier n'existe pas au chemin spécifié.", chantierRef.path); // Message mis à jour
-            uploadStatus.textContent = 'Erreur : Le chantier spécifié n\'existe pas ou l\'UID client est incorrect.'; // Message mis à jour
-            uploadStatus.style.color = 'red';
-            return; // Arrête l'exécution si le chantier n'existe pas
-        }
+            if (!docSnapBeforeUpload.exists()) {
+                console.error("Erreur : Le document chantier n'existe pas au chemin spécifié.", chantierRef.path); // Message mis à jour
+                uploadStatus.textContent = 'Erreur : Le chantier spécifié n\'existe pas ou l\'UID client est incorrect.'; // Message mis à jour
+                uploadStatus.style.color = 'red';
+                return; // Arrête l'exécution si le chantier n'existe pas
+            }
 
-        // Si le document existe, procéder à l'upload et à la mise à jour
+            // Si le document existe, procéder à l'upload et à la mise à jour
 
-        // Construire la référence de stockage en utilisant l'UID du client (celui entré dans le champ)
-        const storageRef = ref(storage, `chantier-photos/${chantierId}/${clientUid}-${Date.now()}-${file.name}`); // <-- Modification pour utiliser clientUid
+            // Construire la référence de stockage en utilisant l'UID du client (celui entré dans le champ)
+            const storageRef = ref(storage, `chantier-photos/${chantierId}/${clientUid}-${Date.now()}-${file.name}`); // <-- Modification pour utiliser clientUid
 
-        uploadStatus.textContent = 'Upload de la photo en cours...'; // Mettre à jour le statut
-        uploadStatus.style.color = 'orange';
+            uploadStatus.textContent = 'Upload de la photo en cours...'; // Mettre à jour le statut
+            uploadStatus.style.color = 'orange';
 
 
-        // --- Reste de la logique d'upload (inchangée) ---
-        const uploadResult = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(uploadResult.ref);
+            // --- Reste de la logique d'upload (inchangée) ---
+            const uploadResult = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
 
-        await updateDoc(chantierRef, { // Utilise la référence chantierRef correcte construite plus tôt
-            photos: arrayUnion(downloadURL) // Ajoute l'URL à un tableau existant (ou crée le tableau)
-        });
+            await updateDoc(chantierRef, { // Utilise la référence chantierRef correcte construite plus tôt
+                photos: arrayUnion(downloadURL) // Ajoute l'URL à un tableau existant (ou crée le tableau)
+            });
 
-        // Indiquer le succès et réinitialiser le formulaire
-        uploadStatus.textContent = 'Photo uploadée avec succès !';
-        uploadStatus.style.color = 'green';
-        uploadPhotoForm.reset(); // Réinitialise le formulaire après succès
-        setTimeout(() => { uploadStatus.style.display = 'none'; }, 3000); // Cache le statut après 3 secondes
+            // Indiquer le succès et réinitialiser le formulaire
+            uploadStatus.textContent = 'Photo uploadée avec succès !';
+            uploadStatus.style.color = 'green';
+            uploadPhotoForm.reset(); // Réinitialise le formulaire après succès
+            setTimeout(() => { uploadStatus.style.display = 'none'; }, 3000); // Cache le statut après 3 secondes
 
-    } catch (error) {
-        console.error("Erreur lors de l'upload de la photo ou de la vérification du chantier : ", error); // Message mis à jour
-        // Afficher le message d'erreur à l'utilisateur
-        uploadStatus.textContent = 'Erreur lors de l\'opération : ' + error.message;
-        uploadStatus.style.color = 'red';
-    }
-});
+        } catch (error) {
+            console.error("Erreur lors de l'upload de la photo ou de la vérification du chantier : ", error); // Message mis à jour
+            // Afficher le message d'erreur à l'utilisateur
+            uploadStatus.textContent = 'Erreur lors de l\'opération : ' + error.message;
+            uploadStatus.style.color = 'red';
+        }
+    });
+} else {
+    // --- NOUVEAU LOG --- Log si l'élément du formulaire n'a pas été trouvé au chargement
+    console.error("SCRIPT LOAD CHECK: Element with ID 'upload-photo-form' was NOT found!");
+    // Optionnel : Afficher un message d'erreur visible sur la page si l'élément est manquant
+    // const errorDiv = document.createElement('div');
+    // errorDiv.textContent = "Erreur interne : Formulaire d'upload non trouvé.";
+    // errorDiv.style.color = 'red';
+    // document.body.prepend(errorDiv); // Ajoute un message au début de la page
+}
 
 
 // --- Fonctions de chargement des questions clients (reste identique) ---
