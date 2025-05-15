@@ -192,6 +192,32 @@ uploadPhotoForm.addEventListener('submit', async (e) => {
     const file = photoFileInput.files[0];
     const user = auth.currentUser;
 
+    // --- AJOUT DES LOGS DE DIAGNOSTIC ---
+    if (user) {
+        console.log("UPLOAD DIAGNOSTIC: Tentative d'upload par l'utilisateur UID:", user.uid);
+        try {
+             const userDocRef = doc(db, 'users', user.uid);
+             const userDocSnap = await firebaseGetDoc(userDocRef);
+             if (userDocSnap.exists()) {
+                 const userData = userDocSnap.data();
+                 console.log("UPLOAD DIAGNOSTIC: Document utilisateur trouvé dans /users. Données:", userData);
+                 if (userData.role === 'admin') {
+                     console.log("UPLOAD DIAGNOSTIC: Rôle 'admin' trouvé. L'utilisateur devrait être admin.");
+                 } else {
+                     console.warn("UPLOAD DIAGNOSTIC: Rôle NON 'admin' trouvé ou champ 'role' absent.", userData.role);
+                 }
+             } else {
+                 console.warn("UPLOAD DIAGNOSTIC: Document utilisateur NON trouvé dans /users pour l'UID:", user.uid);
+             }
+        } catch (firestoreError) {
+             console.error("UPLOAD DIAGNOSTIC: Erreur lors de la récupération du document utilisateur pour le diagnostic:", firestoreError);
+        }
+    } else {
+        console.log("UPLOAD DIAGNOSTIC: Aucune utilisateur connecté.");
+    }
+    // --- FIN DES LOGS DE DIAGNOSTIC ---
+
+
     if (!user) {
         uploadStatus.textContent = 'Vous devez être connecté pour uploader des photos.';
         uploadStatus.style.color = 'red';
