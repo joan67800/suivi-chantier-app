@@ -21,12 +21,9 @@ exports.setUserAsAdmin = functions.https.onCall(async (data, context) => {
   }
 
   // >> DÉBUT DU BLOC TEMPORAIREMENT COMMENTÉ POUR LE PREMIER ADMIN <<
-  // Vérifier si l'utilisateur qui appelle cette fonction est déjà un admin
-  // (basé sur un custom claim 'admin' qu'il aurait déjà)
-  // IMPORTANT : Pour le tout premier admin, cette vérification échouera.
-  // Vous devrez initialement donner le rôle admin à votre propre compte
-  // via un script exécuté avec les identifiants de service, ou commenter cette vérification
-  // TEMPORAIREMENT et la sécuriser après avoir mis en place votre premier admin.
+  // IMPORTANT : Pour le tout premier admin, cette vérification est commentée.
+  // Décommentez-la IMMÉDIATEMENT après avoir défini votre premier admin
+  // et redéployez la fonction !
   // if (context.auth.token.admin !== true) {
   //   console.warn(`Utilisateur non admin (UID: ${context.auth.uid}) a tenté de définir un rôle admin.`);
   //   throw new functions.https.HttpsError(
