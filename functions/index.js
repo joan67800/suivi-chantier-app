@@ -2,7 +2,6 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 // Initialise l'application Firebase Admin SDK.
-// Cela permet à vos fonctions d'agir avec des privilèges d'administrateur.
 admin.initializeApp();
 
 /**
@@ -21,19 +20,21 @@ exports.setUserAsAdmin = functions.https.onCall(async (data, context) => {
     );
   }
 
+  // >> DÉBUT DU BLOC TEMPORAIREMENT COMMENTÉ POUR LE PREMIER ADMIN <<
   // Vérifier si l'utilisateur qui appelle cette fonction est déjà un admin
   // (basé sur un custom claim 'admin' qu'il aurait déjà)
   // IMPORTANT : Pour le tout premier admin, cette vérification échouera.
   // Vous devrez initialement donner le rôle admin à votre propre compte
   // via un script exécuté avec les identifiants de service, ou commenter cette vérification
   // TEMPORAIREMENT et la sécuriser après avoir mis en place votre premier admin.
-  if (context.auth.token.admin !== true) {
-    console.warn(`Utilisateur non admin (UID: ${context.auth.uid}) a tenté de définir un rôle admin.`);
-    throw new functions.https.HttpsError(
-        "permission-denied",
-        "Seul un administrateur peut assigner des rôles d'administrateur.",
-    );
-  }
+  // if (context.auth.token.admin !== true) {
+  //   console.warn(`Utilisateur non admin (UID: ${context.auth.uid}) a tenté de définir un rôle admin.`);
+  //   throw new functions.https.HttpsError(
+  //       "permission-denied",
+  //       "Seul un administrateur peut assigner des rôles d'administrateur.",
+  //   );
+  // }
+  // >> FIN DU BLOC TEMPORAIREMENT COMMENTÉ POUR LE PREMIER ADMIN <<
 
   const targetUserUID = data.uid; // L'UID de l'utilisateur à qui on veut donner le rôle admin
   const isAdminStatus = data.isAdmin; // true pour donner le rôle, false pour l'enlever
