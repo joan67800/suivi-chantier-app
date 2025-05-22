@@ -11,8 +11,8 @@ admin.initializeApp();
  * Ou, pour la première fois, vous (le propriétaire du projet) devrez trouver un moyen
  * de définir votre propre compte comme admin (voir note plus bas).
  */
-// MODIFICATION CLÉ : Ajout de .runWith({ enforceAppCheck: false })
-exports.setUserAsAdmin = functions.runWith({ enforceAppCheck: false }).https.onCall(async (data, context) => {
+// MODIFICATION CLÉ : Ajout de .runWith({ runtime: 'nodejs22', enforceAppCheck: false })
+exports.setUserAsAdmin = functions.runWith({ runtime: 'nodejs22', enforceAppCheck: false }).https.onCall(async (data, context) => {
   // Vérifier si l'utilisateur qui appelle cette fonction est authentifié
   if (!context.auth) {
     throw new functions.https.HttpsError(
