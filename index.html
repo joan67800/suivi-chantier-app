@@ -73,20 +73,29 @@
             <div id="admin-questions-container">
                 <p>Chargement des questions...</p>
             </div>
+             <div style="margin-top: 20px; padding: 10px; border: 1px solid red;">
+                <h3>Zone de Test Admin (Custom Claims)</h3>
+                <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur à rendre admin" style="width: 250px; margin-bottom: 5px;" />
+                <button id="test-set-admin-button">Rendre Admin (via Custom Claim)</button>
+                <button id="test-remove-admin-button" style="margin-left: 10px;">Enlever Admin (via Custom Claim)</button>
+                <p id="test-admin-status" style="margin-top: 5px;"></p>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // Correction ici: importer onAuthStateChanged car il sera utilisé dans script.js
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs, doc, setDoc, addDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
+        // NOUVELLE IMPORTATION pour App Check
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
+            apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8", // Pensez à la sécurité de cette clé si vous partagez ce code plus largement
             authDomain: "suivi-chantier-societe.firebaseapp.com",
             projectId: "suivi-chantier-societe",
             storageBucket: "suivi-chantier-societe.firebasestorage.app",
@@ -97,10 +106,29 @@
 
         // Initialiser Firebase
         const app = initializeApp(firebaseConfig);
+
+        // NOUVELLE INITIALISATION pour App Check
+        // REMPLACEZ 'VOTRE_CLE_DE_SITE_RECAPTCHA_V3_ICI' par votre clé réelle de site reCAPTCHA v3
+        // (self.FIREBASE_APPCHECK_DEBUG_TOKEN n'est QUE pour les tests locaux, ne pas utiliser en production sans l'enlever)
+        // Si vous testez en local (http://localhost...), vous pouvez mettre la variable de débogage
+        // sinon, elle ne doit pas être présente pour la production sur Netlify.
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; // Pour les tests locaux uniquement
+            console.log("App Check: Mode débogage activé pour localhost.");
+        }
+
+        const appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(6LceT0YrAAAAAJ6UpDahjVySRXHiySTp__8Akhdc),
+          isTokenAutoRefreshEnabled: true
+        });
+        window.firebaseAppCheck = appCheck; // Optionnel, si vous voulez y accéder globalement
+
+
+        // Vos initialisations existantes
         const authInstance = getAuth(app);
         const dbInstance = getFirestore(app);
         const storageInstance = getStorage(app);
-        const functionsInstance = getFunctions(app);
+        const functionsInstance = getFunctions(app); // App Check devrait fonctionner automatiquement avec functionsInstance si initialisé avant son utilisation.
 
         // Rendre les instances et fonctions nécessaires disponibles globalement (pour script.js et la console)
         window.firebaseApp = app;
@@ -111,7 +139,6 @@
         window.httpsCallable = httpsCallable;
 
         // Rendre les fonctions d'authentification disponibles globalement pour script.js
-        // (plus simple que de les passer par des arguments)
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.signOut = signOut;
         window.onAuthStateChanged = onAuthStateChanged;
@@ -133,6 +160,59 @@
         window.uploadBytes = uploadBytes;
         window.getDownloadURL = getDownloadURL;
         window.deleteObject = deleteObject;
+
+
+        // Code pour le bouton de test Admin (déplacé ici pour être sûr que tout est initialisé)
+        document.addEventListener('DOMContentLoaded', () => {
+            const testSetAdminButton = document.getElementById('test-set-admin-button');
+            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+            const testAdminUidInput = document.getElementById('test-admin-uid');
+            const testAdminStatus = document.getElementById('test-admin-status');
+
+            const callSetUserAdminStatus = async (makeAdmin) => {
+                const user = window.firebaseAuthInstance.currentUser;
+
+                if (!user) {
+                    testAdminStatus.textContent = "Erreur : Vous devez être connecté pour appeler cette fonction.";
+                    testAdminStatus.style.color = "red";
+                    return;
+                }
+
+                const targetAdminUID = testAdminUidInput.value.trim();
+                if (!targetAdminUID) {
+                    testAdminStatus.textContent = "Erreur : Veuillez entrer un UID cible.";
+                    testAdminStatus.style.color = "red";
+                    return;
+                }
+
+                testAdminStatus.textContent = "Appel de la fonction en cours...";
+                testAdminStatus.style.color = "orange";
+
+                try {
+                    await user.getIdToken(true); // Rafraîchir le jeton de l'appelant
+                    console.log("Jeton de l'appelant rafraîchi avant l'appel de la fonction.");
+
+                    const setUserAsAdminCallable = window.httpsCallable(window.firebaseFunctionsInstance, 'setUserAsAdmin');
+                    const result = await setUserAsAdminCallable({ uid: targetAdminUID, isAdmin: makeAdmin });
+
+                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Déconnectez-vous et reconnectez-vous pour que les claims prennent effet partout.";
+                    testAdminStatus.style.color = "green";
+                    console.log("Résultat de la fonction setUserAsAdmin:", result.data.message);
+
+                } catch (error) {
+                    testAdminStatus.textContent = "Erreur : " + error.message;
+                    testAdminStatus.style.color = "red";
+                    console.error("Erreur en appelant setUserAsAdmin depuis le bouton:", error);
+                }
+            };
+
+            if (testSetAdminButton) {
+                testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+            }
+            if (testRemoveAdminButton) {
+                testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
+            }
+        });
 
     </script>
 
