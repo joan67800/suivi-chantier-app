@@ -1,20 +1,22 @@
 // Dans functions/index.js
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-
-admin.initializeApp();
-
 exports.setUserAsAdmin = functions.https.onCall(async (data, context) => {
-  // NOUVEAUX LOGS DE DÉBOGAGE AU TOUT DÉBUT
   console.log("Fonction setUserAsAdmin appelée.");
-  console.log("Données reçues (data):", data ? JSON.stringify(data) : "data est null ou undefined"); // Vérifie si data existe avant stringify
-  console.log("Contexte d'authentification brut (context.auth):", context.auth ? JSON.stringify(context.auth) : "context.auth est null ou undefined");
-  // Optionnel : loguer le contexte complet peut être très verbeux, mais parfois utile
+  console.log("Données reçues (data):", data ? JSON.stringify(data) : "data est null ou undefined");
+
+  // Loguons context.auth de manière plus sûre
+  if (context.auth) {
+    console.log("Contexte d'authentification (context.auth):", JSON.stringify(context.auth));
+    console.log("UID de l'appelant (context.auth.uid):", context.auth.uid);
+    console.log("Claims du jeton de l'appelant (context.auth.token):", JSON.stringify(context.auth.token));
+  } else {
+    console.log("Contexte d'authentification (context.auth): est null ou undefined");
+  }
+
+  // Supprimez ou commentez cette ligne qui cause l'erreur :
   // console.log("Contexte complet (context):", JSON.stringify(context));
 
-  // Votre vérification existante
   if (!context.auth) {
-    console.error("ERREUR DANS setUserAsAdmin: context.auth est manquant. L'utilisateur n'est pas considéré comme authentifié par la fonction."); // LOG MODIFIÉ/AJOUTÉ
+    console.error("ERREUR DANS setUserAsAdmin: context.auth est manquant.");
     throw new functions.https.HttpsError(
       "unauthenticated",
       "La fonction doit être appelée par un utilisateur authentifié."
