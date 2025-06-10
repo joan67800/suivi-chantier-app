@@ -1,9 +1,10 @@
+// functions/index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+
 admin.initializeApp();
 
 exports.setUserAsAdmin = functions.https.onCall(async (data, context) => {
-  // === LOGS MINIMALISTES POUR ÉVITER TOUTE ERREUR ===
   console.log("--- Début de l'exécution de setUserAsAdmin ---");
 
   if (!context.auth) {
@@ -11,7 +12,6 @@ exports.setUserAsAdmin = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "La fonction doit être appelée par un utilisateur authentifié.");
   }
 
-  // Si on arrive ici, context.auth existe.
   console.log("Vérification de l'authentification : OK. UID de l'appelant :", context.auth.uid);
 
   const targetUserUID = data.uid;
@@ -26,16 +26,15 @@ exports.setUserAsAdmin = functions.https.onCall(async (data, context) => {
 
   try {
     console.log("Tentative de définition du custom claim...");
-    await admin.auth().setCustomUserClaims(targetUserUID, { admin: isAdminStatus });
+    await admin.auth().setCustomUserClaims(targetUserUID, {admin: isAdminStatus});
     console.log("SUCCÈS : Custom claim défini.");
 
     console.log("Tentative de mise à jour de Firestore...");
-    await admin.firestore().collection("users").doc(targetUserUID).set({ role: isAdminStatus ? "admin" : "user" }, { merge: true });
+    await admin.firestore().collection("users").doc(targetUserUID).set({role: isAdminStatus ? "admin" : "user"}, {merge: true});
     console.log("SUCCÈS : Firestore mis à jour.");
 
     console.log("--- Fin de l'exécution de setUserAsAdmin (Succès) ---");
-    return { message: `Succès ! L'utilisateur ${targetUserUID} a maintenant le statut admin: ${isAdminStatus}.` };
-
+    return {message: `Succès ! L'utilisateur ${targetUserUID} a maintenant le statut admin: ${isAdminStatus}.`};
   } catch (error) {
     console.error("--- ERREUR CRITIQUE dans le bloc try/catch ---");
     console.error("Message de l'erreur :", error.message);
