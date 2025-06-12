@@ -88,6 +88,7 @@
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs, doc, setDoc, addDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        // On n'a plus besoin de 'httpsCallable' ni 'getFunctions' pour cet appel spécifique, mais on les garde pour d'éventuelles autres fonctions
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
@@ -109,7 +110,7 @@
         }
 
         const appCheck = initializeAppCheck(app, {
-          provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'), // <<< CORRECTION ICI : Guillemets ajoutés
+          provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
           isTokenAutoRefreshEnabled: true
         });
         window.firebaseAppCheck = appCheck;
@@ -124,7 +125,6 @@
         window.firebaseDbInstance = dbInstance;
         window.firebaseStorageInstance = storageInstance;
         window.firebaseFunctionsInstance = functionsInstance;
-        window.httpsCallable = httpsCallable;
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.signOut = signOut;
         window.onAuthStateChanged = onAuthStateChanged;
@@ -148,35 +148,73 @@
             const testAdminUidInput = document.getElementById('test-admin-uid');
             const testAdminStatus = document.getElementById('test-admin-status');
 
+            // === DÉBUT DE LA FONCTION D'APPEL MODIFIÉE ===
             const callSetUserAdminStatus = async (makeAdmin) => {
                 const user = window.firebaseAuthInstance.currentUser;
+
                 if (!user) {
                     testAdminStatus.textContent = "Erreur : Vous devez être connecté pour appeler cette fonction.";
                     testAdminStatus.style.color = "red";
                     return;
                 }
+
                 const targetAdminUID = testAdminUidInput.value.trim();
                 if (!targetAdminUID) {
                     testAdminStatus.textContent = "Erreur : Veuillez entrer un UID cible.";
                     testAdminStatus.style.color = "red";
                     return;
                 }
+
                 testAdminStatus.textContent = "Appel de la fonction en cours...";
                 testAdminStatus.style.color = "orange";
+
                 try {
-                    await user.getIdToken(true);
-                    console.log("Jeton de l'appelant rafraîchi avant l'appel de la fonction.");
-                    const setUserAsAdminCallable = window.httpsCallable(window.firebaseFunctionsInstance, 'setUserAsAdmin');
-                    const result = await setUserAsAdminCallable({ uid: targetAdminUID, isAdmin: makeAdmin });
-                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Déconnectez-vous et reconnectez-vous pour que les claims prennent effet partout.";
+                    // 1. Obtenir le jeton d'ID Firebase de l'utilisateur actuel
+                    const idToken = await user.getIdToken();
+                    console.log("Jeton d'ID obtenu pour l'appel HTTP.");
+
+                    // 2. Définir l'URL de votre fonction Cloud
+                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
+
+                    // 3. Utiliser 'fetch' pour appeler la fonction HTTP
+                    const response = await fetch(functionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // 4. Ajouter le jeton dans l'en-tête d'autorisation
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        // 5. Envoyer les données dans le corps de la requête, avec le format {data: ...}
+                        body: JSON.stringify({
+                            data: {
+                                uid: targetAdminUID,
+                                isAdmin: makeAdmin
+                            }
+                        })
+                    });
+
+                    // Gérer les erreurs HTTP comme 403, 400, 500
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+                    }
+
+                    // 6. Analyser la réponse JSON en cas de succès
+                    const result = await response.json();
+
+                    const message = result.data.message;
+                    testAdminStatus.textContent = "Succès ! " + message + " Déconnectez-vous et reconnectez-vous.";
                     testAdminStatus.style.color = "green";
-                    console.log("Résultat de la fonction setUserAsAdmin:", result.data.message);
+                    console.log("Résultat de la fonction setUserAsAdmin:", message);
+
                 } catch (error) {
                     testAdminStatus.textContent = "Erreur : " + error.message;
                     testAdminStatus.style.color = "red";
                     console.error("Erreur en appelant setUserAsAdmin depuis le bouton:", error);
                 }
             };
+            // === FIN DE LA FONCTION D'APPEL MODIFIÉE ===
+
 
             if (testSetAdminButton) {
                 testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
