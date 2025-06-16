@@ -3,7 +3,7 @@ const {
     firebaseAuthInstance: auth,
     firebaseDbInstance: db,
     firebaseStorageInstance: storage,
-    firebase: fb // Raccourci pour les fonctions de service
+    firebase: fb
 } = window;
 
 // Éléments du DOM
@@ -43,7 +43,6 @@ loginForm.addEventListener('submit', async (e) => {
     const email = loginForm.email.value;
     const password = loginForm.password.value;
     try {
-        // CORRECTION : On utilise la fonction depuis l'objet 'fb' exposé par index.html
         await fb.auth.signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
         loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
@@ -53,7 +52,6 @@ loginForm.addEventListener('submit', async (e) => {
 
 logoutButton.addEventListener('click', async () => {
     try {
-        // CORRECTION : On utilise la fonction depuis l'objet 'fb'
         await fb.auth.signOut(auth);
     } catch (error) {
         console.error("Erreur lors de la déconnexion : ", error);
@@ -75,7 +73,7 @@ function showAdminView(user) {
     adminSection.style.display = 'block';
     clientQuestionSection.style.display = 'none';
     loadAllChantiersForAdmin();
-    loadAdminQuestions();
+    loadAdminQuestions(); // Appel corrigé
 }
 
 function loadClientChantiers(uid) {
@@ -121,6 +119,8 @@ function loadClientChantiers(uid) {
 }
 
 function loadAllChantiersForAdmin() {
+    // Pour l'instant, on ne charge que les chantiers de l'admin lui-même s'il en a.
+    // On pourrait étendre cela pour afficher tous les chantiers de tous les clients.
     loadClientChantiers(auth.currentUser.uid);
 }
 
@@ -177,37 +177,50 @@ async function loadClientQuestions(uid) {
 }
 
 function loadAdminQuestions() {
-    const q = fb.db.query(fb.db.collection(db, 'questions'), fb.db.where('askedTo', '==', null), fb.db.orderBy('timestamp', 'desc'));
+    // CORRECTION : On charge TOUTES les questions, triées par date.
+    const q = fb.db.query(fb.db.collection(db, 'questions'), fb.db.orderBy('timestamp', 'desc'));
 
     fb.db.onSnapshot(q, async (snapshot) => {
         if (!adminQuestionsContainer) return;
-        adminQuestionsContainer.innerHTML = '<h3>Questions des clients</h3>';
+        adminQuestionsContainer.innerHTML = '';
         if (snapshot.empty) {
-            adminQuestionsContainer.innerHTML += '<p>Aucune question de client en attente.</p>';
+            adminQuestionsContainer.innerHTML = '<p>Aucune question dans le système.</p>';
             return;
         }
-        const userIds = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
+
+        const userIds = [...new Set(snapshot.docs.map(d => d.data().userId || d.data().askedBy).filter(Boolean))];
         const userDocs = await Promise.all(userIds.map(id => fb.db.getDoc(fb.db.doc(db, 'clients', id))));
-        const userNameMap = new Map(userDocs.map(d => [d.id, d.exists() ? d.data().nom : `Client inconnu`]));
+        const userNameMap = new Map(userDocs.map(d => [d.id, d.exists() ? d.data().nom : `Utilisateur inconnu`]));
 
         snapshot.docs.forEach((docSnap) => {
             const questionData = docSnap.data();
             const questionId = docSnap.id;
-            const userId = questionData.userId;
-            const clientName = userNameMap.get(userId) || `UID: ${userId}`;
 
             const questionDiv = document.createElement('div');
             questionDiv.classList.add('admin-question-item');
+            
+            let questionHeader;
+            if (questionData.userId) { // Question d'un client
+                 const clientName = userNameMap.get(questionData.userId) || `UID: ${questionData.userId}`;
+                 questionHeader = `<p><strong>Client :</strong> ${clientName} (<code>${questionData.userId}</code>)</p>`;
+            } else { // Question de l'admin
+                 const targetClientName = userNameMap.get(questionData.askedTo) || `UID: ${questionData.askedTo}`;
+                 questionHeader = `<p><strong>Question posée par vous à :</strong> ${targetClientName} (<code>${questionData.askedTo}</code>)</p>`;
+                 questionDiv.style.backgroundColor = '#f0f8ff'; // Style différent pour les questions de l'admin
+            }
+
             questionDiv.innerHTML = `
-                <p><strong>Client :</strong> ${clientName} (<code>${userId}</code>)</p>
+                ${questionHeader}
                 <p><strong>Question :</strong> ${questionData.question}</p>
                 <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
                 ${questionData.reponse ? `
                     <div class="reponse-admin">
-                        <p><strong>Votre Réponse :</strong> ${questionData.reponse}</p>
+                        <p><strong>Réponse :</strong> ${questionData.reponse}</p>
+                        <p><em>Répondu le : ${questionData.timestampReponse ? new Date(questionData.timestampReponse.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
                         <button class="edit-reply-button" data-question-id="${questionId}">Modifier</button>
                     </div>` :
-                    `<button class="reply-button" data-question-id="${questionId}">Répondre</button>`
+                    // On ne peut répondre qu'aux questions des clients
+                    (questionData.userId ? `<button class="reply-button" data-question-id="${questionId}">Répondre</button>` : '<p><em>Pas encore de réponse.</em></p>')
                 }
                 <div id="reply-form-${questionId}" style="display: none; margin-top: 10px;">
                     <textarea>${questionData.reponse || ''}</textarea>
@@ -220,6 +233,7 @@ function loadAdminQuestions() {
     });
 }
 
+
 // --- Écouteurs d'événements pour les formulaires ---
 
 questionForm?.addEventListener('submit', async (e) => {
@@ -230,7 +244,8 @@ questionForm?.addEventListener('submit', async (e) => {
             await fb.db.addDoc(fb.db.collection(db, 'questions'), {
                 userId: auth.currentUser.uid,
                 question: question,
-                timestamp: fb.db.serverTimestamp()
+                timestamp: fb.db.serverTimestamp(),
+                askedTo: null, // Clarifie que c'est une question client
             });
             questionText.value = '';
             showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
@@ -263,10 +278,11 @@ adminQuestionForm?.addEventListener('submit', async (e) => {
 function showConfirmation(element, message, type) {
     if (!element) return;
     element.textContent = message;
-    element.className = type;
+    element.className = `confirmation-message ${type}`;
     element.style.display = 'block';
     setTimeout(() => { element.style.display = 'none'; }, 3000);
 }
+
 
 // --- GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION (POINT D'ENTRÉE) ---
 fb.auth.onAuthStateChanged(auth, async (user) => {
@@ -322,6 +338,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.classList.contains('reply-button') || target.classList.contains('edit-reply-button')) {
             const form = document.getElementById(`reply-form-${questionId}`);
             if(form) form.style.display = 'block';
+            if (target.classList.contains('edit-reply-button')) {
+                const docSnap = await fb.db.getDoc(questionRef);
+                form.querySelector('textarea').value = docSnap.data().reponse || '';
+            }
         }
 
         if (target.classList.contains('submit-reply-button')) {
