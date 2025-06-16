@@ -1,5 +1,3 @@
-// Les instances et fonctions Firebase sont exposées via l'objet `window` depuis index.html
-
 const questionsContainer = document.getElementById('questions-container');
 const adminSection = document.getElementById('admin-section');
 const adminQuestionsContainer = document.getElementById('admin-questions-container');
@@ -57,6 +55,7 @@ async function loadClientData(uid, isAdminByClaim) {
 
             chantierDiv.innerHTML = `
                 <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
+                <p>Jours d'intervention : ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                 <p>Avancement : ${chantierData.pourcentageAvancement || 0}%</p>
                 <h4>Photos :</h4>
             `;
@@ -95,9 +94,9 @@ async function loadClientData(uid, isAdminByClaim) {
 
     loadClientQuestions(uid);
 
-    const uploadPhotoContainer = document.getElementById('upload-photo-container');
     if (isAdminByClaim) {
         adminSection.style.display = 'block';
+        loadAdminQuestions(); // Appel pour charger les questions de tous les clients pour l'admin
     } else {
         adminSection.style.display = 'none';
     }
@@ -135,7 +134,9 @@ function loadClientQuestions(uid) {
 function loadAdminQuestions() {
     const questionsRef = window.collection(db, 'questions');
     window.onSnapshot(questionsRef, async (snapshot) => {
+        if (!adminQuestionsContainer) return;
         adminQuestionsContainer.innerHTML = '';
+
         if (snapshot.empty) {
             adminQuestionsContainer.innerHTML = '<p>Aucune question en attente.</p>';
             return;
@@ -146,16 +147,44 @@ function loadAdminQuestions() {
         const userDocs = await Promise.all(userPromises);
         const userNameMap = new Map(userDocs.map(d => [d.id, d.exists() ? d.data().nom : `Client inconnu`]));
         
-        snapshot.docs.sort((a,b) => (b.data().timestamp?.seconds || 0) - (a.data().timestamp?.seconds || 0)).forEach((docSnap) => {
-             const questionData = docSnap.data();
-             // ... le reste de la logique d'affichage admin que vous aviez déjà
-        });
+        snapshot.docs
+            .sort((a,b) => (b.data().timestamp?.seconds || 0) - (a.data().timestamp?.seconds || 0))
+            .forEach((docSnap) => {
+                const questionData = docSnap.data();
+                const questionId = docSnap.id;
+                const userId = questionData.userId;
+                const clientName = userNameMap.get(userId) || `UID: ${userId}`;
 
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('admin-question-item');
+                const replyFormId = `reply-form-${questionId}`;
+
+                questionDiv.innerHTML = `
+                    <p><strong>Client :</strong> ${clientName} (<code>${userId}</code>)</p>
+                    <p><strong>Question :</strong> ${questionData.question}</p>
+                    <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                    ${questionData.reponse ? `
+                        <div class="reponse-admin">
+                            <p><strong>Réponse :</strong> ${questionData.reponse}</p>
+                            <p><em>Répondu le : ${questionData.timestampReponse ? new Date(questionData.timestampReponse.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                            <button class="edit-reply-button" data-question-id="${questionId}">Modifier</button>
+                            <button class="delete-reply-button" data-question-id="${questionId}">Supprimer</button>
+                        </div>` :
+                        `<button class="reply-button" data-question-id="${questionId}">Répondre</button>`
+                    }
+                    <div id="${replyFormId}" style="display: none; margin-top: 10px;">
+                        <textarea placeholder="Votre réponse..."></textarea>
+                        <button class="submit-reply-button" data-question-id="${questionId}">Envoyer la réponse</button>
+                    </div>
+                `;
+                adminQuestionsContainer.appendChild(questionDiv);
+        });
     }, (error) => {
+        if (!adminQuestionsContainer) return;
         console.error("Erreur de récupération des questions admin:", error);
+        adminQuestionsContainer.innerHTML = `<p class="error">Erreur de chargement des questions admin.</p>`;
     });
 }
-
 
 // --- Écouteurs d'événements pour les formulaires ---
 
@@ -185,7 +214,82 @@ if (questionForm) {
 if (uploadPhotoForm) {
     uploadPhotoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        // ... votre logique d'upload de photo existante ...
+        const clientUid = clientUidInput.value.trim();
+        const chantierId = chantierIdInput.value.trim();
+        const file = photoFileInput.files[0];
+        const user = auth.currentUser;
+        if (!user || !file || !clientUid || !chantierId) {
+             uploadStatus.textContent = 'Veuillez remplir tous les champs.';
+             uploadStatus.style.color = 'red';
+             uploadStatus.style.display = 'block';
+            return;
+        }
+        uploadStatus.textContent = 'Vérification...';
+        uploadStatus.style.display = 'block';
+        try {
+            const chantierRef = window.doc(db, 'clients', clientUid, 'chantier', chantierId);
+            const docSnap = await window.firebaseGetDoc(chantierRef);
+            if (!docSnap.exists()) throw new Error("Le chantier spécifié n'existe pas.");
+            
+            const storageRef = window.ref(storage, `chantier-photos/${chantierId}/${Date.now()}-${file.name}`);
+            uploadStatus.textContent = 'Upload en cours...';
+            await window.uploadBytes(storageRef, file);
+            const downloadURL = await window.getDownloadURL(storageRef);
+            await window.updateDoc(chantierRef, { photos: window.arrayUnion(downloadURL) });
+            
+            uploadStatus.textContent = 'Photo uploadée avec succès !';
+            uploadStatus.style.color = 'green';
+            uploadPhotoForm.reset();
+        } catch (error) {
+            uploadStatus.textContent = 'Erreur : ' + error.message;
+            uploadStatus.style.color = 'red';
+            console.error("Erreur d'upload:", error);
+        }
+    });
+}
+
+// --- Écouteur d'événements global pour la section admin ---
+if(adminQuestionsContainer){
+    adminQuestionsContainer.addEventListener('click', async (event) => {
+        const target = event.target;
+        const questionId = target.dataset.questionId;
+
+        if (!questionId) return;
+
+        const questionRef = window.doc(db, 'questions', questionId);
+
+        if (target.classList.contains('reply-button') || target.classList.contains('edit-reply-button')) {
+            const form = document.getElementById(`reply-form-${questionId}`);
+            if(form) form.style.display = 'block';
+            if (target.classList.contains('edit-reply-button')) {
+                const docSnap = await window.firebaseGetDoc(questionRef);
+                form.querySelector('textarea').value = docSnap.data().reponse || '';
+            }
+        }
+
+        if (target.classList.contains('delete-reply-button')) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer cette réponse ?")) {
+                try { await window.updateDoc(questionRef, { reponse: window.deleteField(), timestampReponse: window.deleteField() }); }
+                catch (error) { console.error("Erreur de suppression de réponse:", error); alert("Erreur de suppression."); }
+            }
+        }
+
+        if (target.classList.contains('submit-reply-button')) {
+            const form = target.closest('div[id^="reply-form-"]');
+            const textarea = form.querySelector('textarea');
+            if (textarea.value.trim()) {
+                try {
+                    await window.updateDoc(questionRef, {
+                        reponse: textarea.value,
+                        timestampReponse: window.serverTimestamp()
+                    });
+                    form.style.display = 'none';
+                } catch (error) {
+                    console.error("Erreur d'envoi de réponse:", error);
+                    alert("Erreur d'envoi.");
+                }
+            }
+        }
     });
 }
 
@@ -213,7 +317,6 @@ window.onAuthStateChanged(auth, async (user) => {
         chantiersList.innerHTML = '';
         questionsContainer.innerHTML = '';
         adminSection.style.display = 'none';
-        adminQuestionsContainer.innerHTML = '';
     }
 });
 
