@@ -1,7 +1,9 @@
 // On importe les fonctions directement ici pour plus de clarté et de stabilité
-import { getFirestore, collection, query, where, onSnapshot, getDoc as firebaseGetDoc, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
 
 // Éléments du DOM
 const loginContainer = document.getElementById('login-container');
@@ -119,30 +121,27 @@ function loadClientChantiers(uid) {
     });
 }
 
-// CORRECTION : Logique de chargement des questions client plus stable
-function loadClientQuestions(uid) {
+// CORRECTION : Utilisation de getDocs pour un chargement unique et plus fiable
+async function loadClientQuestions(uid) {
     questionsContainer.innerHTML = '<p>Chargement de vos questions...</p>';
+    try {
+        const qByClient = query(collection(db, 'questions'), where('userId', '==', uid));
+        const qToClient = query(collection(db, 'questions'), where('askedTo', '==', uid));
 
-    const qByClient = query(collection(db, 'questions'), where('userId', '==', uid));
-    const qToClient = query(collection(db, 'questions'), where('askedTo', '==', uid));
+        const [byClientSnapshot, toClientSnapshot] = await Promise.all([
+            getDocs(qByClient),
+            getDocs(qToClient)
+        ]);
 
-    let questionsFromClient = [];
-    let questionsToClient = [];
+        const questionsFromClient = byClientSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const questionsToClient = toClientSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const renderCombined = () => {
         const allQuestions = [...questionsFromClient, ...questionsToClient];
         renderClientQuestions(allQuestions);
-    };
-
-    onSnapshot(qByClient, (snapshot) => {
-        questionsFromClient = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderCombined();
-    }, (error) => console.error("Erreur listener qByClient:", error));
-
-    onSnapshot(qToClient, (snapshot) => {
-        questionsToClient = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderCombined();
-    }, (error) => console.error("Erreur listener qToClient:", error));
+    } catch (error) {
+        console.error("Erreur de récupération des questions client:", error);
+        questionsContainer.innerHTML = `<p class="error">Erreur de chargement des questions.</p>`;
+    }
 }
 
 
@@ -172,13 +171,14 @@ function renderClientQuestions(questions) {
         });
 }
 
-// CORRECTION : Logique de chargement des questions admin plus stable
-function loadAdminQuestions() {
+// CORRECTION : Utilisation de getDocs pour un chargement unique et plus fiable
+async function loadAdminQuestions() {
     adminQuestionsContainer.innerHTML = '<p>Chargement des questions des clients...</p>';
-    const questionsRef = collection(db, 'questions');
-    const q = query(questionsRef, orderBy('timestamp', 'desc'));
+    try {
+        const questionsRef = collection(db, 'questions');
+        const q = query(questionsRef, orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(q);
 
-    onSnapshot(q, async (snapshot) => {
         const clientQuestions = snapshot.docs.filter(doc => doc.data().userId);
 
         if (clientQuestions.length === 0) {
@@ -218,10 +218,10 @@ function loadAdminQuestions() {
                 </div>`;
             adminQuestionsContainer.appendChild(questionDiv);
         });
-    }, (error) => {
+    } catch (error) {
         console.error("Erreur de récupération des questions admin:", error);
         adminQuestionsContainer.innerHTML = `<p class="error">Erreur de chargement des questions.</p>`;
-    });
+    }
 }
 
 
@@ -339,6 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await updateDoc(questionRef, { reponse: textarea.value, timestampReponse: serverTimestamp() });
                     form.style.display = 'none';
+                    // Recharger la vue admin pour refléter le changement immédiatement
+                    loadAdminQuestions();
                 } catch (error) {
                     console.error("Erreur lors de l'envoi de la réponse :", error);
                     alert("Erreur d'envoi.");
