@@ -46,50 +46,57 @@
             <p id="question-confirmation" class="success" style="display: none;">Votre question a été envoyée.</p>
         </form>
 
-        <div id="upload-photo-container" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; display: none;">
-            <h3>Ajouter une photo à un chantier</h3>
-            <p><small><em>Note: L'administrateur doit entrer l'UID du client propriétaire et l'ID exact du chantier.</em></small></p>
-            <form id="upload-photo-form">
-                <div>
-                    <label for="client-uid">UID du Client :</label>
-                    <input type="text" id="client-uid" required placeholder="UID du propriétaire du chantier">
-                </div>
-                <div>
-                    <label for="chantier-id">ID du chantier :</label>
-                    <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
-                </div>
-                <div>
-                    <label for="photo-file">Sélectionner une photo :</label>
-                    <input type="file" id="photo-file" accept="image/*" required>
-                </div>
-                <button type="submit">Envoyer la photo</button>
-                <p id="upload-status" style="display: none;"></p>
-            </form>
-        </div>
-
         <div id="admin-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--company-orange);">
             <h2>Section Administration</h2>
-            <h3>Questions de tous les clients</h3>
-            <div id="admin-questions-container">
-                <p>Chargement des questions...</p>
+            
+            <div id="upload-photo-container" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                <h3>Ajouter une photo à un chantier</h3>
+                <p><small><em>Note: L'administrateur doit entrer l'UID du client propriétaire et l'ID exact du chantier.</em></small></p>
+                <form id="upload-photo-form">
+                    <div>
+                        <label for="client-uid">UID du Client :</label>
+                        <input type="text" id="client-uid" required placeholder="UID du propriétaire du chantier">
+                    </div>
+                    <div>
+                        <label for="chantier-id">ID du chantier :</label>
+                        <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
+                    </div>
+                    <div>
+                        <label for="photo-file">Sélectionner une photo :</label>
+                        <input type="file" id="photo-file" accept="image/*" required>
+                    </div>
+                    <button type="submit">Envoyer la photo</button>
+                    <p id="upload-status" style="display: none;"></p>
+                </form>
             </div>
-             <div style="margin-top: 20px; padding: 10px; border: 1px solid red;">
+            
+            <div id="admin-questions-container" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                 <h3>Questions de tous les clients</h3>
+                 <!-- Le contenu sera ajouté par script.js -->
+            </div>
+             
+            <div style="margin-top: 30px; padding: 15px; border: 1px solid red; border-radius: 5px;">
                 <h3>Zone de Test Admin (Custom Claims)</h3>
                 <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur à rendre admin" style="width: 250px; margin-bottom: 5px;" />
-                <button id="test-set-admin-button">Rendre Admin (via Custom Claim)</button>
-                <button id="test-remove-admin-button" style="margin-left: 10px;">Enlever Admin (via Custom Claim)</button>
+                <button id="test-set-admin-button">Rendre Admin</button>
+                <button id="test-remove-admin-button" style="margin-left: 10px;">Enlever Admin</button>
                 <p id="test-admin-status" style="margin-top: 5px;"></p>
             </div>
         </div>
     </div>
 
+    <!-- La structure de la "Lightbox" pour afficher l'image en grand -->
+    <div id="image-lightbox" class="lightbox" style="display: none;">
+      <span class="lightbox-close">&times;</span>
+      <img class="lightbox-content" id="lightbox-image">
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, setDoc, addDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc, arrayUnion, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        // On n'a plus besoin de 'httpsCallable' ni 'getFunctions' pour cet appel spécifique, mais on les garde pour d'éventuelles autres fonctions
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+        import { getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
         const firebaseConfig = {
@@ -113,123 +120,82 @@
           provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
           isTokenAutoRefreshEnabled: true
         });
-        window.firebaseAppCheck = appCheck;
 
-        const authInstance = getAuth(app);
-        const dbInstance = getFirestore(app);
-        const storageInstance = getStorage(app);
-        const functionsInstance = getFunctions(app);
-
+        // Rendre les instances et fonctions nécessaires disponibles globalement
         window.firebaseApp = app;
-        window.firebaseAuthInstance = authInstance;
-        window.firebaseDbInstance = dbInstance;
-        window.firebaseStorageInstance = storageInstance;
-        window.firebaseFunctionsInstance = functionsInstance;
+        window.firebaseAuthInstance = getAuth(app);
+        window.firebaseDbInstance = getFirestore(app);
+        window.firebaseStorageInstance = getStorage(app);
+        window.firebaseFunctionsInstance = getFunctions(app);
+        
+        // Exposer les fonctions pour qu'elles soient accessibles dans script.js
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.signOut = signOut;
         window.onAuthStateChanged = onAuthStateChanged;
         window.collection = collection;
         window.query = query;
         window.where = where;
-        window.getDocs = getDocs;
+        window.onSnapshot = onSnapshot;
         window.doc = doc;
         window.setDoc = setDoc;
         window.addDoc = addDoc;
+        window.updateDoc = updateDoc;
         window.deleteDoc = deleteDoc;
-        window.orderBy = orderBy;
+        window.arrayUnion = arrayUnion;
+        window.deleteField = deleteField;
+        window.serverTimestamp = serverTimestamp;
+        window.getDoc = getDocs; // Note: 'getDoc' est pluriel ici, pour les requêtes de collection
+        window.firebaseGetDoc = getFirestore().getDoc; // 'getDoc' au singulier, spécifiquement pour un document
         window.ref = ref;
         window.uploadBytes = uploadBytes;
         window.getDownloadURL = getDownloadURL;
         window.deleteObject = deleteObject;
 
+        // Code pour le bouton de test Admin
         document.addEventListener('DOMContentLoaded', () => {
             const testSetAdminButton = document.getElementById('test-set-admin-button');
             const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
             const testAdminUidInput = document.getElementById('test-admin-uid');
             const testAdminStatus = document.getElementById('test-admin-status');
 
-            // === DÉBUT DE LA FONCTION D'APPEL MODIFIÉE ===
             const callSetUserAdminStatus = async (makeAdmin) => {
                 const user = window.firebaseAuthInstance.currentUser;
-
                 if (!user) {
                     testAdminStatus.textContent = "Erreur : Vous devez être connecté pour appeler cette fonction.";
-                    testAdminStatus.style.color = "red";
-                    return;
+                    testAdminStatus.style.color = "red"; return;
                 }
-
                 const targetAdminUID = testAdminUidInput.value.trim();
                 if (!targetAdminUID) {
                     testAdminStatus.textContent = "Erreur : Veuillez entrer un UID cible.";
-                    testAdminStatus.style.color = "red";
-                    return;
+                    testAdminStatus.style.color = "red"; return;
                 }
-
                 testAdminStatus.textContent = "Appel de la fonction en cours...";
                 testAdminStatus.style.color = "orange";
-
                 try {
-                    // 1. Obtenir le jeton d'ID Firebase de l'utilisateur actuel
                     const idToken = await user.getIdToken();
-                    console.log("Jeton d'ID obtenu pour l'appel HTTP.");
-
-                    // 2. Définir l'URL de votre fonction Cloud
                     const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
-
-                    // 3. Utiliser 'fetch' pour appeler la fonction HTTP
                     const response = await fetch(functionUrl, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            // 4. Ajouter le jeton dans l'en-tête d'autorisation
-                            'Authorization': `Bearer ${idToken}`
-                        },
-                        // 5. Envoyer les données dans le corps de la requête, avec le format {data: ...}
-                        body: JSON.stringify({
-                            data: {
-                                uid: targetAdminUID,
-                                isAdmin: makeAdmin
-                            }
-                        })
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
                     });
-
-                    // Gérer les erreurs HTTP comme 403, 400, 500
                     if (!response.ok) {
                         const errorText = await response.text();
                         throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
                     }
-
-                    // 6. Analyser la réponse JSON en cas de succès
                     const result = await response.json();
-
                     const message = result.data.message;
                     testAdminStatus.textContent = "Succès ! " + message + " Déconnectez-vous et reconnectez-vous.";
                     testAdminStatus.style.color = "green";
-                    console.log("Résultat de la fonction setUserAsAdmin:", message);
-
                 } catch (error) {
                     testAdminStatus.textContent = "Erreur : " + error.message;
                     testAdminStatus.style.color = "red";
-                    console.error("Erreur en appelant setUserAsAdmin depuis le bouton:", error);
                 }
             };
-            // === FIN DE LA FONCTION D'APPEL MODIFIÉE ===
-
-
-            if (testSetAdminButton) {
-                testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
-            }
-            if (testRemoveAdminButton) {
-                testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
-            }
+            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
         });
     </script>
     <script type="module" src="script.js"></script>
-<!-- La structure de la "Lightbox" pour afficher l'image en grand -->
-<div id="image-lightbox" class="lightbox" style="display: none;">
-  <span class="lightbox-close">&times;</span>
-  <img class="lightbox-content" id="lightbox-image">
-  <div id="lightbox-caption"></div>
-</div>
 </body>
 </html>
