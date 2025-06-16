@@ -8,6 +8,8 @@ const {
 
 // Éléments du DOM
 const loginContainer = document.getElementById('login-container');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
 const appContainer = document.getElementById('app-container');
 const appTitle = document.getElementById('app-title');
 const logoutButton = document.getElementById('logout-button');
@@ -23,12 +25,42 @@ const questionConfirmation = document.getElementById('question-confirmation');
 // Section Admin
 const adminSection = document.getElementById('admin-section');
 const adminQuestionsContainer = document.getElementById('admin-questions-container');
+const uploadPhotoForm = document.getElementById('upload-photo-form');
+const clientUidInput = document.getElementById('client-uid');
+const chantierIdInput = document.getElementById('chantier-id');
+const photoFileInput = document.getElementById('photo-file');
+const uploadStatus = document.getElementById('upload-status');
 const adminQuestionForm = document.getElementById('admin-question-form');
 const targetClientUidInput = document.getElementById('target-client-uid');
 const adminQuestionText = document.getElementById('admin-question-text');
 const adminQuestionConfirmation = document.getElementById('admin-question-confirmation');
 
-// --- Fonctions de chargement de l'UI ---
+
+// --- Fonctions Login / Logout ---
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.textContent = '';
+    const email = loginForm.email.value;
+    const password = loginForm.password.value;
+    try {
+        // CORRECTION : On utilise la fonction depuis l'objet 'fb' exposé par index.html
+        await fb.auth.signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
+        console.error("Login error:", error.message);
+    }
+});
+
+logoutButton.addEventListener('click', async () => {
+    try {
+        // CORRECTION : On utilise la fonction depuis l'objet 'fb'
+        await fb.auth.signOut(auth);
+    } catch (error) {
+        console.error("Erreur lors de la déconnexion : ", error);
+    }
+});
+
+// --- Fonctions principales de l'application ---
 
 function showClientView(user) {
     appTitle.textContent = "Suivi de vos chantiers";
@@ -41,8 +73,8 @@ function showClientView(user) {
 function showAdminView(user) {
     appTitle.textContent = "Espace Administration";
     adminSection.style.display = 'block';
-    clientQuestionSection.style.display = 'none'; // L'admin utilise un autre formulaire
-    loadAllChantiersForAdmin(); // Pour que l'admin puisse voir les infos de tous les chantiers
+    clientQuestionSection.style.display = 'none';
+    loadAllChantiersForAdmin();
     loadAdminQuestions();
 }
 
@@ -89,7 +121,6 @@ function loadClientChantiers(uid) {
 }
 
 function loadAllChantiersForAdmin() {
-    // Affiche les chantiers de l'admin lui-même s'il en a
     loadClientChantiers(auth.currentUser.uid);
 }
 
@@ -98,69 +129,63 @@ async function loadClientQuestions(uid) {
     const qToClient = fb.db.query(fb.db.collection(db, 'questions'), fb.db.where('askedTo', '==', uid));
 
     const allQuestions = [];
-
-    const unsubByClient = fb.db.onSnapshot(qByClient, (snapshot) => {
-        snapshot.docs.forEach(doc => {
-            const question = { id: doc.id, ...doc.data(), type: 'byClient' };
-            const existingIndex = allQuestions.findIndex(q => q.id === doc.id);
-            if (existingIndex > -1) allQuestions[existingIndex] = question;
-            else allQuestions.push(question);
-        });
-        renderClientQuestions(allQuestions);
-    });
-
-    const unsubToClient = fb.db.onSnapshot(qToClient, (snapshot) => {
-        snapshot.docs.forEach(doc => {
-            const question = { id: doc.id, ...doc.data(), type: 'toClient' };
-            const existingIndex = allQuestions.findIndex(q => q.id === doc.id);
-            if (existingIndex > -1) allQuestions[existingIndex] = question;
-            else allQuestions.push(question);
-        });
-        renderClientQuestions(allQuestions);
-    });
-    // Vous pouvez stocker unsubByClient et unsubToClient pour vous désabonner plus tard si nécessaire
-}
-
-function renderClientQuestions(questions) {
-    questionsContainer.innerHTML = '';
-    if (questions.length === 0) {
-        questionsContainer.innerHTML = '<p>Aucune question pour le moment.</p>';
-        return;
-    }
-    questions
-        .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
-        .forEach(questionData => {
-            const questionDiv = document.createElement('div');
-            questionDiv.classList.add('question-item');
-            if (questionData.type === 'toClient') {
-                questionDiv.classList.add('question-from-admin');
-            }
-            questionDiv.innerHTML = `
-                <p><strong>Question :</strong> ${questionData.question}</p>
-                <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                ${questionData.reponse ?
-                    `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p></div>` :
-                    '<p><em>En attente de réponse...</em></p>'
+    const renderClientQuestions = (questions) => {
+        questionsContainer.innerHTML = '';
+        if (questions.length === 0) {
+            questionsContainer.innerHTML = '<p>Aucune question pour le moment.</p>';
+            return;
+        }
+        questions
+            .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
+            .forEach(questionData => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('question-item');
+                if (questionData.askedBy) {
+                    questionDiv.classList.add('question-from-admin');
                 }
-            `;
-            questionsContainer.appendChild(questionDiv);
-        });
-}
+                questionDiv.innerHTML = `
+                    <p><strong>Question :</strong> ${questionData.question}</p>
+                    <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                    ${questionData.reponse ?
+                        `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p></div>` :
+                        '<p><em>En attente de réponse...</em></p>'
+                    }
+                `;
+                questionsContainer.appendChild(questionDiv);
+            });
+    };
 
+    fb.db.onSnapshot(qByClient, (snapshot) => {
+        snapshot.docs.forEach(doc => {
+            const question = { id: doc.id, ...doc.data() };
+            const existingIndex = allQuestions.findIndex(q => q.id === doc.id);
+            if (existingIndex > -1) allQuestions[existingIndex] = question;
+            else allQuestions.push(question);
+        });
+        renderClientQuestions(allQuestions);
+    });
+
+    fb.db.onSnapshot(qToClient, (snapshot) => {
+        snapshot.docs.forEach(doc => {
+            const question = { id: doc.id, ...doc.data() };
+            const existingIndex = allQuestions.findIndex(q => q.id === doc.id);
+            if (existingIndex > -1) allQuestions[existingIndex] = question;
+            else allQuestions.push(question);
+        });
+        renderClientQuestions(allQuestions);
+    });
+}
 
 function loadAdminQuestions() {
-    const questionsRef = fb.db.collection(db, 'questions');
-    // On ne veut que les questions posées par les clients (celles qui n'ont pas de champ 'askedTo')
-    const q = fb.db.query(questionsRef, fb.db.where('askedTo', '==', null), fb.db.orderBy('timestamp', 'desc'));
+    const q = fb.db.query(fb.db.collection(db, 'questions'), fb.db.where('askedTo', '==', null), fb.db.orderBy('timestamp', 'desc'));
 
     fb.db.onSnapshot(q, async (snapshot) => {
         if (!adminQuestionsContainer) return;
-        adminQuestionsContainer.innerHTML = '';
+        adminQuestionsContainer.innerHTML = '<h3>Questions des clients</h3>';
         if (snapshot.empty) {
-            adminQuestionsContainer.innerHTML = '<p>Aucune question de client en attente.</p>';
+            adminQuestionsContainer.innerHTML += '<p>Aucune question de client en attente.</p>';
             return;
         }
-
         const userIds = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
         const userDocs = await Promise.all(userIds.map(id => fb.db.getDoc(fb.db.doc(db, 'clients', id))));
         const userNameMap = new Map(userDocs.map(d => [d.id, d.exists() ? d.data().nom : `Client inconnu`]));
@@ -195,7 +220,6 @@ function loadAdminQuestions() {
     });
 }
 
-
 // --- Écouteurs d'événements pour les formulaires ---
 
 questionForm?.addEventListener('submit', async (e) => {
@@ -204,7 +228,7 @@ questionForm?.addEventListener('submit', async (e) => {
     if (question && auth.currentUser) {
         try {
             await fb.db.addDoc(fb.db.collection(db, 'questions'), {
-                userId: auth.currentUser.uid, // Le client qui pose
+                userId: auth.currentUser.uid,
                 question: question,
                 timestamp: fb.db.serverTimestamp()
             });
@@ -221,8 +245,8 @@ adminQuestionForm?.addEventListener('submit', async (e) => {
     if (question && targetUid && auth.currentUser) {
         try {
             await fb.db.addDoc(fb.db.collection(db, 'questions'), {
-                askedBy: auth.currentUser.uid, // L'admin qui pose
-                askedTo: targetUid,            // Le client ciblé
+                askedBy: auth.currentUser.uid,
+                askedTo: targetUid,
                 question: question,
                 timestamp: fb.db.serverTimestamp()
             });
@@ -239,11 +263,10 @@ adminQuestionForm?.addEventListener('submit', async (e) => {
 function showConfirmation(element, message, type) {
     if (!element) return;
     element.textContent = message;
-    element.className = type; // 'success' ou 'error'
+    element.className = type;
     element.style.display = 'block';
     setTimeout(() => { element.style.display = 'none'; }, 3000);
 }
-
 
 // --- GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION (POINT D'ENTRÉE) ---
 fb.auth.onAuthStateChanged(auth, async (user) => {
@@ -273,7 +296,6 @@ fb.auth.onAuthStateChanged(auth, async (user) => {
     }
 });
 
-
 // --- GESTION DE LA LIGHTBOX ---
 function openLightbox(url) {
     const lightbox = document.getElementById('image-lightbox');
@@ -290,4 +312,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
   if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
+  
+  adminQuestionsContainer?.addEventListener('click', async (event) => {
+        const target = event.target;
+        const questionId = target.dataset.questionId;
+        if (!questionId) return;
+        const questionRef = fb.db.doc(db, 'questions', questionId);
+
+        if (target.classList.contains('reply-button') || target.classList.contains('edit-reply-button')) {
+            const form = document.getElementById(`reply-form-${questionId}`);
+            if(form) form.style.display = 'block';
+        }
+
+        if (target.classList.contains('submit-reply-button')) {
+            const form = target.closest('div[id^="reply-form-"]');
+            const textarea = form.querySelector('textarea');
+            if (textarea.value.trim()) {
+                try {
+                    await fb.db.updateDoc(questionRef, { reponse: textarea.value, timestampReponse: fb.db.serverTimestamp() });
+                    form.style.display = 'none';
+                } catch (error) { alert("Erreur d'envoi."); }
+            }
+        }
+    });
 });
