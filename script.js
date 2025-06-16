@@ -3,7 +3,7 @@ const {
     firebaseAuthInstance: auth,
     firebaseDbInstance: db,
     firebaseStorageInstance: storage,
-    firebase: fb
+    firebase: fb // Raccourci pour les fonctions de service
 } = window;
 
 // Éléments du DOM
@@ -73,7 +73,7 @@ function showAdminView(user) {
     adminSection.style.display = 'block';
     clientQuestionSection.style.display = 'none';
     loadAllChantiersForAdmin();
-    loadAdminQuestions(); // Appel corrigé
+    loadAdminQuestions();
 }
 
 function loadClientChantiers(uid) {
@@ -89,6 +89,7 @@ function loadClientChantiers(uid) {
             const chantierDiv = document.createElement('div');
             chantierDiv.classList.add('chantier-item');
 
+            // CORRECTION : La ligne "Jours d'intervention" a été rajoutée ici
             chantierDiv.innerHTML = `
                 <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
                 <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
@@ -119,108 +120,100 @@ function loadClientChantiers(uid) {
 }
 
 function loadAllChantiersForAdmin() {
-    // Pour l'instant, on ne charge que les chantiers de l'admin lui-même s'il en a.
-    // On pourrait étendre cela pour afficher tous les chantiers de tous les clients.
-    loadClientChantiers(auth.currentUser.uid);
+    // Cette fonction pourrait être étendue pour montrer tous les chantiers.
+    // Pour l'instant, elle ne montre que la section pour uploader des photos,
+    // ce qui est suffisant car la liste des questions inclut déjà l'UID du client.
+    // On vide la liste des chantiers pour l'admin pour éviter la confusion.
+    chantiersList.innerHTML = '';
 }
 
 async function loadClientQuestions(uid) {
+    // Requête pour les questions posées par le client
     const qByClient = fb.db.query(fb.db.collection(db, 'questions'), fb.db.where('userId', '==', uid));
+    // Requête pour les questions posées à ce client par un admin
     const qToClient = fb.db.query(fb.db.collection(db, 'questions'), fb.db.where('askedTo', '==', uid));
 
-    const allQuestions = [];
-    const renderClientQuestions = (questions) => {
-        questionsContainer.innerHTML = '';
-        if (questions.length === 0) {
-            questionsContainer.innerHTML = '<p>Aucune question pour le moment.</p>';
-            return;
-        }
-        questions
-            .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
-            .forEach(questionData => {
-                const questionDiv = document.createElement('div');
-                questionDiv.classList.add('question-item');
-                if (questionData.askedBy) {
-                    questionDiv.classList.add('question-from-admin');
-                }
-                questionDiv.innerHTML = `
-                    <p><strong>Question :</strong> ${questionData.question}</p>
-                    <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                    ${questionData.reponse ?
-                        `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p></div>` :
-                        '<p><em>En attente de réponse...</em></p>'
-                    }
-                `;
-                questionsContainer.appendChild(questionDiv);
-            });
-    };
-
-    fb.db.onSnapshot(qByClient, (snapshot) => {
-        snapshot.docs.forEach(doc => {
-            const question = { id: doc.id, ...doc.data() };
-            const existingIndex = allQuestions.findIndex(q => q.id === doc.id);
-            if (existingIndex > -1) allQuestions[existingIndex] = question;
-            else allQuestions.push(question);
+    // Utiliser onSnapshot séparément pour écouter les deux types de questions
+    fb.db.onSnapshot(qByClient, (byClientSnapshot) => {
+        fb.db.onSnapshot(qToClient, (toClientSnapshot) => {
+            const allQuestions = [];
+            byClientSnapshot.forEach(doc => allQuestions.push({ id: doc.id, ...doc.data() }));
+            toClientSnapshot.forEach(doc => allQuestions.push({ id: doc.id, ...doc.data() }));
+            renderClientQuestions(allQuestions);
         });
-        renderClientQuestions(allQuestions);
-    });
-
-    fb.db.onSnapshot(qToClient, (snapshot) => {
-        snapshot.docs.forEach(doc => {
-            const question = { id: doc.id, ...doc.data() };
-            const existingIndex = allQuestions.findIndex(q => q.id === doc.id);
-            if (existingIndex > -1) allQuestions[existingIndex] = question;
-            else allQuestions.push(question);
-        });
-        renderClientQuestions(allQuestions);
     });
 }
 
+
+function renderClientQuestions(questions) {
+    questionsContainer.innerHTML = '';
+    if (questions.length === 0) {
+        questionsContainer.innerHTML = '<p>Aucune question pour le moment.</p>';
+        return;
+    }
+    questions
+        .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
+        .forEach(questionData => {
+            const questionDiv = document.createElement('div');
+            questionDiv.classList.add('question-item');
+            // Si la question a été posée par un admin, on lui donne un style différent
+            if (questionData.askedBy) {
+                questionDiv.classList.add('question-from-admin');
+            }
+            questionDiv.innerHTML = `
+                <p><strong>Question :</strong> ${questionData.question}</p>
+                <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                ${questionData.reponse ?
+                    `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p></div>` :
+                    '<p><em>En attente de réponse...</em></p>'
+                }
+            `;
+            questionsContainer.appendChild(questionDiv);
+        });
+}
+
+
 function loadAdminQuestions() {
-    // CORRECTION : On charge TOUTES les questions, triées par date.
-    const q = fb.db.query(fb.db.collection(db, 'questions'), fb.db.orderBy('timestamp', 'desc'));
+    // CORRECTION : On enlève le filtre `where('askedTo', '==', null)` qui ne fonctionne pas
+    // comme attendu, et on filtre en JavaScript.
+    const questionsRef = fb.db.collection(db, 'questions');
+    const q = fb.db.query(questionsRef, fb.db.orderBy('timestamp', 'desc'));
 
     fb.db.onSnapshot(q, async (snapshot) => {
         if (!adminQuestionsContainer) return;
-        adminQuestionsContainer.innerHTML = '';
-        if (snapshot.empty) {
-            adminQuestionsContainer.innerHTML = '<p>Aucune question dans le système.</p>';
+
+        // On filtre pour ne garder que les questions posées PAR les clients
+        const clientQuestions = snapshot.docs.filter(doc => doc.data().userId);
+
+        if (clientQuestions.length === 0) {
+            adminQuestionsContainer.innerHTML = '<p>Aucune question de client en attente.</p>';
             return;
+        } else {
+            adminQuestionsContainer.innerHTML = ''; // Vider avant de remplir
         }
 
-        const userIds = [...new Set(snapshot.docs.map(d => d.data().userId || d.data().askedBy).filter(Boolean))];
+        const userIds = [...new Set(clientQuestions.map(d => d.data().userId).filter(Boolean))];
         const userDocs = await Promise.all(userIds.map(id => fb.db.getDoc(fb.db.doc(db, 'clients', id))));
-        const userNameMap = new Map(userDocs.map(d => [d.id, d.exists() ? d.data().nom : `Utilisateur inconnu`]));
+        const userNameMap = new Map(userDocs.map(d => [d.id, d.exists() ? d.data().nom : `Client inconnu`]));
 
-        snapshot.docs.forEach((docSnap) => {
+        clientQuestions.forEach((docSnap) => {
             const questionData = docSnap.data();
             const questionId = docSnap.id;
+            const userId = questionData.userId;
+            const clientName = userNameMap.get(userId) || `UID: ${userId}`;
 
             const questionDiv = document.createElement('div');
             questionDiv.classList.add('admin-question-item');
-            
-            let questionHeader;
-            if (questionData.userId) { // Question d'un client
-                 const clientName = userNameMap.get(questionData.userId) || `UID: ${questionData.userId}`;
-                 questionHeader = `<p><strong>Client :</strong> ${clientName} (<code>${questionData.userId}</code>)</p>`;
-            } else { // Question de l'admin
-                 const targetClientName = userNameMap.get(questionData.askedTo) || `UID: ${questionData.askedTo}`;
-                 questionHeader = `<p><strong>Question posée par vous à :</strong> ${targetClientName} (<code>${questionData.askedTo}</code>)</p>`;
-                 questionDiv.style.backgroundColor = '#f0f8ff'; // Style différent pour les questions de l'admin
-            }
-
             questionDiv.innerHTML = `
-                ${questionHeader}
+                <p><strong>Client :</strong> ${clientName} (<code>${userId}</code>)</p>
                 <p><strong>Question :</strong> ${questionData.question}</p>
                 <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
                 ${questionData.reponse ? `
                     <div class="reponse-admin">
-                        <p><strong>Réponse :</strong> ${questionData.reponse}</p>
-                        <p><em>Répondu le : ${questionData.timestampReponse ? new Date(questionData.timestampReponse.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                        <p><strong>Votre Réponse :</strong> ${questionData.reponse}</p>
                         <button class="edit-reply-button" data-question-id="${questionId}">Modifier</button>
                     </div>` :
-                    // On ne peut répondre qu'aux questions des clients
-                    (questionData.userId ? `<button class="reply-button" data-question-id="${questionId}">Répondre</button>` : '<p><em>Pas encore de réponse.</em></p>')
+                    `<button class="reply-button" data-question-id="${questionId}">Répondre</button>`
                 }
                 <div id="reply-form-${questionId}" style="display: none; margin-top: 10px;">
                     <textarea>${questionData.reponse || ''}</textarea>
@@ -233,7 +226,6 @@ function loadAdminQuestions() {
     });
 }
 
-
 // --- Écouteurs d'événements pour les formulaires ---
 
 questionForm?.addEventListener('submit', async (e) => {
@@ -242,10 +234,9 @@ questionForm?.addEventListener('submit', async (e) => {
     if (question && auth.currentUser) {
         try {
             await fb.db.addDoc(fb.db.collection(db, 'questions'), {
-                userId: auth.currentUser.uid,
+                userId: auth.currentUser.uid, // Le client qui pose
                 question: question,
-                timestamp: fb.db.serverTimestamp(),
-                askedTo: null, // Clarifie que c'est une question client
+                timestamp: fb.db.serverTimestamp()
             });
             questionText.value = '';
             showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
@@ -278,11 +269,10 @@ adminQuestionForm?.addEventListener('submit', async (e) => {
 function showConfirmation(element, message, type) {
     if (!element) return;
     element.textContent = message;
-    element.className = `confirmation-message ${type}`;
+    element.className = `message-feedback ${type}`; // Utilise une classe commune pour le style
     element.style.display = 'block';
-    setTimeout(() => { element.style.display = 'none'; }, 3000);
+    setTimeout(() => { element.style.display = 'none'; }, 4000);
 }
-
 
 // --- GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION (POINT D'ENTRÉE) ---
 fb.auth.onAuthStateChanged(auth, async (user) => {
@@ -312,7 +302,7 @@ fb.auth.onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- GESTION DE LA LIGHTBOX ---
+// --- GESTION DE LA LIGHTBOX ET DES ÉVÉNEMENTS ADMIN ---
 function openLightbox(url) {
     const lightbox = document.getElementById('image-lightbox');
     const lightboxImg = document.getElementById('lightbox-image');
@@ -323,13 +313,13 @@ function openLightbox(url) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const lightbox = document.getElementById('image-lightbox');
-  const closeBtn = document.querySelector('.lightbox-close');
+    const lightbox = document.getElementById('image-lightbox');
+    const closeBtn = document.querySelector('.lightbox-close');
 
-  if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
-  if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
+    if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
+    if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
   
-  adminQuestionsContainer?.addEventListener('click', async (event) => {
+    adminQuestionsContainer?.addEventListener('click', async (event) => {
         const target = event.target;
         const questionId = target.dataset.questionId;
         if (!questionId) return;
@@ -337,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (target.classList.contains('reply-button') || target.classList.contains('edit-reply-button')) {
             const form = document.getElementById(`reply-form-${questionId}`);
-            if(form) form.style.display = 'block';
+            if (form) form.style.display = 'block';
             if (target.classList.contains('edit-reply-button')) {
                 const docSnap = await fb.db.getDoc(questionRef);
                 form.querySelector('textarea').value = docSnap.data().reponse || '';
