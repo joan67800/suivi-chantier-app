@@ -3,8 +3,13 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 import { getStorage, ref, uploadBytes, getDownloadURL, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Récupération des instances Firebase depuis l'objet window (initialisé dans index.html)
-const { auth, db, storage } = window.firebaseServices;
+// On récupère l'instance 'app' initialisée dans index.html
+const app = window.firebaseApp;
+
+// On initialise les services à partir de l'instance 'app'
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 // Éléments du DOM
 const loginContainer = document.getElementById('login-container');
