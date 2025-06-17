@@ -1,4 +1,3 @@
-// Importations directes pour la clarté et la stabilité
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -39,10 +38,8 @@ const storage = getStorage();
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     loginError.textContent = '';
-    const email = loginForm.email.value;
-    const password = loginForm.password.value;
     try {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
     } catch (error) {
         loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
     }
@@ -51,8 +48,7 @@ loginForm.addEventListener('submit', async (e) => {
 logoutButton.addEventListener('click', () => signOut(auth));
 
 
-// --- Fonctions principales de l'application ---
-
+// --- Fonctions de chargement de l'UI ---
 function showView(isClient) {
     adminSection.style.display = isClient ? 'none' : 'block';
     clientQuestionSection.style.display = isClient ? 'block' : 'none';
@@ -72,7 +68,6 @@ function loadClientChantiers(uid) {
             chantierDiv.classList.add('chantier-item');
             chantierDiv.innerHTML = `
                 <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
-                <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                 <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                 <h4>Photos :</h4>`;
             const photosContainer = document.createElement('div');
@@ -119,8 +114,7 @@ async function loadClientListForAdmin() {
         });
         adminClientList.appendChild(clientListUl);
     } catch(error) {
-        console.error("Erreur lors du chargement de la liste des clients:", error);
-        adminClientList.textContent = 'Erreur de chargement.';
+        adminClientList.textContent = 'Erreur de chargement de la liste des clients.';
     }
 }
 
@@ -135,9 +129,10 @@ function loadAdminQuestions() {
 }
 
 async function renderQuestions(snapshot, container, isAdminView) {
+    if (!container) return;
     container.innerHTML = '';
     if (snapshot.empty) {
-        container.innerHTML = '<p>Aucune question pour le moment.</p>';
+        container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question pour le moment.'}</p>`;
         return;
     }
 
@@ -150,11 +145,11 @@ async function renderQuestions(snapshot, container, isAdminView) {
 
     snapshot.forEach((docSnap) => {
         const questionData = docSnap.data();
-        if (isAdminView && !questionData.userId) return; 
+        if (isAdminView && !questionData.userId) return;
 
         const questionDiv = document.createElement('div');
         questionDiv.classList.add('question-item');
-        if(questionData.askedBy) questionDiv.classList.add('question-from-admin');
+        if (questionData.askedBy) questionDiv.classList.add('question-from-admin');
         
         const clientName = isAdminView ? users[questionData.userId] : '';
         const header = isAdminView ? `<p><strong>Client :</strong> ${clientName} (<code>${questionData.userId}</code>)</p>` : '';

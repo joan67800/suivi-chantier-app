@@ -121,6 +121,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
             authDomain: "suivi-chantier-societe.firebaseapp.com",
@@ -130,9 +132,16 @@
             appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
             measurementId: "G-2KTWHDGT3S"
         };
-        initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
+        
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        }
+        getAppCheck(app, {
+          provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
+          isTokenAutoRefreshEnabled: true
+        });
     </script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
-```css
