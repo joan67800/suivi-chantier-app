@@ -111,6 +111,9 @@
     <!-- Initialisation de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
         const firebaseConfig = {
@@ -123,16 +126,53 @@
             measurementId: "G-2KTWHDGT3S"
         };
         
-        // On initialise l'app et on la met sur l'objet window pour que script.js la récupère
-        window.firebaseApp = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
+        
+        // On initialise les services et on les met sur l'objet window
+        // pour que script.js puisse les utiliser sans avoir à les importer.
+        window.firebaseServices = {
+            auth: getAuth(app),
+            db: getFirestore(app),
+            storage: getStorage(app),
+        };
 
         // Initialisation d'App Check
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
             self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
         }
-        initializeAppCheck(window.firebaseApp, {
+        initializeAppCheck(app, {
           provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
           isTokenAutoRefreshEnabled: true
+        });
+
+        // Event listener pour les boutons de test admin
+        document.addEventListener('DOMContentLoaded', () => {
+            const testSetAdminButton = document.getElementById('test-set-admin-button');
+            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+            const testAdminUidInput = document.getElementById('test-admin-uid');
+            const testAdminStatus = document.getElementById('test-admin-status');
+
+            const callSetUserAdminStatus = async (makeAdmin) => {
+                const user = window.firebaseServices.auth.currentUser;
+                if (!user) { testAdminStatus.textContent = "Erreur : Vous devez être connecté."; return; }
+                const targetAdminUID = testAdminUidInput.value.trim();
+                if (!targetAdminUID) { testAdminStatus.textContent = "Erreur : UID cible manquant."; return; }
+                testAdminStatus.textContent = "Appel en cours...";
+                try {
+                    const idToken = await user.getIdToken();
+                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
+                    const response = await fetch(functionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
+                    });
+                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
+                    const result = await response.json();
+                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
+                } catch (error) { testAdminStatus.textContent = "Erreur : " + error.message; }
+            };
+            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
         });
     </script>
     
