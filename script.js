@@ -27,9 +27,9 @@ const adminQuestionConfirmation = document.getElementById('admin-question-confir
 const adminClientList = document.getElementById('admin-client-list');
 const clientUidSelect = document.getElementById('client-uid-select');
 const targetClientUidSelect = document.getElementById('target-client-uid-select');
-const chantierIdSelect = document.getElementById('chantier-id-select'); // NOUVEL ÉLÉMENT
+const chantierIdSelect = document.getElementById('chantier-id-select');
 
-// Instances Firebase
+// Récupération des instances Firebase depuis l'objet window
 const { auth, db, storage } = window.firebaseServices;
 
 // --- Fonctions Login / Logout ---
@@ -52,7 +52,41 @@ function showView(isClient) {
     clientQuestionSection.style.display = isClient ? 'block' : 'none';
 }
 
-// CORRECTION : La logique pour charger les chantiers dans le menu déroulant est ajoutée
+function loadClientChantiers(uid) {
+    const chantiersRef = collection(db, 'clients', uid, 'chantier');
+    onSnapshot(chantiersRef, (snapshot) => {
+        chantiersList.innerHTML = '';
+        if (snapshot.empty) {
+            chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
+            return;
+        }
+        snapshot.forEach((docSnap) => {
+            const chantierData = docSnap.data();
+            const chantierDiv = document.createElement('div');
+            chantierDiv.classList.add('chantier-item');
+            chantierDiv.innerHTML = `
+                <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
+                <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
+                <h4>Photos :</h4>`;
+            const photosContainer = document.createElement('div');
+            photosContainer.classList.add('photos-container');
+            if (chantierData.photos?.length) {
+                chantierData.photos.forEach(photoUrl => {
+                    const img = document.createElement('img');
+                    img.src = photoUrl;
+                    img.alt = "Photo du chantier";
+                    img.addEventListener('click', () => openLightbox(photoUrl));
+                    photosContainer.appendChild(img);
+                });
+            } else {
+                photosContainer.textContent = 'Aucune photo pour le moment.';
+            }
+            chantierDiv.appendChild(photosContainer);
+            chantiersList.appendChild(chantierDiv);
+        });
+    });
+}
+
 async function loadChantiersForClientSelect(clientId) {
     chantierIdSelect.innerHTML = '<option value="">Chargement...</option>';
     chantierIdSelect.disabled = true;
@@ -92,7 +126,7 @@ async function loadClientListForAdmin() {
         const defaultOption = '<option value="">-- Sélectionnez un client --</option>';
         clientUidSelect.innerHTML = defaultOption;
         targetClientUidSelect.innerHTML = defaultOption;
-        loadChantiersForClientSelect(null); // Réinitialiser le menu des chantiers
+        loadChantiersForClientSelect(null);
 
         if (clientsSnapshot.empty) {
             adminClientList.textContent = 'Aucun client trouvé.';
@@ -114,42 +148,6 @@ async function loadClientListForAdmin() {
     } catch(error) {
         adminClientList.textContent = 'Erreur de chargement de la liste des clients.';
     }
-}
-
-// Les fonctions pour charger chantiers et questions restent ici...
-function loadClientChantiers(uid) {
-    const chantiersRef = collection(db, 'clients', uid, 'chantier');
-    onSnapshot(chantiersRef, (snapshot) => {
-        chantiersList.innerHTML = '';
-        if (snapshot.empty) {
-            chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
-            return;
-        }
-        snapshot.forEach((docSnap) => {
-            const chantierData = docSnap.data();
-            const chantierDiv = document.createElement('div');
-            chantierDiv.classList.add('chantier-item');
-            chantierDiv.innerHTML = `
-                <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
-                <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                <h4>Photos :</h4>`;
-            const photosContainer = document.createElement('div');
-            photosContainer.classList.add('photos-container');
-            if (chantierData.photos?.length) {
-                chantierData.photos.forEach(photoUrl => {
-                    const img = document.createElement('img');
-                    img.src = photoUrl;
-                    img.alt = "Photo du chantier";
-                    img.addEventListener('click', () => openLightbox(photoUrl));
-                    photosContainer.appendChild(img);
-                });
-            } else {
-                photosContainer.textContent = 'Aucune photo pour le moment.';
-            }
-            chantierDiv.appendChild(photosContainer);
-            chantiersList.appendChild(chantierDiv);
-        });
-    });
 }
 
 async function loadClientQuestions(uid) {
@@ -210,7 +208,7 @@ async function renderQuestions(snapshot, container, isAdminView) {
 uploadPhotoForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const clientUid = clientUidSelect.value;
-    const chantierId = chantierIdSelect.value; // MODIFIÉ
+    const chantierId = chantierIdSelect.value;
     const file = photoFileInput.files[0];
     if (!file || !clientUid || !chantierId) {
         showConfirmation(uploadStatus, 'Veuillez sélectionner un client, un chantier et un fichier.', 'error');
@@ -235,10 +233,36 @@ uploadPhotoForm?.addEventListener('submit', async (e) => {
         showConfirmation(uploadStatus, 'Erreur : ' + error.message, 'error');
     }
 });
-// ...autres formulaires...
-questionForm?.addEventListener('submit', async (e) => { e.preventDefault(); /* ... */ });
-adminQuestionForm?.addEventListener('submit', async (e) => { e.preventDefault(); /* ... */ });
 
+questionForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = questionText.value.trim();
+    if (question && auth.currentUser) {
+        await addDoc(collection(db, 'questions'), {
+            userId: auth.currentUser.uid,
+            question: question,
+            timestamp: serverTimestamp()
+        });
+        questionText.value = '';
+        showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
+    }
+});
+
+adminQuestionForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = adminQuestionText.value.trim();
+    const targetUid = targetClientUidSelect.value;
+    if (question && targetUid && auth.currentUser) {
+        await addDoc(collection(db, 'questions'), {
+            askedBy: auth.currentUser.uid,
+            askedTo: targetUid,
+            question: question,
+            timestamp: serverTimestamp()
+        });
+        adminQuestionText.value = '';
+        showConfirmation(adminQuestionConfirmation, 'Question envoyée au client.', 'success');
+    }
+});
 
 function showConfirmation(element, message, type) {
     if (!element) return;
@@ -288,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
   if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
 
-  // ÉCOUTEUR POUR LE MENU DÉROULANT DES CLIENTS
   clientUidSelect?.addEventListener('change', () => {
     loadChantiersForClientSelect(clientUidSelect.value);
   });

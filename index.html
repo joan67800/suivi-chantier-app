@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Conteneur de connexion -->
     <div id="login-container">
         <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
         <h2>Connexion</h2>
@@ -24,6 +25,7 @@
         </form>
     </div>
 
+    <!-- Conteneur principal de l'application -->
     <div id="app-container" style="display: none;">
         <header class="app-header">
             <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="app-logo" class="company-logo">
@@ -31,14 +33,12 @@
             <button id="logout-button">Se déconnecter</button>
         </header>
 
-        <div id="chantiers-list">
-            </div>
+        <div id="chantiers-list"></div>
 
+        <!-- Section des questions pour les clients -->
         <div id="client-question-section">
             <h2>Vos Questions</h2>
-            <div id="questions-container">
-                <p>Chargement de vos questions...</p>
-            </div>
+            <div id="questions-container"></div>
             <h2>Poser une nouvelle question</h2>
             <form id="question-form">
                 <textarea id="question-text" placeholder="Écrivez votre question ici..."></textarea>
@@ -47,16 +47,13 @@
             </form>
         </div>
 
-        <div id="admin-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--company-orange);">
+        <!-- Section réservée à l'administrateur -->
+        <div id="admin-section" style="display: none;">
             <h2>Section Administration</h2>
-
             <div class="admin-subsection">
-                <h3>Liste des Clients Enregistrés</h3>
-                <div id="admin-client-list">
-                    <p>Chargement de la liste des clients...</p>
-                </div>
+                <h3>Liste des Clients</h3>
+                <div id="admin-client-list"></div>
             </div>
-            
             <div class="admin-subsection">
                 <h3>Ajouter une photo à un chantier</h3>
                 <form id="upload-photo-form">
@@ -76,7 +73,6 @@
                     <p id="upload-status" class="message-feedback" style="display: none;"></p>
                 </form>
             </div>
-            
             <div class="admin-subsection">
                 <h3>Poser une question à un client</h3>
                 <form id="admin-question-form">
@@ -92,33 +88,29 @@
                     <p id="admin-question-confirmation" class="message-feedback" style="display: none;"></p>
                 </form>
             </div>
-
             <div class="admin-subsection">
                  <h3>Questions de tous les clients</h3>
-                 <div id="admin-questions-container">
-                    </div>
+                 <div id="admin-questions-container"></div>
             </div>
-             
-            <div class="admin-subsection" style="margin-top: 30px; padding: 15px; border: 1px solid red; border-radius: 5px;">
+            <div class="admin-subsection admin-danger-zone">
                 <h3>Gérer les Rôles Admin</h3>
-                <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" style="width: 250px; margin-bottom: 5px;" />
+                <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" />
                 <button id="test-set-admin-button">Rendre Admin</button>
-                <button id="test-remove-admin-button" style="margin-left: 10px;">Enlever Admin</button>
-                <p id="test-admin-status" style="margin-top: 5px;"></p>
+                <button id="test-remove-admin-button">Enlever Admin</button>
+                <p id="test-admin-status"></p>
             </div>
         </div>
     </div>
 
+    <!-- Lightbox pour l'agrandissement des photos -->
     <div id="image-lightbox" class="lightbox" style="display: none;">
       <span class="lightbox-close">&times;</span>
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
+    <!-- Initialisation de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
         const firebaseConfig = {
@@ -130,14 +122,13 @@
             appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
             measurementId: "G-2KTWHDGT3S"
         };
+        
         const app = initializeApp(firebaseConfig);
         
-        window.firebaseServices = {
-            auth: getAuth(app),
-            db: getFirestore(app),
-            storage: getStorage(app),
-        };
+        // On met l'instance de l'app sur l'objet window pour que script.js puisse la récupérer
+        window.firebaseApp = app;
 
+        // Initialisation d'App Check
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
             self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
         }
@@ -145,36 +136,9 @@
           provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
           isTokenAutoRefreshEnabled: true
         });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const testSetAdminButton = document.getElementById('test-set-admin-button');
-            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
-            const testAdminUidInput = document.getElementById('test-admin-uid');
-            const testAdminStatus = document.getElementById('test-admin-status');
-
-            const callSetUserAdminStatus = async (makeAdmin) => {
-                const user = window.firebaseServices.auth.currentUser;
-                if (!user) { testAdminStatus.textContent = "Erreur : Vous devez être connecté."; return; }
-                const targetAdminUID = testAdminUidInput.value.trim();
-                if (!targetAdminUID) { testAdminStatus.textContent = "Erreur : UID cible manquant."; return; }
-                testAdminStatus.textContent = "Appel en cours...";
-                try {
-                    const idToken = await user.getIdToken();
-                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
-                    const response = await fetch(functionUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
-                    });
-                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
-                    const result = await response.json();
-                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
-                } catch (error) { testAdminStatus.textContent = "Erreur : " + error.message; }
-            };
-            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
-            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
-        });
     </script>
+    
+    <!-- Chargement du script principal de l'application -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
