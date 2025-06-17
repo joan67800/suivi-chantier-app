@@ -1,5 +1,4 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-// CORRECTION : arrayUnion est importé depuis firestore, pas storage
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -94,7 +93,6 @@ function startApp() {
                 const chantierData = docSnap.data();
                 const chantierDiv = document.createElement('div');
                 chantierDiv.classList.add('chantier-item');
-                // CORRECTION : La ligne "Jours d'intervention" est réintégrée ici
                 chantierDiv.innerHTML = `
                     <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
                     <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
@@ -194,25 +192,30 @@ function startApp() {
         onSnapshot(q, (snapshot) => renderQuestions(snapshot, adminQuestionsContainer, true));
     }
 
-    async function renderQuestions(snapshot, container, isAdminView) {
+    // CORRECTION DE LA FONCTION RENDERQUESTIONS
+    async function renderQuestions(snapshotOrArray, container, isAdminView) {
         if (!container) return;
-        const docs = snapshot.docs || snapshot; // Gère les deux types d'entrées
-        if (docs.length === 0) {
+
+        // Étape 1 : Unifier l'entrée en un tableau de données JS pures.
+        const questionsData = Array.isArray(snapshotOrArray)
+            ? snapshotOrArray // C'est déjà un tableau de données
+            : snapshotOrArray.docs.map(d => ({ id: d.id, ...d.data() })); // C'est un snapshot, on le transforme en tableau de données
+
+        if (questionsData.length === 0) {
             container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question.'}</p>`;
             return;
         }
 
         let users = {};
         if (isAdminView) {
-            const userIds = [...new Set(docs.map(d => d.data().userId).filter(Boolean))];
+            const userIds = [...new Set(questionsData.map(d => d.userId).filter(Boolean))];
             const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
             userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
         }
 
-        const questionPromises = docs
-            .map(d => ({id: d.id, ...d.data()}))
+        const questionHtml = questionsData
             .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
-            .map(async (questionData) => {
+            .map((questionData) => { // On travaille directement avec le tableau de données
                 if (isAdminView && !questionData.userId) return '';
                 const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
                 return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
@@ -223,8 +226,8 @@ function startApp() {
                             (isAdminView ? `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
                             ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
                         </div>`;
-            });
-        container.innerHTML = (await Promise.all(questionPromises)).join('');
+            }).join('');
+        container.innerHTML = questionHtml;
     }
 
 
