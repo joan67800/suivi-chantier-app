@@ -1,3 +1,4 @@
+// Importations directes pour la clarté et la stabilité
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -29,10 +30,8 @@ const adminClientList = document.getElementById('admin-client-list');
 const clientUidSelect = document.getElementById('client-uid-select');
 const targetClientUidSelect = document.getElementById('target-client-uid-select');
 
-// Instances Firebase
-const auth = getAuth();
-const db = getFirestore();
-const storage = getStorage();
+// Récupération des instances Firebase depuis l'objet window
+const { auth, db, storage } = window.firebaseServices;
 
 // --- Fonctions Login / Logout ---
 loginForm.addEventListener('submit', async (e) => {

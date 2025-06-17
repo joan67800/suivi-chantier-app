@@ -51,7 +51,6 @@
         <div id="admin-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--company-orange);">
             <h2>Section Administration</h2>
 
-            <!-- NOUVELLE SECTION : LISTE DES CLIENTS -->
             <div class="admin-subsection">
                 <h3>Liste des Clients Enregistrés</h3>
                 <div id="admin-client-list">
@@ -63,7 +62,6 @@
                 <h3>Ajouter une photo à un chantier</h3>
                 <form id="upload-photo-form">
                     <div>
-                        <!-- MODIFIÉ : Remplacé par un menu déroulant -->
                         <label for="client-uid-select">Sélectionner un Client :</label>
                         <select id="client-uid-select" required></select>
                     </div>
@@ -84,7 +82,6 @@
                 <h3>Poser une question à un client</h3>
                 <form id="admin-question-form">
                      <div>
-                        <!-- MODIFIÉ : Remplacé par un menu déroulant -->
                         <label for="target-client-uid-select">Sélectionner un Client Cible :</label>
                         <select id="target-client-uid-select" required></select>
                     </div>
@@ -120,8 +117,12 @@
     </div>
 
     <script type="module">
+        // Initialisation centralisée de Firebase et exposition des services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
@@ -134,12 +135,50 @@
         };
         const app = initializeApp(firebaseConfig);
         
+        // On initialise les services et on les met sur l'objet 'window'
+        // pour que script.js puisse les utiliser sans avoir à les importer.
+        window.firebaseServices = {
+            auth: getAuth(app),
+            db: getFirestore(app),
+            storage: getStorage(app),
+        };
+
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
             self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
         }
-        getAppCheck(app, {
+        initializeAppCheck(app, {
           provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
           isTokenAutoRefreshEnabled: true
+        });
+
+        // Event listener pour les boutons de test admin
+        document.addEventListener('DOMContentLoaded', () => {
+            const testSetAdminButton = document.getElementById('test-set-admin-button');
+            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+            const testAdminUidInput = document.getElementById('test-admin-uid');
+            const testAdminStatus = document.getElementById('test-admin-status');
+
+            const callSetUserAdminStatus = async (makeAdmin) => {
+                const user = window.firebaseServices.auth.currentUser;
+                if (!user) { testAdminStatus.textContent = "Erreur : Vous devez être connecté."; return; }
+                const targetAdminUID = testAdminUidInput.value.trim();
+                if (!targetAdminUID) { testAdminStatus.textContent = "Erreur : UID cible manquant."; return; }
+                testAdminStatus.textContent = "Appel en cours...";
+                try {
+                    const idToken = await user.getIdToken();
+                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
+                    const response = await fetch(functionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
+                    });
+                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
+                    const result = await response.json();
+                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
+                } catch (error) { testAdminStatus.textContent = "Erreur : " + error.message; }
+            };
+            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
         });
     </script>
     <script type="module" src="script.js"></script>
