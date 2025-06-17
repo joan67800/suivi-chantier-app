@@ -96,31 +96,25 @@ function loadClientChantiers(uid) {
 async function loadChantiersForClientSelect(clientId) {
     chantierIdSelect.innerHTML = '<option value="">Chargement...</option>';
     chantierIdSelect.disabled = true;
-
     if (!clientId) {
         chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
         return;
     }
-
     try {
         const chantiersRef = collection(db, 'clients', clientId, 'chantier');
         const chantiersSnapshot = await getDocs(chantiersRef);
-
         chantierIdSelect.innerHTML = '<option value="">-- Sélectionnez un chantier --</option>';
-
         if (chantiersSnapshot.empty) {
-            chantierIdSelect.innerHTML = '<option value="">Aucun chantier trouvé pour ce client</option>';
+            chantierIdSelect.innerHTML = '<option value="">Aucun chantier pour ce client</option>';
         } else {
             chantiersSnapshot.forEach(docSnap => {
                 const chantierData = docSnap.data();
                 const optionText = chantierData.adresse || `Chantier ID: ${docSnap.id}`;
-                const option = new Option(optionText, docSnap.id);
-                chantierIdSelect.add(option);
+                chantierIdSelect.add(new Option(optionText, docSnap.id));
             });
             chantierIdSelect.disabled = false;
         }
     } catch (error) {
-        console.error("Erreur lors du chargement des chantiers pour le select:", error);
         chantierIdSelect.innerHTML = '<option value="">Erreur de chargement</option>';
     }
 }
@@ -133,7 +127,6 @@ async function loadClientListForAdmin() {
         clientUidSelect.innerHTML = defaultOption;
         targetClientUidSelect.innerHTML = defaultOption;
         loadChantiersForClientSelect(null);
-
         if (clientsSnapshot.empty) {
             adminClientList.textContent = 'Aucun client trouvé.';
             return;
@@ -152,7 +145,7 @@ async function loadClientListForAdmin() {
         });
         adminClientList.appendChild(clientListUl);
     } catch(error) {
-        adminClientList.textContent = 'Erreur de chargement de la liste des clients.';
+        adminClientList.textContent = 'Erreur de chargement.';
     }
 }
 
@@ -170,43 +163,27 @@ async function renderQuestions(snapshot, container, isAdminView) {
     if (!container) return;
     container.innerHTML = '';
     if (snapshot.empty) {
-        container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question pour le moment.'}</p>`;
+        container.innerHTML = `<p>${isAdminView ? 'Aucune question de client.' : 'Aucune question.'}</p>`;
         return;
     }
-
     let users = {};
     if (isAdminView) {
         const userIds = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
         const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
         userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
     }
-
     const questionPromises = snapshot.docs.map(async (docSnap) => {
         const questionData = docSnap.data();
         if (isAdminView && !questionData.userId) return '';
-        let header = '';
-        if (isAdminView) {
-            header = `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>`;
-        }
-        return `
-            <div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
-                ${header}
-                <p><strong>Question :</strong> ${questionData.question}</p>
-                <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                ${questionData.reponse ? `
-                    <div class="reponse-admin">
-                        <p><strong>Réponse :</strong> ${questionData.reponse}</p>
-                        ${isAdminView ? `<button class="edit-reply-button" data-question-id="${docSnap.id}">Modifier</button>` : ''}
-                    </div>` : 
-                    (isAdminView ? `<button class="reply-button" data-question-id="${docSnap.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')
-                }
-                ${isAdminView ? `
-                    <div id="reply-form-${docSnap.id}" style="display: none; margin-top: 10px;">
-                        <textarea>${questionData.reponse || ''}</textarea>
-                        <button class="submit-reply-button" data-question-id="${docSnap.id}">Envoyer</button>
-                    </div>` : ''
-                }
-            </div>`;
+        const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
+        return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
+                    ${header}
+                    <p><strong>Question :</strong> ${questionData.question}</p>
+                    <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                    ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${docSnap.id}">Modifier</button>` : ''}</div>` : 
+                    (isAdminView ? `<button class="reply-button" data-question-id="${docSnap.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
+                    ${isAdminView ? `<div id="reply-form-${docSnap.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${docSnap.id}">Envoyer</button></div>` : ''}
+                </div>`;
     });
     container.innerHTML = (await Promise.all(questionPromises)).join('');
 }
@@ -227,7 +204,6 @@ uploadPhotoForm?.addEventListener('submit', async (e) => {
         const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId);
         const docSnap = await firebaseGetDoc(chantierRef);
         if (!docSnap.exists()) throw new Error("Le chantier sélectionné n'existe pas.");
-        
         const storageRef = ref(storage, `chantier-photos/${chantierId}/${Date.now()}-${file.name}`);
         showConfirmation(uploadStatus, 'Upload en cours...', 'info');
         await uploadBytes(storageRef, file);
@@ -241,32 +217,21 @@ uploadPhotoForm?.addEventListener('submit', async (e) => {
         showConfirmation(uploadStatus, 'Erreur : ' + error.message, 'error');
     }
 });
-
 questionForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const question = questionText.value.trim();
     if (question && auth.currentUser) {
-        await addDoc(collection(db, 'questions'), {
-            userId: auth.currentUser.uid,
-            question: question,
-            timestamp: serverTimestamp()
-        });
+        await addDoc(collection(db, 'questions'), { userId: auth.currentUser.uid, question: question, timestamp: serverTimestamp() });
         questionText.value = '';
         showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
     }
 });
-
 adminQuestionForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const question = adminQuestionText.value.trim();
     const targetUid = targetClientUidSelect.value;
     if (question && targetUid && auth.currentUser) {
-        await addDoc(collection(db, 'questions'), {
-            askedBy: auth.currentUser.uid,
-            askedTo: targetUid,
-            question: question,
-            timestamp: serverTimestamp()
-        });
+        await addDoc(collection(db, 'questions'), { askedBy: auth.currentUser.uid, askedTo: targetUid, question: question, timestamp: serverTimestamp() });
         adminQuestionText.value = '';
         showConfirmation(adminQuestionConfirmation, 'Question envoyée au client.', 'success');
     }
@@ -329,12 +294,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionId = target.dataset.questionId;
         if (!questionId) return;
         const questionRef = doc(db, 'questions', questionId);
-
         if (target.matches('.reply-button, .edit-reply-button')) {
             const form = document.getElementById(`reply-form-${questionId}`);
             if (form) form.style.display = 'block';
         }
-
         if (target.matches('.submit-reply-button')) {
             const form = target.closest('div[id^="reply-form-"]');
             const textarea = form.querySelector('textarea');
