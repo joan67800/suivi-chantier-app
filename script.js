@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
@@ -93,8 +93,10 @@ function startApp() {
                 const chantierData = docSnap.data();
                 const chantierDiv = document.createElement('div');
                 chantierDiv.classList.add('chantier-item');
+                // CORRECTION : La ligne "Jours d'intervention" est réintégrée ici
                 chantierDiv.innerHTML = `
                     <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
+                    <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                     <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                     <h4>Photos :</h4>`;
                 const photosContainer = document.createElement('div');
@@ -173,8 +175,17 @@ function startApp() {
     }
 
     async function loadClientQuestions(uid) {
-        const q = query(collection(db, 'questions'), where('userId', '==', uid));
-        onSnapshot(q, (snapshot) => renderQuestions(snapshot, questionsContainer, false));
+        const q1 = query(collection(db, 'questions'), where('userId', '==', uid));
+        const q2 = query(collection(db, 'questions'), where('askedTo', '==', uid));
+        onSnapshot(q1, (snap1) => {
+            onSnapshot(q2, (snap2) => {
+                const allQuestions = [
+                    ...snap1.docs.map(d => ({id: d.id, ...d.data()})),
+                    ...snap2.docs.map(d => ({id: d.id, ...d.data()}))
+                ];
+                renderQuestions(allQuestions, questionsContainer, false);
+            });
+        });
     }
 
     async function loadAdminQuestions() {
@@ -184,32 +195,37 @@ function startApp() {
 
     async function renderQuestions(snapshot, container, isAdminView) {
         if (!container) return;
-        container.innerHTML = '';
-        if (snapshot.empty) {
+        const docs = snapshot.docs || snapshot; // Gère les deux types d'entrées
+        if (docs.length === 0) {
             container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question.'}</p>`;
             return;
         }
+
         let users = {};
         if (isAdminView) {
-            const userIds = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
+            const userIds = [...new Set(docs.map(d => d.data().userId).filter(Boolean))];
             const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
             userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
         }
-        const questionPromises = snapshot.docs.map(async (docSnap) => {
-            const questionData = docSnap.data();
-            if (isAdminView && !questionData.userId) return '';
-            const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
-            return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
-                        ${header}
-                        <p><strong>Question :</strong> ${questionData.question}</p>
-                        <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                        ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${docSnap.id}">Modifier</button>` : ''}</div>` : 
-                        (isAdminView ? `<button class="reply-button" data-question-id="${docSnap.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
-                        ${isAdminView ? `<div id="reply-form-${docSnap.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${docSnap.id}">Envoyer</button></div>` : ''}
-                    </div>`;
-        });
+
+        const questionPromises = docs
+            .map(d => ({id: d.id, ...d.data()}))
+            .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
+            .map(async (questionData) => {
+                if (isAdminView && !questionData.userId) return '';
+                const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
+                return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
+                            ${header}
+                            <p><strong>Question :</strong> ${questionData.question}</p>
+                            <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                            ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${questionData.id}">Modifier</button>` : ''}</div>` : 
+                            (isAdminView ? `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
+                            ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
+                        </div>`;
+            });
         container.innerHTML = (await Promise.all(questionPromises)).join('');
     }
+
 
     // --- Écouteurs d'événements pour les formulaires ---
     uploadPhotoForm?.addEventListener('submit', async (e) => {
