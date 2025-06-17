@@ -35,7 +35,6 @@
             <!-- Contenu chargé par JS -->
         </div>
 
-        <!-- Section pour que le client pose une question -->
         <div id="client-question-section">
             <h2>Vos Questions</h2>
             <div id="questions-container">
@@ -45,20 +44,28 @@
             <form id="question-form">
                 <textarea id="question-text" placeholder="Écrivez votre question ici..."></textarea>
                 <button type="submit">Envoyer la question</button>
-                <p id="question-confirmation" class="success" style="display: none;"></p>
+                <p id="question-confirmation" class="message-feedback" style="display: none;"></p>
             </form>
         </div>
 
-        <!-- Section réservée à l'administrateur -->
         <div id="admin-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--company-orange);">
             <h2>Section Administration</h2>
+
+            <!-- NOUVELLE SECTION : LISTE DES CLIENTS -->
+            <div class="admin-subsection">
+                <h3>Liste des Clients Enregistrés</h3>
+                <div id="admin-client-list">
+                    <p>Chargement de la liste des clients...</p>
+                </div>
+            </div>
             
             <div class="admin-subsection">
                 <h3>Ajouter une photo à un chantier</h3>
                 <form id="upload-photo-form">
                     <div>
-                        <label for="client-uid">UID du Client :</label>
-                        <input type="text" id="client-uid" required placeholder="UID du propriétaire du chantier">
+                        <!-- MODIFIÉ : Remplacé par un menu déroulant -->
+                        <label for="client-uid-select">Sélectionner un Client :</label>
+                        <select id="client-uid-select" required></select>
                     </div>
                     <div>
                         <label for="chantier-id">ID du chantier :</label>
@@ -69,7 +76,7 @@
                         <input type="file" id="photo-file" accept="image/*" required>
                     </div>
                     <button type="submit">Envoyer la photo</button>
-                    <p id="upload-status" style="display: none;"></p>
+                    <p id="upload-status" class="message-feedback" style="display: none;"></p>
                 </form>
             </div>
             
@@ -77,15 +84,16 @@
                 <h3>Poser une question à un client</h3>
                 <form id="admin-question-form">
                      <div>
-                        <label for="target-client-uid">UID du Client Cible :</label>
-                        <input type="text" id="target-client-uid" required placeholder="Entrez l'UID du client à qui poser la question">
+                        <!-- MODIFIÉ : Remplacé par un menu déroulant -->
+                        <label for="target-client-uid-select">Sélectionner un Client Cible :</label>
+                        <select id="target-client-uid-select" required></select>
                     </div>
                      <div>
                         <label for="admin-question-text">Votre Question :</label>
                         <textarea id="admin-question-text" placeholder="Écrivez votre question ici..."></textarea>
                     </div>
                     <button type="submit">Envoyer au client</button>
-                    <p id="admin-question-confirmation" class="success" style="display: none;"></p>
+                    <p id="admin-question-confirmation" class="message-feedback" style="display: none;"></p>
                 </form>
             </div>
 
@@ -106,21 +114,13 @@
         </div>
     </div>
 
-    <!-- La structure de la "Lightbox" pour afficher l'image en grand -->
     <div id="image-lightbox" class="lightbox" style="display: none;">
       <span class="lightbox-close">&times;</span>
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
     <script type="module">
-        // Ce bloc reste inchangé, il initialise et expose les fonctions Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc, arrayUnion, deleteField, serverTimestamp, orderBy as firestoreOrderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
-
         const firebaseConfig = {
             apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
             authDomain: "suivi-chantier-societe.firebaseapp.com",
@@ -130,55 +130,9 @@
             appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
             measurementId: "G-2KTWHDGT3S"
         };
-        const app = initializeApp(firebaseConfig);
-        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-        }
-        initializeAppCheck(app, {
-          provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
-          isTokenAutoRefreshEnabled: true
-        });
-
-        window.firebaseAuthInstance = getAuth(app);
-        window.firebaseDbInstance = getFirestore(app);
-        window.firebaseStorageInstance = getStorage(app);
-        window.firebaseFunctionsInstance = getFunctions(app);
-        
-        window.firebase = {
-            auth: { signInWithEmailAndPassword, signOut, onAuthStateChanged },
-            db: { collection, query, where, onSnapshot, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc, arrayUnion, deleteField, serverTimestamp, getDoc: getFirestore().getDoc, orderBy: firestoreOrderBy },
-            storage: { ref, uploadBytes, getDownloadURL, deleteObject }
-        };
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const testSetAdminButton = document.getElementById('test-set-admin-button');
-            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
-            const testAdminUidInput = document.getElementById('test-admin-uid');
-            const testAdminStatus = document.getElementById('test-admin-status');
-
-            const callSetUserAdminStatus = async (makeAdmin) => {
-                const user = window.firebaseAuthInstance.currentUser;
-                if (!user) { testAdminStatus.textContent = "Erreur : Vous devez être connecté."; return; }
-                const targetAdminUID = testAdminUidInput.value.trim();
-                if (!targetAdminUID) { testAdminStatus.textContent = "Erreur : UID cible manquant."; return; }
-                testAdminStatus.textContent = "Appel en cours...";
-                try {
-                    const idToken = await user.getIdToken();
-                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
-                    const response = await fetch(functionUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
-                    });
-                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
-                    const result = await response.json();
-                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
-                } catch (error) { testAdminStatus.textContent = "Erreur : " + error.message; }
-            };
-            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
-            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
-        });
+        initializeApp(firebaseConfig);
     </script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
+```css
