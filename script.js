@@ -3,6 +3,14 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 import { getStorage, ref, uploadBytes, getDownloadURL, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// On récupère l'instance 'app' initialisée dans index.html
+const app = window.firebaseApp;
+
+// On initialise les services à partir de l'instance 'app'
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
 // Éléments du DOM
 const loginContainer = document.getElementById('login-container');
 const loginForm = document.getElementById('login-form');
@@ -29,8 +37,6 @@ const clientUidSelect = document.getElementById('client-uid-select');
 const targetClientUidSelect = document.getElementById('target-client-uid-select');
 const chantierIdSelect = document.getElementById('chantier-id-select');
 
-// Récupération des instances Firebase depuis l'objet window
-const { auth, db, storage } = window.firebaseServices;
 
 // --- Fonctions Login / Logout ---
 loginForm.addEventListener('submit', async (e) => {
@@ -151,18 +157,8 @@ async function loadClientListForAdmin() {
 }
 
 async function loadClientQuestions(uid) {
-    const qByClient = query(collection(db, 'questions'), where('userId', '==', uid));
-    const qToClient = query(collection(db, 'questions'), where('askedTo', '==', uid));
-    try {
-        const [byClientSnapshot, toClientSnapshot] = await Promise.all([getDocs(qByClient), getDocs(qToClient)]);
-        const allQuestions = [
-            ...byClientSnapshot.docs.map(d => ({ id: d.id, ...d.data() })),
-            ...toClientSnapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-        ];
-        renderQuestions(allQuestions, questionsContainer, false);
-    } catch (error) {
-        questionsContainer.innerHTML = '<p class="error">Erreur de chargement des questions.</p>';
-    }
+    const q = query(collection(db, 'questions'), where('userId', '==', uid));
+    onSnapshot(q, (snapshot) => renderQuestions(snapshot, questionsContainer, false));
 }
 
 async function loadAdminQuestions() {
@@ -172,14 +168,25 @@ async function loadAdminQuestions() {
 
 async function renderQuestions(snapshot, container, isAdminView) {
     if (!container) return;
-    const questionsHtml = await Promise.all(snapshot.docs.map(async (docSnap) => {
+    container.innerHTML = '';
+    if (snapshot.empty) {
+        container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question pour le moment.'}</p>`;
+        return;
+    }
+
+    let users = {};
+    if (isAdminView) {
+        const userIds = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
+        const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
+        userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
+    }
+
+    const questionPromises = snapshot.docs.map(async (docSnap) => {
         const questionData = docSnap.data();
         if (isAdminView && !questionData.userId) return '';
         let header = '';
         if (isAdminView) {
-            const clientDoc = await firebaseGetDoc(doc(db, 'clients', questionData.userId));
-            const clientName = clientDoc.exists() ? clientDoc.data().nom : 'Client inconnu';
-            header = `<p><strong>Client :</strong> ${clientName} (<code>${questionData.userId}</code>)</p>`;
+            header = `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>`;
         }
         return `
             <div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
@@ -200,9 +207,10 @@ async function renderQuestions(snapshot, container, isAdminView) {
                     </div>` : ''
                 }
             </div>`;
-    }));
-    container.innerHTML = questionsHtml.join('') || (isAdminView ? '<p>Aucune question de client.</p>' : '<p>Aucune question.</p>');
+    });
+    container.innerHTML = (await Promise.all(questionPromises)).join('');
 }
+
 
 // --- Écouteurs d'événements pour les formulaires ---
 uploadPhotoForm?.addEventListener('submit', async (e) => {

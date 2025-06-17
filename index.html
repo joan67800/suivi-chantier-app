@@ -123,16 +123,14 @@
             measurementId: "G-2KTWHDGT3S"
         };
         
-        const app = initializeApp(firebaseConfig);
-        
-        // On met l'instance de l'app sur l'objet window pour que script.js puisse la récupérer
-        window.firebaseApp = app;
+        // On initialise l'app et on la met sur l'objet window pour que script.js la récupère
+        window.firebaseApp = initializeApp(firebaseConfig);
 
         // Initialisation d'App Check
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
             self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
         }
-        initializeAppCheck(app, {
+        initializeAppCheck(window.firebaseApp, {
           provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
           isTokenAutoRefreshEnabled: true
         });
