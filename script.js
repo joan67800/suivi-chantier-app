@@ -1,7 +1,6 @@
-// Importations directes pour la clarté et la stabilité
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Éléments du DOM
@@ -20,7 +19,6 @@ const questionConfirmation = document.getElementById('question-confirmation');
 const adminSection = document.getElementById('admin-section');
 const adminQuestionsContainer = document.getElementById('admin-questions-container');
 const uploadPhotoForm = document.getElementById('upload-photo-form');
-const chantierIdInput = document.getElementById('chantier-id');
 const photoFileInput = document.getElementById('photo-file');
 const uploadStatus = document.getElementById('upload-status');
 const adminQuestionForm = document.getElementById('admin-question-form');
@@ -29,8 +27,9 @@ const adminQuestionConfirmation = document.getElementById('admin-question-confir
 const adminClientList = document.getElementById('admin-client-list');
 const clientUidSelect = document.getElementById('client-uid-select');
 const targetClientUidSelect = document.getElementById('target-client-uid-select');
+const chantierIdSelect = document.getElementById('chantier-id-select');
 
-// Récupération des instances Firebase depuis l'objet window
+// Instances Firebase
 const { auth, db, storage } = window.firebaseServices;
 
 // --- Fonctions Login / Logout ---
@@ -52,6 +51,67 @@ function showView(isClient) {
     adminSection.style.display = isClient ? 'none' : 'block';
     clientQuestionSection.style.display = isClient ? 'block' : 'none';
 }
+
+async function loadChantiersForClientSelect(clientId) {
+    chantierIdSelect.innerHTML = '<option value="">Chargement...</option>';
+    chantierIdSelect.disabled = true;
+
+    if (!clientId) {
+        chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
+        return;
+    }
+
+    const chantiersRef = collection(db, 'clients', clientId, 'chantier');
+    const chantiersSnapshot = await getDocs(chantiersRef);
+
+    chantierIdSelect.innerHTML = '<option value="">-- Sélectionnez un chantier --</option>';
+
+    if (chantiersSnapshot.empty) {
+        chantierIdSelect.innerHTML = '<option value="">Aucun chantier trouvé pour ce client</option>';
+    } else {
+        chantiersSnapshot.forEach(docSnap => {
+            const chantierData = docSnap.data();
+            const optionText = chantierData.adresse || `Chantier ID: ${docSnap.id}`;
+            const option = new Option(optionText, docSnap.id);
+            chantierIdSelect.add(option);
+        });
+        chantierIdSelect.disabled = false;
+    }
+}
+
+async function loadClientListForAdmin() {
+    try {
+        const clientsSnapshot = await getDocs(collection(db, 'clients'));
+        adminClientList.innerHTML = '';
+        const defaultOption = '<option value="">-- Sélectionnez un client --</option>';
+        clientUidSelect.innerHTML = defaultOption;
+        targetClientUidSelect.innerHTML = defaultOption;
+
+        if (clientsSnapshot.empty) {
+            adminClientList.textContent = 'Aucun client trouvé.';
+            return;
+        }
+        const clientListUl = document.createElement('ul');
+        clientsSnapshot.forEach(docSnap => {
+            const clientData = docSnap.data();
+            const clientName = clientData.nom || 'Client sans nom';
+            const clientId = docSnap.id;
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${clientName}:</strong> <code>${clientId}</code>`;
+            clientListUl.appendChild(li);
+            [clientUidSelect, targetClientUidSelect].forEach(select => {
+                select.add(new Option(`${clientName} (${clientId})`, clientId));
+            });
+        });
+        adminClientList.appendChild(clientListUl);
+    } catch(error) {
+        adminClientList.textContent = 'Erreur de chargement de la liste des clients.';
+    }
+}
+
+// ... Le reste des fonctions (loadClientChantiers, loadClientQuestions, etc.)
+// Le reste du fichier est identique à la version précédente.
+// Je copie ici le reste des fonctions pour que le fichier soit complet.
 
 function loadClientChantiers(uid) {
     const chantiersRef = collection(db, 'clients', uid, 'chantier');
@@ -86,35 +146,6 @@ function loadClientChantiers(uid) {
             chantiersList.appendChild(chantierDiv);
         });
     });
-}
-
-async function loadClientListForAdmin() {
-    try {
-        const clientsSnapshot = await getDocs(collection(db, 'clients'));
-        adminClientList.innerHTML = '';
-        clientUidSelect.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
-        targetClientUidSelect.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
-
-        if (clientsSnapshot.empty) {
-            adminClientList.textContent = 'Aucun client trouvé.';
-            return;
-        }
-        const clientListUl = document.createElement('ul');
-        clientsSnapshot.forEach(docSnap => {
-            const clientData = docSnap.data();
-            const clientName = clientData.nom || 'Client sans nom';
-            const clientId = docSnap.id;
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${clientName}:</strong> <code>${clientId}</code>`;
-            clientListUl.appendChild(li);
-            [clientUidSelect, targetClientUidSelect].forEach(select => {
-                select.add(new Option(`${clientName} (${clientId})`, clientId));
-            });
-        });
-        adminClientList.appendChild(clientListUl);
-    } catch(error) {
-        adminClientList.textContent = 'Erreur de chargement de la liste des clients.';
-    }
 }
 
 function loadClientQuestions(uid) {
@@ -209,17 +240,17 @@ adminQuestionForm?.addEventListener('submit', async (e) => {
 uploadPhotoForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const clientUid = clientUidSelect.value;
-    const chantierId = chantierIdInput.value.trim();
+    const chantierId = chantierIdSelect.value; // MODIFIÉ pour utiliser le nouveau menu déroulant
     const file = photoFileInput.files[0];
     if (!file || !clientUid || !chantierId) {
-        showConfirmation(uploadStatus, 'Veuillez remplir tous les champs.', 'error');
+        showConfirmation(uploadStatus, 'Veuillez sélectionner un client, un chantier et un fichier.', 'error');
         return;
     }
     showConfirmation(uploadStatus, 'Vérification...', 'info');
     try {
         const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId);
         const docSnap = await firebaseGetDoc(chantierRef);
-        if (!docSnap.exists()) throw new Error("Le chantier spécifié n'existe pas.");
+        if (!docSnap.exists()) throw new Error("Le chantier sélectionné n'existe pas.");
         
         const storageRef = ref(storage, `chantier-photos/${chantierId}/${Date.now()}-${file.name}`);
         showConfirmation(uploadStatus, 'Upload en cours...', 'info');
@@ -228,6 +259,8 @@ uploadPhotoForm?.addEventListener('submit', async (e) => {
         await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
         showConfirmation(uploadStatus, 'Photo uploadée avec succès !', 'success');
         uploadPhotoForm.reset();
+        chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
+        chantierIdSelect.disabled = true;
     } catch (error) {
         showConfirmation(uploadStatus, 'Erreur : ' + error.message, 'error');
     }
@@ -280,6 +313,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeBtn = document.querySelector('.lightbox-close');
   if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
   if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
+
+  clientUidSelect?.addEventListener('change', () => {
+    loadChantiersForClientSelect(clientUidSelect.value);
+  });
   
   adminQuestionsContainer?.addEventListener('click', async (event) => {
         const target = event.target;

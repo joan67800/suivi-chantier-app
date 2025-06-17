@@ -66,8 +66,8 @@
                         <select id="client-uid-select" required></select>
                     </div>
                     <div>
-                        <label for="chantier-id">ID du chantier :</label>
-                        <input type="text" id="chantier-id" required placeholder="ID exact du document chantier">
+                        <label for="chantier-id-select">Sélectionner un Chantier :</label>
+                        <select id="chantier-id-select" required disabled></select>
                     </div>
                     <div>
                         <label for="photo-file">Sélectionner une photo :</label>
@@ -117,7 +117,6 @@
     </div>
 
     <script type="module">
-        // Initialisation centralisée de Firebase et exposition des services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -135,8 +134,6 @@
         };
         const app = initializeApp(firebaseConfig);
         
-        // On initialise les services et on les met sur l'objet 'window'
-        // pour que script.js puisse les utiliser sans avoir à les importer.
         window.firebaseServices = {
             auth: getAuth(app),
             db: getFirestore(app),
@@ -151,7 +148,6 @@
           isTokenAutoRefreshEnabled: true
         });
 
-        // Event listener pour les boutons de test admin
         document.addEventListener('DOMContentLoaded', () => {
             const testSetAdminButton = document.getElementById('test-set-admin-button');
             const testRemoveAdminButton = document.getElementById('test-remove-admin-button');

@@ -44,7 +44,6 @@ button:active { transform: scale(0.98); }
 .message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; }
 .message-feedback.info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
 
-
 .chantier-item { border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 20px; border-radius: 8px; background-color: #fdfdfd; }
 .photos-container { display: flex; gap: 10px; margin-top: 10px; padding: 10px; overflow-x: auto; background-color: #f4f7f6; border-radius: 5px; }
 .photos-container img { height: 100px; width: auto; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
