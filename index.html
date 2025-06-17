@@ -108,24 +108,7 @@
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
-    <!-- Initialisation de Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
-            authDomain: "suivi-chantier-societe.firebaseapp.com",
-            projectId: "suivi-chantier-societe",
-            storageBucket: "suivi-chantier-societe.firebasestorage.app",
-            messagingSenderId: "888449140099",
-            appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
-            measurementId: "G-2KTWHDGT3S"
-        };
-        
-        // On initialise l'app et on la met sur l'objet window pour que script.js puisse la récupérer
-        window.firebaseApp = initializeApp(firebaseConfig);
-    </script>
-    
+    <!-- Il n'y a plus de code d'initialisation ici, tout est dans script.js -->
     <!-- Chargement du script principal de l'application -->
     <script type="module" src="script.js"></script>
 </body>

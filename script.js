@@ -1,17 +1,38 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
-// On récupère l'instance 'app' initialisée dans index.html
-const app = window.firebaseApp;
 
-// On initialise les services à partir de l'instance 'app'
+// --- Initialisation de Firebase ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
+    authDomain: "suivi-chantier-societe.firebaseapp.com",
+    projectId: "suivi-chantier-societe",
+    storageBucket: "suivi-chantier-societe.firebasestorage.app",
+    messagingSenderId: "888449140099",
+    appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
+    measurementId: "G-2KTWHDGT3S"
+};
+
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Éléments du DOM
+// Initialisation d'App Check
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
+  isTokenAutoRefreshEnabled: true
+});
+
+
+// --- Éléments du DOM ---
 const loginContainer = document.getElementById('login-container');
 const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
@@ -187,7 +208,6 @@ async function renderQuestions(snapshot, container, isAdminView) {
     });
     container.innerHTML = (await Promise.all(questionPromises)).join('');
 }
-
 
 // --- Écouteurs d'événements pour les formulaires ---
 uploadPhotoForm?.addEventListener('submit', async (e) => {
