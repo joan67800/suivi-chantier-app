@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
     
-    <!-- ====================================================== -->
-    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML                     -->
-    <!-- ====================================================== -->
     <style>
         :root {
             --company-orange: #E57300;
@@ -51,10 +48,11 @@
         
         .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
         .client-accordion, .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
-        .client-header, .chantier-header { cursor: pointer; padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
-        .client-header { background-color: #e2efda; border-bottom: 2px solid var(--company-dark-green-action); }
-        .chantier-header { background-color: #f8f9fa; margin: 0 15px 15px 15px; border: 1px solid #eee; }
-        .client-header:hover, .chantier-header:hover { background-color: #e9ecef; }
+        .client-header, .chantier-header { padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
+        .client-header { cursor: pointer; background-color: #e2efda; border-bottom: 2px solid var(--company-dark-green-action); }
+        .chantier-header { cursor: pointer; background-color: #f8f9fa; margin: 0 15px 15px 15px; border: 1px solid #eee; }
+        .client-header:not(.is-admin):hover, .chantier-header:hover { background-color: #e9ecef; }
+        .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom: 2px solid #ccc; }
         .client-header .title-content, .chantier-header .title-content { flex-grow: 1; }
         .client-header h3, .chantier-header h3 { margin: 0; padding: 0; border: none; color: var(--text-dark); font-size: 1.2em; }
         .chantier-header h4 { font-size: 0.9em; color: #6c757d; font-weight: normal; margin:0; padding:0; border:0;}
@@ -82,17 +80,7 @@
         .chat-form textarea { flex-grow: 1; margin: 0; }
         .chat-form button { margin-top: 0; align-self: flex-end; }
 
-        .admin-badge {
-            background-color: var(--company-orange);
-            color: white;
-            font-size: 0.7em;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 10px;
-            font-weight: bold;
-            vertical-align: middle;
-        }
-
+        .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; }
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
         .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -167,7 +155,7 @@
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
             const appTitle = document.getElementById('app-title');
-
+            
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 document.getElementById('login-error').textContent = '';
@@ -212,7 +200,7 @@
             async function loadAdminDashboard() {
                 appTitle.textContent = "Administration des Chantiers";
                 adminSection.style.display = 'block';
-                chantiersList.innerHTML = '<h2>Tous les Comptes</h2>';
+                chantiersList.innerHTML = '<h2>Liste des Comptes</h2>';
                 try {
                     const usersSnapshot = await getDocs(collection(db, 'users'));
                     const adminUids = new Set();
@@ -224,7 +212,7 @@
 
                     const clientsSnapshot = await getDocs(collection(db, 'clients'));
                     if (clientsSnapshot.empty) {
-                        chantiersList.innerHTML += '<p>Aucun compte client ou admin trouvé dans la collection "clients".</p>';
+                        chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>';
                         return;
                     }
                     
@@ -233,34 +221,45 @@
                         const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
                         
                         const isThisUserAdmin = adminUids.has(clientDoc.id);
-                        const adminBadge = isThisUserAdmin ? '<span class="admin-badge">Admin</span>' : '';
-
-                        const clientAccordion = document.createElement('div');
-                        clientAccordion.classList.add('client-accordion');
-                        clientAccordion.innerHTML = `
-                            <div class="client-header" data-target="client-body-${clientDoc.id}">
-                                <h3>${clientInfo.nom} ${adminBadge}</h3>
-                                <span class="indicator">▼</span>
-                            </div>
-                            <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
-                        chantiersList.appendChild(clientAccordion);
                         
-                        const chantiersContainer = clientAccordion.querySelector('.client-body');
-                        const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
-                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                             chantiersContainer.innerHTML = '';
-                             if(chantiersSnapshot.empty) {
-                                 chantiersContainer.innerHTML = '<p>Ce compte n\'a aucun chantier.</p>';
-                             } else {
-                                 chantiersSnapshot.forEach(chantierDoc => {
-                                     chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo));
-                                 });
-                             }
-                        });
+                        const accountWrapper = document.createElement('div');
+                        accountWrapper.classList.add('client-accordion');
+
+                        if (isThisUserAdmin) {
+                            accountWrapper.innerHTML = `
+                                <div class="client-header is-admin">
+                                    <h3>${clientInfo.nom} <span class="admin-badge">Admin</span></h3>
+                                </div>`;
+                        } else {
+                            accountWrapper.innerHTML = `
+                                <div class="client-header" data-target="client-body-${clientDoc.id}">
+                                    <h3>${clientInfo.nom}</h3>
+                                    <span class="indicator">▼</span>
+                                </div>
+                                <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                            
+                            const chantiersContainer = accountWrapper.querySelector('.client-body');
+                            const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                            onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                                 chantiersContainer.innerHTML = '';
+                                 if(chantiersSnapshot.empty) {
+                                     chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>';
+                                 } else {
+                                     chantiersSnapshot.forEach(chantierDoc => {
+                                         chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo));
+                                     });
+                                 }
+                            });
+                        }
+                        chantiersList.appendChild(accountWrapper);
                     });
                 } catch(error) {
                     chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;
                 }
+            }
+
+            async function loadClientDashboard(user) {
+                // ... logique pour la vue client
             }
 
             onAuthStateChanged(auth, async (user) => {
@@ -282,7 +281,7 @@
 
             chantiersList.addEventListener('click', (e) => {
                 const header = e.target.closest('.client-header, .chantier-header');
-                if (header) {
+                if (header && !header.classList.contains('is-admin')) { // Ne rien faire si c'est un header d'admin
                     const body = document.getElementById(header.dataset.target);
                     if (body) {
                         const isOpen = body.style.display === 'block';
@@ -291,6 +290,7 @@
                     }
                 }
             });
+            // ... autres listeners et fonctions
         });
     </script>
 </body>
