@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,7 @@
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
     
     <!-- ====================================================== -->
-    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML (AVEC MODIFICATIONS)-->
+    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML                     -->
     <!-- ====================================================== -->
     <style>
         :root {
@@ -49,7 +49,6 @@
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
         
-        /* MODIFIÉ : Styles pour l'accordéon des chantiers */
         .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
         .chantier-header { cursor: pointer; padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
         .chantier-header:hover { background-color: #e9ecef; }
@@ -160,7 +159,16 @@
             const testAdminUidInput = document.getElementById('test-admin-uid');
             const testAdminStatus = document.getElementById('test-admin-status');
 
-            loginForm.addEventListener('submit', async (e) => { /* ... */ });
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loginError.textContent = '';
+                try {
+                    await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
+                } catch (error) {
+                    loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
+                }
+            });
+
             logoutButton.addEventListener('click', () => signOut(auth));
 
             function renderChantier(chantierDoc, isAdmin, clientInfo = {}) {
@@ -186,6 +194,7 @@
                         <span class="indicator">▼</span>
                     </div>
                     <div class="chantier-body" id="body-${chantierId}">
+                        <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                         <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                         <h4>Photos :</h4>
                         <div class="photos-container">
@@ -212,7 +221,7 @@
                     if (!chatBox) return;
                     chatBox.innerHTML = '';
                     if (snapshot.empty) {
-                        chatBox.innerHTML = '<p>Aucun message.</p>';
+                        chatBox.innerHTML = '<p>Aucun message. Soyez le premier à poser une question !</p>';
                         return;
                     }
                     snapshot.forEach(doc => {
@@ -230,7 +239,6 @@
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
                     
-                    // Logique de notification
                     const chantierBody = document.getElementById(`body-${chantierId}`);
                     if (chantierBody && chantierBody.style.display === 'none') {
                         const lastMessage = snapshot.docs[snapshot.docs.length - 1]?.data();
@@ -264,6 +272,7 @@
             chantiersList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'IMG') {
                     openLightbox(e.target.src);
+                    return;
                 }
                 const header = e.target.closest('.chantier-header');
                 if (header) {
@@ -319,13 +328,44 @@
                 }
             });
 
-            function openLightbox(url) { /* ... */ }
+            function openLightbox(url) {
+                const lightbox = document.getElementById('image-lightbox');
+                const lightboxImg = document.getElementById('lightbox-image');
+                if (lightbox && lightboxImg) {
+                    lightbox.style.display = "flex";
+                    lightboxImg.src = url;
+                }
+            }
+
             const lightbox = document.getElementById('image-lightbox');
             const closeBtn = document.querySelector('.lightbox-close');
             if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
             if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
 
-            const callSetUserAdminStatus = async (makeAdmin) => { /* ... */ };
+            const callSetUserAdminStatus = async (makeAdmin) => {
+                const user = auth.currentUser;
+                const targetAdminUID = document.getElementById('test-admin-uid').value.trim();
+                const testAdminStatus = document.getElementById('test-admin-status');
+                if (!user || !targetAdminUID) {
+                    testAdminStatus.textContent = "Connectez-vous et entrez un UID.";
+                    return;
+                }
+                testAdminStatus.textContent = "Appel en cours...";
+                try {
+                    const idToken = await user.getIdToken();
+                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
+                    const response = await fetch(functionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
+                    });
+                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
+                    const result = await response.json();
+                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
+                } catch (error) {
+                    testAdminStatus.textContent = "Erreur : " + error.message;
+                }
+            };
             if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
             if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
         });
