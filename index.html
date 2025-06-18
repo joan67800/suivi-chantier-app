@@ -74,6 +74,7 @@
     </style>
 </head>
 <body>
+    <!-- Contenu HTML -->
     <div id="login-container">
         <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
         <h2>Connexion</h2>
@@ -90,10 +91,7 @@
             <h1 id="app-title">Suivi de vos chantiers</h1>
             <button id="logout-button">Se déconnecter</button>
         </header>
-
-        <!-- Ce conteneur sera utilisé par la vue Client ou la vue Admin -->
         <div id="chantiers-list"></div>
-
         <div id="admin-section" style="display: none;">
             <h2>Outils d'Administration</h2>
             <div class="admin-danger-zone">
@@ -169,7 +167,6 @@
                 const clientId = clientInfo.id || chantierDoc.ref.parent.parent.id;
                 const clientName = clientInfo.nom || '';
 
-                // On cherche si un élément pour ce chantier existe déjà
                 let chantierWrapper = document.getElementById(`chantier-${chantierId}`);
                 if (!chantierWrapper) {
                     chantierWrapper = document.createElement('div');
@@ -231,6 +228,9 @@
                         chatBox.appendChild(messageDiv);
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
+                }, (error) => {
+                    console.error("Erreur listener chat: ", error);
+                    chatBox.innerHTML = '<p class="error">Erreur de chargement des messages.</p>';
                 });
             }
 
@@ -275,7 +275,6 @@
                         adminSection.style.display = 'block';
                         const clientsSnapshot = await getDocs(collection(db, 'clients'));
                         clientsSnapshot.forEach(clientDoc => {
-                            // On ne charge pas les chantiers personnels de l'admin
                             if (clientDoc.id === user.uid) return;
                             
                             const clientData = clientDoc.data();
@@ -284,7 +283,9 @@
                             const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
                             onSnapshot(chantiersRef, (chantiersSnapshot) => {
                                  chantiersSnapshot.forEach(chantierDoc => {
-                                    renderChantier(chantierDoc, true, clientInfo);
+                                    if(!document.getElementById(`chantier-${chantierDoc.id}`)){
+                                        renderChantier(chantierDoc, true, clientInfo);
+                                    }
                                  });
                             });
                         });
