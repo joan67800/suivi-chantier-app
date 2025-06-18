@@ -45,7 +45,7 @@
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
         .message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
-
+        
         .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
         .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
         .client-header:hover { background-color: #d4e7c7; }
@@ -54,8 +54,9 @@
         .is-open > .indicator { transform: rotate(180deg); }
         .client-body { display: none; padding: 15px; }
 
-        .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; }
+        .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
         .chantier-header { cursor: pointer; padding: 10px 15px; background-color: #f8f9fa; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
+        .chantier-header:hover { background-color: #e9ecef; }
         .chantier-header .title-content { flex-grow: 1; }
         .chantier-header h3, .chantier-header h4 { margin: 0; padding: 0; border: none; color: var(--text-dark); font-size: 1.1em; }
         .chantier-body { padding: 15px; border-top: 1px solid #e0e0e0; display: none; }
@@ -112,7 +113,7 @@
                     <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
                     <div><label for="new-client-password">Mot de passe initial :</label><input type="text" id="new-client-password" required></div>
                     <button type="submit">Créer le Client</button>
-                    <p id="create-client-status" class="message-feedback" style="display: none;"></p>
+                    <p id="create-client-status" style="display: none;"></p>
                 </form>
             </div>
             <div class="admin-subsection">
@@ -121,7 +122,7 @@
                     <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
                     <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
                     <button type="submit">Ajouter le Chantier</button>
-                    <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
+                    <p id="add-chantier-status" style="display: none;"></p>
                 </form>
             </div>
             <div class="admin-danger-zone">
@@ -138,12 +139,14 @@
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
+    <!-- ====================================================== -->
+    <!--   JAVASCRIPT COMPLET INTÉGRÉ DANS LE HTML            -->
+    <!-- ====================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
-        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
@@ -154,33 +157,124 @@
                 messagingSenderId: "888449140099",
                 appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
             };
+
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
-            initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'), isTokenAutoRefreshEnabled: true });
+
+            initializeAppCheck(app, {
+              provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
+              isTokenAutoRefreshEnabled: true
+            });
 
             const loginContainer = document.getElementById('login-container');
+            const loginForm = document.getElementById('login-form');
             const appContainer = document.getElementById('app-container');
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
             const appTitle = document.getElementById('app-title');
 
-            // Listeners pour les formulaires principaux
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
+            loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 document.getElementById('login-error').textContent = '';
-                try { await signInWithEmailAndPassword(auth, email.value, password.value); } 
-                catch (error) { document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.'; }
+                try {
+                    await signInWithEmailAndPassword(auth, email.value, password.value);
+                } catch (error) {
+                    document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.';
+                }
             });
+
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
 
-            // ----- Fonctions de rendu et de chargement -----
-            
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
-                // ... (logique de rendu d'un chantier, identique à la verson précédente)
+                const chantierData = chantierDoc.data();
+                const chantierId = chantierDoc.id;
+                const clientId = clientInfo.id;
+                const clientName = clientInfo.nom;
+
+                const chantierItem = document.createElement('div');
+                chantierItem.classList.add('chantier-item');
+                
+                const title = isAdmin ? `<h4>Chantier de ${clientName}</h4><h3>${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
+                
+                chantierItem.innerHTML = `
+                    <div class="chantier-header" data-target="body-${chantierId}">
+                        <div class="title-content">${title}</div>
+                        <span class="indicator">▼</span>
+                    </div>
+                    <div class="chantier-body" id="body-${chantierId}">
+                        <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
+                        <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
+                        <h4>Photos :</h4>
+                        <div class="photos-container">
+                            ${(chantierData.photos?.length) ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier">`).join('') : 'Aucune photo pour le moment.'}
+                        </div>
+                        <div class="chat-section">
+                            <h4>Questions & Réponses</h4>
+                            <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
+                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question..."></textarea><button type="submit">Envoyer</button></form>
+                        </div>
+                    </div>
+                `;
+                return chantierItem;
+            }
+            
+            async function loadAdminDashboard(adminUid) {
+                appTitle.textContent = "Administration des Chantiers";
+                adminSection.style.display = 'block';
+                chantiersList.innerHTML = '';
+                try {
+                    const clientsSnapshot = await getDocs(collection(db, 'clients'));
+                    clientsSnapshot.forEach(clientDoc => {
+                        if (clientDoc.id === adminUid) return;
+                        const clientData = clientDoc.data();
+                        const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
+                        
+                        const clientAccordion = document.createElement('div');
+                        clientAccordion.classList.add('client-accordion');
+                        clientAccordion.innerHTML = `
+                            <div class="client-header" data-target="client-body-${clientDoc.id}">
+                                <h3>${clientInfo.nom}</h3>
+                                <span class="indicator">▼</span>
+                            </div>
+                            <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                        chantiersList.appendChild(clientAccordion);
+                        
+                        const chantiersContainer = clientAccordion.querySelector('.client-body');
+                        const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                             chantiersContainer.innerHTML = '';
+                             if(chantiersSnapshot.empty) {
+                                 chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>';
+                             } else {
+                                 chantiersSnapshot.forEach(chantierDoc => {
+                                     chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo));
+                                 });
+                             }
+                        });
+                    });
+                    loadClientListForAdmin();
+                } catch(error) {
+                    chantiersList.innerHTML = '<p class="error">Erreur de chargement du tableau de bord.</p>';
+                }
+            }
+            
+            function loadClientDashboard(uid) {
+                appTitle.textContent = "Suivi de vos chantiers";
+                adminSection.style.display = 'none';
+                const chantiersRef = collection(db, 'clients', uid, 'chantier');
+                 onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                     chantiersList.innerHTML = '';
+                     if(chantiersSnapshot.empty){
+                         chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
+                     } else {
+                         chantiersSnapshot.forEach(chantierDoc => {
+                            chantiersList.appendChild(renderChantier(chantierDoc, false, {id: user.uid}));
+                         });
+                     }
+                 });
             }
 
-            // ----- Logique principale au changement d'authentification -----
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     loginContainer.style.display = 'none';
@@ -188,15 +282,9 @@
                     const idTokenResult = await user.getIdTokenResult(true);
                     const isAdmin = idTokenResult.claims.admin === true;
 
-                    chantiersList.innerHTML = ''; 
-                    adminSection.style.display = 'none';
-
                     if (isAdmin) {
-                        appTitle.textContent = "Administration des Chantiers";
-                        adminSection.style.display = 'block';
                         loadAdminDashboard(user.uid);
                     } else {
-                        appTitle.textContent = "Suivi de vos chantiers";
                         loadClientDashboard(user.uid);
                     }
                 } else {
@@ -204,8 +292,8 @@
                     appContainer.style.display = 'none';
                 }
             });
-            
-            // Le reste de votre code JavaScript...
+
+            // ... Le reste de votre code JavaScript ...
         });
     </script>
 </body>
