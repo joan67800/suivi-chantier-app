@@ -221,6 +221,9 @@
                         chatBox.appendChild(messageDiv);
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
+                }, (error) => {
+                    console.error("Erreur listener chat: ", error);
+                    chatBox.innerHTML = '<p class="error">Erreur de chargement des messages.</p>';
                 });
             }
 
