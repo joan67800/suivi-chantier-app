@@ -74,7 +74,6 @@
     </style>
 </head>
 <body>
-    <!-- Contenu HTML -->
     <div id="login-container">
         <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
         <h2>Connexion</h2>
@@ -91,7 +90,10 @@
             <h1 id="app-title">Suivi de vos chantiers</h1>
             <button id="logout-button">Se déconnecter</button>
         </header>
+
+        <!-- Ce conteneur sera utilisé par la vue Client ou la vue Admin -->
         <div id="chantiers-list"></div>
+
         <div id="admin-section" style="display: none;">
             <h2>Outils d'Administration</h2>
             <div class="admin-danger-zone">
@@ -161,16 +163,25 @@
 
             logoutButton.addEventListener('click', () => signOut(auth));
 
-            function renderChantier(chantierDoc, isAdmin) {
+            function renderChantier(chantierDoc, isAdmin, clientInfo = {}) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
-                const clientId = chantierDoc.ref.parent.parent.id;
+                const clientId = clientInfo.id || chantierDoc.ref.parent.parent.id;
+                const clientName = clientInfo.nom || '';
 
-                const chantierWrapper = document.createElement('div');
-                chantierWrapper.classList.add('chantier-item');
+                // On cherche si un élément pour ce chantier existe déjà
+                let chantierWrapper = document.getElementById(`chantier-${chantierId}`);
+                if (!chantierWrapper) {
+                    chantierWrapper = document.createElement('div');
+                    chantierWrapper.id = `chantier-${chantierId}`;
+                    chantierWrapper.classList.add('chantier-item');
+                    chantiersList.appendChild(chantierWrapper);
+                }
                 
+                const title = isAdmin ? `<h4>Client : ${clientName}</h4><h3>Chantier : ${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
+
                 chantierWrapper.innerHTML = `
-                    <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
+                    ${title}
                     <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                     <h4>Photos :</h4>
                     <div class="photos-container">
@@ -187,7 +198,6 @@
                         </form>
                     </div>
                 `;
-                chantiersList.appendChild(chantierWrapper);
                 listenForChatMessages(clientId, chantierId, isAdmin);
             }
 
@@ -221,9 +231,6 @@
                         chatBox.appendChild(messageDiv);
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
-                }, (error) => {
-                    console.error("Erreur listener chat: ", error);
-                    chatBox.innerHTML = '<p class="error">Erreur de chargement des messages.</p>';
                 });
             }
 
@@ -264,16 +271,20 @@
 
                     chantiersList.innerHTML = ''; 
                     if (isAdmin) {
-                        appTitle.textContent = "Espace Administration";
+                        appTitle.textContent = "Administration des Chantiers";
                         adminSection.style.display = 'block';
                         const clientsSnapshot = await getDocs(collection(db, 'clients'));
                         clientsSnapshot.forEach(clientDoc => {
+                            // On ne charge pas les chantiers personnels de l'admin
+                            if (clientDoc.id === user.uid) return;
+                            
+                            const clientData = clientDoc.data();
+                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
+                            
                             const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
                             onSnapshot(chantiersRef, (chantiersSnapshot) => {
                                  chantiersSnapshot.forEach(chantierDoc => {
-                                    if(!document.getElementById(`chat-box-${chantierDoc.id}`)){
-                                        renderChantier(chantierDoc, true);
-                                    }
+                                    renderChantier(chantierDoc, true, clientInfo);
                                  });
                             });
                         });
@@ -287,7 +298,7 @@
                                  chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
                              } else {
                                  chantiersSnapshot.forEach(chantierDoc => {
-                                    renderChantier(chantierDoc, false);
+                                    renderChantier(chantierDoc, false, {id: user.uid});
                                  });
                              }
                          });
