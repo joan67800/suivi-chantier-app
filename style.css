@@ -52,7 +52,7 @@ button:active { transform: scale(0.98); }
 #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
 .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
 .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-.question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
+.question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
 .reponse-admin { background-color: var(--company-light-green); border-left: 3px solid var(--company-dark-green-action); padding: 10px; margin-top: 10px; border-radius: 3px; }
 .question-from-admin { background-color: #fff3cd; border-left: 3px solid #ffeeba; padding: 10px; margin-top: 10px; border-radius: 3px; }
 
@@ -62,44 +62,9 @@ button:active { transform: scale(0.98); }
 
 .admin-danger-zone { border: 1px solid red !important; }
 
-#progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 15px; overflow: hidden; }
-#progress-bar { width: 0%; height: 24px; background-color: var(--company-dark-green-action); text-align: center; line-height: 24px; color: white; font-weight: bold; border-radius: 4px; transition: width 0.4s ease; }
-
 .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
 .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; animation-name: lightbox-zoom; animation-duration: 0.6s; }
 @keyframes lightbox-zoom { from {transform: scale(0.1)} to {transform: scale(1)} }
 .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
 .lightbox-close:hover, .lightbox-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
-
-/* NOUVEAU : Styles pour le statut des questions */
-.question-status {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.status-ouverte {
-    background-color: #ffc107; /* Jaune/Orange */
-    color: #333;
-}
-
-.status-resolue {
-    background-color: var(--company-dark-green-action); /* Vert */
-    color: white;
-}
-
-.resolve-button {
-    background-color: #17a2b8; /* Bleu info */
-    color: white;
-    padding: 5px 10px;
-    font-size: 0.8em;
-    margin-top: 10px;
-}
-.resolve-button:hover {
-    background-color: #138496;
-}
+```javascript
