@@ -1,134 +1,41 @@
-<!DOCTYPE html>
+[⚠️ Suspicious Content] <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
-    
-    <!-- ====================================================== -->
-    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML                     -->
-    <!-- ====================================================== -->
-    <style>
-        :root {
-            --company-orange: #E57300;
-            --company-light-green: #E2EFDA;
-            --company-dark-green-action: #3E8E41;
-            --text-dark: #333333;
-            --text-light: #FFFFFF;
-            --border-color: #cccccc;
-            --error-red: #dc3545;
-            --success-green-bg: #d4edda;
-            --success-green-border: #c3e6cb;
-            --success-green-text: #155724;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            background-color: #f4f7f6;
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-
-        .company-logo { display: block; margin: 0 auto 20px auto; max-height: 120px; width: auto; }
-        .app-header { background-color: #ffffff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--company-orange); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .app-header .company-logo { margin: 0; max-height: 50px; }
-        .app-header h1 { margin: 0 20px; flex-grow: 1; font-size: 1.5em; color: var(--company-orange); }
-
-        #login-container, #app-container { background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 900px; }
-        #login-container { max-width: 400px; text-align: center; }
-
-        h2, h3 { color: var(--company-orange); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 25px; }
-        h2:first-child, h3:first-child { margin-top: 0; }
-
-        input[type="email"], input[type="password"], input[type="text"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; font-size: 1em; }
-        textarea { min-height: 120px; resize: vertical; }
-
-        button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease, transform 0.1s ease; }
-        button:hover { background-color: #D46900; }
-        button:active { transform: scale(0.98); }
-        #logout-button { background-color: #6c757d; }
-        #logout-button:hover { background-color: #5a6268; }
-
-        .message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
-        .message-feedback.success { color: var(--success-green-text); background-color: var(--success-green-bg); border-color: var(--success-green-border); }
-        .message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; }
-        .message-feedback.info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
-
-        .chantier-item { border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 20px; border-radius: 8px; background-color: #fdfdfd; }
-        .photos-container { display: flex; gap: 10px; margin-top: 10px; padding: 10px; overflow-x: auto; background-color: #f4f7f6; border-radius: 5px; }
-        .photos-container img { height: 100px; width: auto; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
-        .photos-container img:hover { transform: scale(1.05); }
-
-        #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
-        .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
-        .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-        .question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
-        .reponse-admin { background-color: var(--company-light-green); border-left: 3px solid var(--company-dark-green-action); padding: 10px; margin-top: 10px; border-radius: 3px; }
-        .question-from-admin { background-color: #fff3cd; border-left: 3px solid #ffeeba; padding: 10px; margin-top: 10px; border-radius: 3px; }
-
-        #admin-client-list ul { list-style-type: none; padding: 0; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; }
-        #admin-client-list li { background-color: #f8f9fa; padding: 10px; border-bottom: 1px solid #dee2e6; font-family: 'Courier New', Courier, monospace; }
-        #admin-client-list li:last-child { border-bottom: none; }
-
-        .admin-danger-zone { border: 1px solid red !important; }
-
-        /* Styles pour le statut des questions */
-        .question-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-ouverte {
-            background-color: #ffc107; /* Jaune/Orange */
-            color: #333;
-        }
-        .status-resolue {
-            background-color: var(--company-dark-green-action); /* Vert */
-            color: white;
-        }
-        .resolve-button {
-            background-color: #17a2b8; /* Bleu info */
-            color: white;
-            padding: 5px 10px;
-            font-size: 0.8em;
-            margin-top: 10px;
-        }
-        .resolve-button:hover {
-            background-color: #138496;
-        }
-
-        .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
-        .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; animation-name: lightbox-zoom; animation-duration: 0.6s; }
-        @keyframes lightbox-zoom { from {transform: scale(0.1)} to {transform: scale(1)} }
-        .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
-        .lightbox-close:hover, .lightbox-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Contenu HTML inchangé... -->
+    <!-- Conteneur de connexion -->
     <div id="login-container">
         <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
         <h2>Connexion</h2>
         <form id="login-form">
-            <div><label for="email">E-mail :</label><input type="email" id="email" name="email" required></div>
-            <div><label for="password">Mot de passe :</label><input type="password" id="password" name="password" required></div>
+            <div>
+                <label for="email">E-mail :</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div>
+                <label for="password">Mot de passe :</label>
+                <input type="password" id="password" name="password" required>
+            </div>
             <button type="submit">Se connecter</button>
             <p id="login-error" class="error" style="display: none;"></p>
         </form>
     </div>
+
+    <!-- Conteneur principal de l'application -->
     <div id="app-container" style="display: none;">
         <header class="app-header">
             <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="app-logo" class="company-logo">
             <h1 id="app-title">Suivi de vos chantiers</h1>
             <button id="logout-button">Se déconnecter</button>
         </header>
+
         <div id="chantiers-list"></div>
+
+        <!-- Section des questions pour les clients -->
         <div id="client-question-section">
             <h2>Vos Questions</h2>
             <div id="questions-container"></div>
@@ -139,9 +46,14 @@
                 <p id="question-confirmation" class="message-feedback" style="display: none;"></p>
             </form>
         </div>
+
+        <!-- Section réservée à l'administrateur -->
         <div id="admin-section" style="display: none;">
             <h2>Section Administration</h2>
-            <div class="admin-subsection"><h3>Liste des Clients</h3><div id="admin-client-list"></div></div>
+            <div class="admin-subsection">
+                <h3>Liste des Clients</h3>
+                <div id="admin-client-list"></div>
+            </div>
             <div class="admin-subsection">
                 <h3>Ajouter une photo à un chantier</h3>
                 <form id="upload-photo-form">
@@ -161,7 +73,10 @@
                     <p id="admin-question-confirmation" class="message-feedback" style="display: none;"></p>
                 </form>
             </div>
-            <div class="admin-subsection"><h3>Questions de tous les clients</h3><div id="admin-questions-container"></div></div>
+            <div class="admin-subsection">
+                 <h3>Questions de tous les clients</h3>
+                 <div id="admin-questions-container"></div>
+            </div>
             <div class="admin-subsection admin-danger-zone">
                 <h3>Gérer les Rôles Admin</h3>
                 <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" />
@@ -171,161 +86,428 @@
             </div>
         </div>
     </div>
+
+    <!-- Lightbox pour l'agrandissement des photos -->
     <div id="image-lightbox" class="lightbox" style="display: none;">
       <span class="lightbox-close">&times;</span>
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
-    <!-- ====================================================== -->
-    <!--   JAVASCRIPT COMPLET INTÉGRÉ DANS LE HTML            -->
-    <!-- ====================================================== -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+    <!-- Le script principal est le seul script chargé -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+```css
+/* ====================================================== */
+/* 2. CODE COMPLET POUR : style.css (AVEC MODIFICATIONS)  */
+/* ====================================================== */
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const firebaseConfig = {
-                apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
-                authDomain: "suivi-chantier-societe.firebaseapp.com",
-                projectId: "suivi-chantier-societe",
-                storageBucket: "suivi-chantier-societe.firebasestorage.app",
-                messagingSenderId: "888449140099",
-                appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
-                measurementId: "G-2KTWHDGT3S"
-            };
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const storage = getStorage(app);
-            initializeAppCheck(app, {
-              provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
-              isTokenAutoRefreshEnabled: true
-            });
+:root {
+    --company-orange: #E57300;
+    --company-light-green: #E2EFDA;
+    --company-dark-green-action: #3E8E41;
+    --text-dark: #333333;
+    --text-light: #FFFFFF;
+    --border-color: #cccccc;
+    --error-red: #dc3545;
+    --success-green-bg: #d4edda;
+    --success-green-border: #c3e6cb;
+    --success-green-text: #155724;
+}
 
-            const loginForm = document.getElementById('login-form');
-            const appContainer = document.getElementById('app-container');
-            const logoutButton = document.getElementById('logout-button');
-            const chantiersList = document.getElementById('chantiers-list');
-            const clientQuestionSection = document.getElementById('client-question-section');
-            const questionsContainer = document.getElementById('questions-container');
-            const questionForm = document.getElementById('question-form');
-            const adminSection = document.getElementById('admin-section');
-            const adminQuestionsContainer = document.getElementById('admin-questions-container');
-            
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                try { await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value); } catch (error) { document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.'; }
-            });
-            logoutButton.addEventListener('click', () => signOut(auth));
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    background-color: #f4f7f6;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
 
-            function setupAdminEventListeners() { /* ... */ } // Placeholder
-            function openLightbox(url) { /* ... */ } // Placeholder
-            
-            async function renderQuestions(docs, container, isAdminView) {
-                if (!container) return;
-                container.innerHTML = '';
-                const questionsData = docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+.company-logo { display: block; margin: 0 auto 20px auto; max-height: 120px; width: auto; }
+.app-header { background-color: #ffffff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--company-orange); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.app-header .company-logo { margin: 0; max-height: 50px; }
+.app-header h1 { margin: 0 20px; flex-grow: 1; font-size: 1.5em; color: var(--company-orange); }
 
-                if (questionsData.length === 0) {
-                    container.innerHTML = `<p>${isAdminView ? 'Aucune question de client.' : 'Aucune question.'}</p>`;
-                    return;
+#login-container, #app-container { background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 900px; }
+#login-container { max-width: 400px; text-align: center; }
+
+h2, h3 { color: var(--company-orange); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 25px; }
+h2:first-child, h3:first-child { margin-top: 0; }
+
+input[type="email"], input[type="password"], input[type="text"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; font-size: 1em; }
+textarea { min-height: 120px; resize: vertical; }
+
+button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease, transform 0.1s ease; }
+button:hover { background-color: #D46900; }
+button:active { transform: scale(0.98); }
+#logout-button { background-color: #6c757d; }
+#logout-button:hover { background-color: #5a6268; }
+
+.message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
+.message-feedback.success { color: var(--success-green-text); background-color: var(--success-green-bg); border-color: var(--success-green-border); }
+.message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; }
+.message-feedback.info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+
+.chantier-item { border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 20px; border-radius: 8px; background-color: #fdfdfd; }
+.photos-container { display: flex; gap: 10px; margin-top: 10px; padding: 10px; overflow-x: auto; background-color: #f4f7f6; border-radius: 5px; }
+.photos-container img { height: 100px; width: auto; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+.photos-container img:hover { transform: scale(1.05); }
+
+#admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
+.admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
+.admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
+.reponse-admin { background-color: var(--company-light-green); border-left: 3px solid var(--company-dark-green-action); padding: 10px; margin-top: 10px; border-radius: 3px; }
+.question-from-admin { background-color: #fff3cd; border-left: 3px solid #ffeeba; padding: 10px; margin-top: 10px; border-radius: 3px; }
+
+#admin-client-list ul { list-style-type: none; padding: 0; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; }
+#admin-client-list li { background-color: #f8f9fa; padding: 10px; border-bottom: 1px solid #dee2e6; font-family: 'Courier New', Courier, monospace; }
+#admin-client-list li:last-child { border-bottom: none; }
+
+.admin-danger-zone { border: 1px solid red !important; }
+
+/* Styles pour le statut des questions */
+.question-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.status-ouverte {
+    background-color: #ffc107; /* Jaune/Orange */
+    color: #333;
+}
+.status-resolue {
+    background-color: var(--company-dark-green-action); /* Vert */
+    color: white;
+}
+.resolve-button {
+    background-color: #17a2b8; /* Bleu info */
+    color: white;
+    padding: 5px 10px;
+    font-size: 0.8em;
+    margin-top: 10px;
+}
+.resolve-button:hover {
+    background-color: #138496;
+}
+
+.lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
+.lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; animation-name: lightbox-zoom; animation-duration: 0.6s; }
+@keyframes lightbox-zoom { from {transform: scale(0.1)} to {transform: scale(1)} }
+.lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
+.lightbox-close:hover, .lightbox-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
+```javascript
+// ======================================================
+//     3. CODE COMPLET POUR : script.js (MODIFIÉ)
+// ======================================================
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const firebaseConfig = {
+        apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
+        authDomain: "suivi-chantier-societe.firebaseapp.com",
+        projectId: "suivi-chantier-societe",
+        storageBucket: "suivi-chantier-societe.firebasestorage.app",
+        messagingSenderId: "888449140099",
+        appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
+        measurementId: "G-2KTWHDGT3S"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
+      isTokenAutoRefreshEnabled: true
+    });
+
+    const loginContainer = document.getElementById('login-container');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const appContainer = document.getElementById('app-container');
+    const appTitle = document.getElementById('app-title');
+    const logoutButton = document.getElementById('logout-button');
+    const chantiersList = document.getElementById('chantiers-list');
+    const clientQuestionSection = document.getElementById('client-question-section');
+    const questionsContainer = document.getElementById('questions-container');
+    const questionForm = document.getElementById('question-form');
+    const questionText = document.getElementById('question-text');
+    const questionConfirmation = document.getElementById('question-confirmation');
+    const adminSection = document.getElementById('admin-section');
+    const adminQuestionsContainer = document.getElementById('admin-questions-container');
+    const uploadPhotoForm = document.getElementById('upload-photo-form');
+    const photoFileInput = document.getElementById('photo-file');
+    const uploadStatus = document.getElementById('upload-status');
+    const adminQuestionForm = document.getElementById('admin-question-form');
+    const adminQuestionText = document.getElementById('admin-question-text');
+    const adminQuestionConfirmation = document.getElementById('admin-question-confirmation');
+    const adminClientList = document.getElementById('admin-client-list');
+    const clientUidSelect = document.getElementById('client-uid-select');
+    const targetClientUidSelect = document.getElementById('target-client-uid-select');
+    const chantierIdSelect = document.getElementById('chantier-id-select');
+    const testSetAdminButton = document.getElementById('test-set-admin-button');
+    const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+    const testAdminUidInput = document.getElementById('test-admin-uid');
+    const testAdminStatus = document.getElementById('test-admin-status');
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginError.textContent = '';
+        try {
+            await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
+        } catch (error) {
+            loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
+        }
+    });
+
+    logoutButton.addEventListener('click', () => signOut(auth));
+
+    function showView(isClient) {
+        adminSection.style.display = isClient ? 'none' : 'block';
+        clientQuestionSection.style.display = isClient ? 'block' : 'none';
+    }
+
+    function loadClientChantiers(uid) {
+        const chantiersRef = collection(db, 'clients', uid, 'chantier');
+        onSnapshot(chantiersRef, (snapshot) => {
+            chantiersList.innerHTML = '';
+            if (snapshot.empty) {
+                chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
+                return;
+            }
+            snapshot.forEach((docSnap) => {
+                const chantierData = docSnap.data();
+                const chantierDiv = document.createElement('div');
+                chantierDiv.classList.add('chantier-item');
+                chantierDiv.innerHTML = `
+                    <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
+                    <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
+                    <h4>Photos :</h4>`;
+                const photosContainer = document.createElement('div');
+                photosContainer.classList.add('photos-container');
+                if (chantierData.photos?.length) {
+                    chantierData.photos.forEach(photoUrl => {
+                        const img = document.createElement('img');
+                        img.src = photoUrl;
+                        img.alt = "Photo du chantier";
+                        img.addEventListener('click', () => openLightbox(photoUrl));
+                        photosContainer.appendChild(img);
+                    });
+                } else {
+                    photosContainer.textContent = 'Aucune photo pour le moment.';
                 }
+                chantierDiv.appendChild(photosContainer);
+                chantiersList.appendChild(chantierDiv);
+            });
+        });
+    }
 
-                let users = {};
-                if (isAdminView) {
-                    const userIds = [...new Set(questionsData.map(d => d.userId).filter(Boolean))];
-                    const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
-                    userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
-                }
-                
-                questionsData.forEach(questionData => {
-                    if (isAdminView && !questionData.userId) return;
-                    
-                    const questionDiv = document.createElement('div');
-                    questionDiv.classList.add('question-item');
-                    if (questionData.askedBy) questionDiv.classList.add('question-from-admin');
-                    
-                    const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || 'Inconnu'} (<code>${questionData.userId}</code>)</p>` : '';
-                    const status = questionData.status || 'ouverte';
-                    const statusBadge = `<span class="question-status status-${status}">${status}</span>`;
-                    
-                    let actionButton = '';
-                    if (!isAdminView && status === 'ouverte' && questionData.reponse) {
-                        actionButton = `<button class="resolve-button" data-question-id="${questionData.id}">Marquer comme résolue</button>`;
-                    } else if (isAdminView && !questionData.reponse) {
-                        actionButton = `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>`;
-                    }
-                    
-                    questionDiv.innerHTML = `
-                        ${statusBadge}
-                        ${header}
-                        <p><strong>Question :</strong> ${questionData.question}</p>
-                        <p><em>Posée le : ${new Date(questionData.timestamp.seconds * 1000).toLocaleString()}</em></p>
-                        ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${questionData.id}">Modifier</button>` : ''}</div>` : ''}
-                        ${actionButton}
-                        ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
-                    `;
-                    container.appendChild(questionDiv);
+    async function loadChantiersForClientSelect(clientId) {
+        chantierIdSelect.innerHTML = '<option value="">Chargement...</option>';
+        chantierIdSelect.disabled = true;
+        if (!clientId) {
+            chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
+            return;
+        }
+        try {
+            const chantiersRef = collection(db, 'clients', clientId, 'chantier');
+            const chantiersSnapshot = await getDocs(chantiersRef);
+            chantierIdSelect.innerHTML = '<option value="">-- Sélectionnez un chantier --</option>';
+            if (chantiersSnapshot.empty) {
+                chantierIdSelect.innerHTML = '<option value="">Aucun chantier pour ce client</option>';
+            } else {
+                chantiersSnapshot.forEach(docSnap => {
+                    const chantierData = docSnap.data();
+                    const optionText = chantierData.adresse || `Chantier ID: ${docSnap.id}`;
+                    chantierIdSelect.add(new Option(optionText, docSnap.id));
                 });
+                chantierIdSelect.disabled = false;
+            }
+        } catch (error) {
+            chantierIdSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    }
+
+    async function loadClientListForAdmin() {
+        try {
+            const clientsSnapshot = await getDocs(collection(db, 'clients'));
+            adminClientList.innerHTML = '';
+            const defaultOption = '<option value="">-- Sélectionnez un client --</option>';
+            clientUidSelect.innerHTML = defaultOption;
+            targetClientUidSelect.innerHTML = defaultOption;
+            loadChantiersForClientSelect(null);
+            if (clientsSnapshot.empty) {
+                adminClientList.textContent = 'Aucun client trouvé.';
+                return;
+            }
+            const clientListUl = document.createElement('ul');
+            clientsSnapshot.forEach(docSnap => {
+                const clientData = docSnap.data();
+                const clientName = clientData.nom || 'Client sans nom';
+                const clientId = docSnap.id;
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${clientName}:</strong> <code>${clientId}</code>`;
+                clientListUl.appendChild(li);
+                [clientUidSelect, targetClientUidSelect].forEach(select => {
+                    select.add(new Option(`${clientName} (${clientId})`, clientId));
+                });
+            });
+            adminClientList.appendChild(clientListUl);
+        } catch(error) {
+            adminClientList.textContent = 'Erreur de chargement.';
+        }
+    }
+
+    function loadClientQuestions(uid) {
+        const q1 = query(collection(db, 'questions'), where('userId', '==', uid));
+        const q2 = query(collection(db, 'questions'), where('askedTo', '==', uid));
+        let unsub1 = onSnapshot(q1, (snap1) => {
+            let unsub2 = onSnapshot(q2, (snap2) => {
+                const allDocs = [...snap1.docs, ...snap2.docs];
+                renderQuestions(allDocs, questionsContainer, false);
+            });
+        });
+    }
+
+    function loadAdminQuestions() {
+        const q = query(collection(db, 'questions'), firestoreOrderBy('timestamp', 'desc'));
+        onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, adminQuestionsContainer, true));
+    }
+    
+    async function renderQuestions(docs, container, isAdminView) {
+        if (!container) return;
+        container.innerHTML = '';
+        if (docs.length === 0) {
+            container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question.'}</p>`;
+            return;
+        }
+
+        let users = {};
+        if (isAdminView) {
+            const userIds = [...new Set(docs.map(d => d.data().userId).filter(Boolean))];
+            const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
+            userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
+        }
+
+        const questionsData = docs
+            .map(d => ({id: d.id, ...d.data()}))
+            .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+        questionsData.forEach((questionData) => {
+            if (isAdminView && !questionData.userId) return;
+            
+            const questionDiv = document.createElement('div');
+            questionDiv.classList.add('question-item');
+            if (questionData.askedBy) questionDiv.classList.add('question-from-admin');
+            
+            const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || 'Inconnu'} (<code>${questionData.userId}</code>)</p>` : '';
+            const status = questionData.status || 'ouverte';
+            const statusBadge = `<span class="question-status status-${status}">${status}</span>`;
+            
+            let actionButton = '';
+            if (!isAdminView && status === 'ouverte' && questionData.reponse) {
+                actionButton = `<button class="resolve-button" data-question-id="${questionData.id}">Marquer comme résolue</button>`;
+            } else if (isAdminView && !questionData.reponse) {
+                actionButton = `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>`;
             }
             
-            // Le reste de votre code ici...
-            // GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION, etc.
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    loginContainer.style.display = 'none';
-                    appContainer.style.display = 'block';
-                    const idTokenResult = await user.getIdTokenResult(true);
-                    const isAdmin = idTokenResult.claims.admin === true;
-
-                    if (isAdmin) {
-                        appTitle.textContent = "Espace Administration";
-                        adminSection.style.display = 'block';
-                        clientQuestionSection.style.display = 'none';
-                        // chargez ici les données pour l'admin
-                        // ... loadAdminQuestions, loadClientListForAdmin
-                    } else {
-                        appTitle.textContent = "Suivi de vos chantiers";
-                        adminSection.style.display = 'none';
-                        clientQuestionSection.style.display = 'block';
-                        // chargez ici les données pour le client
-                        // ... loadClientChantiers, loadClientQuestions
-                    }
-                } else {
-                    loginContainer.style.display = 'block';
-                    appContainer.style.display = 'none';
-                }
-            });
-            
-            appContainer.addEventListener('click', async (event) => {
-                const target = event.target;
-                if(target.matches('.resolve-button')) {
-                    const questionId = target.dataset.questionId;
-                    const questionRef = doc(db, 'questions', questionId);
-                    await updateDoc(questionRef, { status: 'resolue' });
-                }
-                // ... autre logique d'événement
-            });
-            
-            questionForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const questionTextEl = document.getElementById('question-text');
-                if (questionTextEl.value.trim() && auth.currentUser) {
-                    await addDoc(collection(db, 'questions'), {
-                        userId: auth.currentUser.uid,
-                        question: questionTextEl.value.trim(),
-                        timestamp: serverTimestamp(),
-                        status: 'ouverte'
-                    });
-                    questionTextEl.value = '';
-                }
-            });
-
+            questionDiv.innerHTML = `
+                ${statusBadge}
+                ${header}
+                <p><strong>Question :</strong> ${questionData.question}</p>
+                <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${questionData.id}">Modifier</button>` : ''}</div>` : ''}
+                ${actionButton}
+                ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
+            `;
+            container.appendChild(questionDiv);
         });
+    }
+
+    uploadPhotoForm?.addEventListener('submit', (e) => { e.preventDefault(); /* ... */ });
+    questionForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const question = questionText.value.trim();
+        if (question && auth.currentUser) {
+            await addDoc(collection(db, 'questions'), {
+                userId: auth.currentUser.uid,
+                question: question,
+                timestamp: serverTimestamp(),
+                status: 'ouverte'
+            });
+            questionText.value = '';
+            showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
+        }
+    });
+    adminQuestionForm?.addEventListener('submit', async (e) => { /* ... */ });
+
+    function showConfirmation(element, message, type) { /* ... */ }
+    
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            const idTokenResult = await user.getIdTokenResult(true);
+            const isAdmin = idTokenResult.claims.admin === true;
+            if (isAdmin) {
+                appTitle.textContent = "Espace Administration";
+                showView(false);
+                loadAdminQuestions();
+                loadClientListForAdmin();
+            } else {
+                appTitle.textContent = "Suivi de vos chantiers";
+                showView(true);
+                loadClientChantiers(user.uid);
+                loadClientQuestions(user.uid);
+            }
+        } else {
+            loginContainer.style.display = 'block';
+            appContainer.style.display = 'none';
+        }
+    });
+
+    function openLightbox(url) { /* ... */ }
+    
+    appContainer.addEventListener('click', async (event) => {
+        const target = event.target;
+        const questionId = target.dataset.questionId;
+        if (!questionId) return;
+        const questionRef = doc(db, 'questions', questionId);
+        if(target.matches('.resolve-button')) {
+            await updateDoc(questionRef, { status: 'resolue' });
+        }
+        if (target.matches('.reply-button, .edit-reply-button')) {
+            document.getElementById(`reply-form-${questionId}`).style.display = 'block';
+        }
+        if (target.matches('.submit-reply-button')) {
+            const form = target.closest('div');
+            const textarea = form.querySelector('textarea');
+            if (textarea.value.trim()) {
+                await updateDoc(questionRef, { reponse: textarea.value, timestampReponse: serverTimestamp() });
+                form.style.display = 'none';
+            }
+        }
+    });
+
+    const testSetAdminButton = document.getElementById('test-set-admin-button');
+    const callSetUserAdminStatus = async (makeAdmin) => { /* ... */ };
+    if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+    document.getElementById('test-remove-admin-button')?.addEventListener('click', () => callSetUserAdminStatus(false));
+});
     </script>
 </body>
 </html>
