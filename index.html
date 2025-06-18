@@ -1,5 +1,5 @@
 [⚠️ Suspicious Content] <!-- ====================================================== -->
-<!--   1. CODE COMPLET POUR : index.html (INCHANGÉ)         -->
+<!--   1. CODE COMPLET POUR : index.html (FINAL)            -->
 <!-- ====================================================== -->
 
 <!DOCTYPE html>
@@ -61,19 +61,33 @@
             <div class="admin-subsection">
                 <h3>Ajouter une photo à un chantier</h3>
                 <form id="upload-photo-form">
-                    <div><label for="client-uid-select">Sélectionner un Client :</label><select id="client-uid-select" required></select></div>
-                    <div><label for="chantier-id-select">Sélectionner un Chantier :</label><select id="chantier-id-select" required disabled></select></div>
-                    <div><label for="photo-file">Sélectionner une photo :</label><input type="file" id="photo-file" accept="image/*" required></div>
+                    <div>
+                        <label for="client-uid-select">Sélectionner un Client :</label>
+                        <select id="client-uid-select" required></select>
+                    </div>
+                    <div>
+                        <label for="chantier-id-select">Sélectionner un Chantier :</label>
+                        <select id="chantier-id-select" required disabled></select>
+                    </div>
+                    <div>
+                        <label for="photo-file">Sélectionner une photo :</label>
+                        <input type="file" id="photo-file" accept="image/*" required>
+                    </div>
                     <button type="submit">Envoyer la photo</button>
                     <p id="upload-status" class="message-feedback" style="display: none;"></p>
-                    <div id="progress-bar-container" style="display: none;"><div id="progress-bar"></div></div>
                 </form>
             </div>
             <div class="admin-subsection">
                 <h3>Poser une question à un client</h3>
                 <form id="admin-question-form">
-                     <div><label for="target-client-uid-select">Sélectionner un Client Cible :</label><select id="target-client-uid-select" required></select></div>
-                     <div><label for="admin-question-text">Votre Question :</label><textarea id="admin-question-text" placeholder="Écrivez votre question ici..."></textarea></div>
+                     <div>
+                        <label for="target-client-uid-select">Sélectionner un Client Cible :</label>
+                        <select id="target-client-uid-select" required></select>
+                    </div>
+                     <div>
+                        <label for="admin-question-text">Votre Question :</label>
+                        <textarea id="admin-question-text" placeholder="Écrivez votre question ici..."></textarea>
+                    </div>
                     <button type="submit">Envoyer au client</button>
                     <p id="admin-question-confirmation" class="message-feedback" style="display: none;"></p>
                 </form>
@@ -98,12 +112,13 @@
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
+    <!-- Le script principal est le seul script chargé -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
 ```css
 /* ====================================================== */
-/* 2. CODE COMPLET POUR : style.css (AVEC MODIFICATIONS)  */
+/* 2. CODE COMPLET POUR : style.css (FINAL)               */
 /* ====================================================== */
 
 :root {
@@ -160,7 +175,7 @@ button:active { transform: scale(0.98); }
 #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
 .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
 .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-.question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
+.question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
 .reponse-admin { background-color: var(--company-light-green); border-left: 3px solid var(--company-dark-green-action); padding: 10px; margin-top: 10px; border-radius: 3px; }
 .question-from-admin { background-color: #fff3cd; border-left: 3px solid #ffeeba; padding: 10px; margin-top: 10px; border-radius: 3px; }
 
@@ -170,58 +185,28 @@ button:active { transform: scale(0.98); }
 
 .admin-danger-zone { border: 1px solid red !important; }
 
-#progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 15px; overflow: hidden; }
-#progress-bar { width: 0%; height: 24px; background-color: var(--company-dark-green-action); text-align: center; line-height: 24px; color: white; font-weight: bold; border-radius: 4px; transition: width 0.4s ease; }
-
 .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
 .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; animation-name: lightbox-zoom; animation-duration: 0.6s; }
 @keyframes lightbox-zoom { from {transform: scale(0.1)} to {transform: scale(1)} }
 .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
 .lightbox-close:hover, .lightbox-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
-
-/* NOUVEAU : Styles pour le statut des questions */
-.question-status {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-.status-ouverte {
-    background-color: #ffc107; /* Jaune/Orange */
-    color: #333;
-}
-.status-resolue {
-    background-color: var(--company-dark-green-action); /* Vert */
-    color: white;
-}
-.resolve-button {
-    background-color: #17a2b8; /* Bleu info */
-    color: white;
-    padding: 5px 10px;
-    font-size: 0.8em;
-    margin-top: 10px;
-}
-.resolve-button:hover {
-    background-color: #138496;
-}
 ```javascript
 // ======================================================
-//     3. CODE COMPLET POUR : script.js (MODIFIÉ)
+//     3. CODE COMPLET POUR : script.js (CORRIGÉ)
 // ======================================================
 
+// Importations des fonctions nécessaires depuis les SDK Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
+// On attend que la page soit prête pour lancer l'application
+document.addEventListener('DOMContentLoaded', () => {
 
-function startApp() {
+    // --- Initialisation de Firebase ---
     const firebaseConfig = {
         apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
         authDomain: "suivi-chantier-societe.firebaseapp.com",
@@ -242,6 +227,7 @@ function startApp() {
       isTokenAutoRefreshEnabled: true
     });
 
+    // --- Éléments du DOM ---
     const loginContainer = document.getElementById('login-container');
     const loginForm = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
@@ -266,31 +252,131 @@ function startApp() {
     const clientUidSelect = document.getElementById('client-uid-select');
     const targetClientUidSelect = document.getElementById('target-client-uid-select');
     const chantierIdSelect = document.getElementById('chantier-id-select');
-    const progressBarContainer = document.getElementById('progress-bar-container');
-    const progressBar = document.getElementById('progress-bar');
+    const testSetAdminButton = document.getElementById('test-set-admin-button');
+    const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+    const testAdminUidInput = document.getElementById('test-admin-uid');
+    const testAdminStatus = document.getElementById('test-admin-status');
 
-    loginForm.addEventListener('submit', async (e) => { /* ... */ });
+    // --- Fonctions Login / Logout ---
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginError.textContent = '';
+        try {
+            await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
+        } catch (error) {
+            loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
+        }
+    });
+
     logoutButton.addEventListener('click', () => signOut(auth));
 
-    function showView(isClient) { /* ... */ }
-    function loadClientChantiers(uid) { /* ... */ }
-    async function loadChantiersForClientSelect(clientId) { /* ... */ }
-    async function loadClientListForAdmin() { /* ... */ }
+    // --- Fonctions de chargement de l'UI ---
+    function showView(isClient) {
+        adminSection.style.display = isClient ? 'none' : 'block';
+        clientQuestionSection.style.display = isClient ? 'block' : 'none';
+    }
+
+    function loadClientChantiers(uid) {
+        const chantiersRef = collection(db, 'clients', uid, 'chantier');
+        onSnapshot(chantiersRef, (snapshot) => {
+            chantiersList.innerHTML = '';
+            if (snapshot.empty) {
+                chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
+                return;
+            }
+            snapshot.forEach((docSnap) => {
+                const chantierData = docSnap.data();
+                const chantierDiv = document.createElement('div');
+                chantierDiv.classList.add('chantier-item');
+                chantierDiv.innerHTML = `
+                    <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
+                    <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
+                    <h4>Photos :</h4>`;
+                const photosContainer = document.createElement('div');
+                photosContainer.classList.add('photos-container');
+                if (chantierData.photos?.length) {
+                    chantierData.photos.forEach(photoUrl => {
+                        const img = document.createElement('img');
+                        img.src = photoUrl;
+                        img.alt = "Photo du chantier";
+                        img.addEventListener('click', () => openLightbox(photoUrl));
+                        photosContainer.appendChild(img);
+                    });
+                } else {
+                    photosContainer.textContent = 'Aucune photo pour le moment.';
+                }
+                chantierDiv.appendChild(photosContainer);
+                chantiersList.appendChild(chantierDiv);
+            });
+        });
+    }
+
+    async function loadChantiersForClientSelect(clientId) {
+        chantierIdSelect.innerHTML = '<option value="">Chargement...</option>';
+        chantierIdSelect.disabled = true;
+        if (!clientId) {
+            chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
+            return;
+        }
+        try {
+            const chantiersRef = collection(db, 'clients', clientId, 'chantier');
+            const chantiersSnapshot = await getDocs(chantiersRef);
+            chantierIdSelect.innerHTML = '<option value="">-- Sélectionnez un chantier --</option>';
+            if (chantiersSnapshot.empty) {
+                chantierIdSelect.innerHTML = '<option value="">Aucun chantier pour ce client</option>';
+            } else {
+                chantiersSnapshot.forEach(docSnap => {
+                    const chantierData = docSnap.data();
+                    const optionText = chantierData.adresse || `Chantier ID: ${docSnap.id}`;
+                    chantierIdSelect.add(new Option(optionText, docSnap.id));
+                });
+                chantierIdSelect.disabled = false;
+            }
+        } catch (error) {
+            chantierIdSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    }
+
+    async function loadClientListForAdmin() {
+        try {
+            const clientsSnapshot = await getDocs(collection(db, 'clients'));
+            adminClientList.innerHTML = '';
+            const defaultOption = '<option value="">-- Sélectionnez un client --</option>';
+            clientUidSelect.innerHTML = defaultOption;
+            targetClientUidSelect.innerHTML = defaultOption;
+            loadChantiersForClientSelect(null);
+            if (clientsSnapshot.empty) {
+                adminClientList.textContent = 'Aucun client trouvé.';
+                return;
+            }
+            const clientListUl = document.createElement('ul');
+            clientsSnapshot.forEach(docSnap => {
+                const clientData = docSnap.data();
+                const clientName = clientData.nom || 'Client sans nom';
+                const clientId = docSnap.id;
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${clientName}:</strong> <code>${clientId}</code>`;
+                clientListUl.appendChild(li);
+                [clientUidSelect, targetClientUidSelect].forEach(select => {
+                    select.add(new Option(`${clientName} (${clientId})`, clientId));
+                });
+            });
+            adminClientList.appendChild(clientListUl);
+        } catch(error) {
+            adminClientList.textContent = 'Erreur de chargement.';
+        }
+    }
 
     async function loadClientQuestions(uid) {
-        const q1 = query(collection(db, 'questions'), where('userId', '==', uid));
-        const q2 = query(collection(db, 'questions'), where('askedTo', '==', uid));
-        onSnapshot(q1, (snap1) => onSnapshot(q2, (snap2) => {
-            const allDocs = [...snap1.docs, ...snap2.docs];
-            renderQuestions(allDocs, questionsContainer, false);
-        }));
+        const q = query(collection(db, 'questions'), where('userId', '==', uid));
+        onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, questionsContainer, false));
     }
 
     async function loadAdminQuestions() {
         const q = query(collection(db, 'questions'), firestoreOrderBy('timestamp', 'desc'));
         onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, adminQuestionsContainer, true));
     }
-    
+
     async function renderQuestions(docs, container, isAdminView) {
         if (!container) return;
         container.innerHTML = '';
@@ -298,67 +384,32 @@ function startApp() {
             container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question.'}</p>`;
             return;
         }
-
         let users = {};
         if (isAdminView) {
             const userIds = [...new Set(docs.map(d => d.data().userId).filter(Boolean))];
             const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
             userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
         }
-
-        const questionsData = docs
+        const questionPromises = docs
             .map(d => ({id: d.id, ...d.data()}))
-            .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-        questionsData.forEach((questionData) => {
-            if (isAdminView && !questionData.userId) return;
-
-            const questionDiv = document.createElement('div');
-            questionDiv.classList.add('question-item');
-            if (questionData.askedBy) questionDiv.classList.add('question-from-admin');
-            
-            const clientName = isAdminView ? users[questionData.userId] : '';
-            const header = isAdminView ? `<p><strong>Client :</strong> ${clientName} (<code>${questionData.userId}</code>)</p>` : '';
-            
-            const status = questionData.status || 'ouverte';
-            const statusBadge = `<span class="question-status status-${status}">${status}</span>`;
-            
-            let actionButton = '';
-            if (!isAdminView && status === 'ouverte' && questionData.reponse) {
-                actionButton = `<button class="resolve-button" data-question-id="${questionData.id}">Marquer comme résolue</button>`;
-            } else if (isAdminView && !questionData.reponse) {
-                actionButton = `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>`;
-            }
-
-            questionDiv.innerHTML = `
-                ${statusBadge}
-                ${header}
-                <p><strong>Question :</strong> ${questionData.question}</p>
-                <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${questionData.id}">Modifier</button>` : ''}</div>` : ''}
-                ${actionButton}
-                ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
-            `;
-            container.appendChild(questionDiv);
-        });
+            .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
+            .map(async (questionData) => {
+                if (isAdminView && !questionData.userId) return '';
+                const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
+                return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
+                            ${header}
+                            <p><strong>Question :</strong> ${questionData.question}</p>
+                            <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                            ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${questionData.id}">Modifier</button>` : ''}</div>` : 
+                            (isAdminView ? `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
+                            ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
+                        </div>`;
+            });
+        container.innerHTML = (await Promise.all(questionPromises)).join('');
     }
 
-    questionForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const question = questionText.value.trim();
-        if (question && auth.currentUser) {
-            await addDoc(collection(db, 'questions'), {
-                userId: auth.currentUser.uid,
-                question: question,
-                timestamp: serverTimestamp(),
-                status: 'ouverte' // NOUVEAU : Statut par défaut
-            });
-            questionText.value = '';
-            showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
-        }
-    });
-
-    uploadPhotoForm?.addEventListener('submit', (e) => { 
+    // --- Écouteurs d'événements pour les formulaires ---
+    uploadPhotoForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const clientUid = clientUidSelect.value;
         const chantierId = chantierIdSelect.value;
@@ -367,53 +418,53 @@ function startApp() {
             showConfirmation(uploadStatus, 'Veuillez sélectionner un client, un chantier et un fichier.', 'error');
             return;
         }
-        const storageRef = ref(storage, `chantier-photos/${chantierId}/${Date.now()}-${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        uploadStatus.style.display = 'none';
-        progressBarContainer.style.display = 'block';
-        progressBar.style.width = '0%';
-        progressBar.textContent = '0%';
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressBar.style.width = progress + '%';
-            progressBar.textContent = Math.round(progress) + '%';
-          }, 
-          (error) => {
-            showConfirmation(uploadStatus, 'Erreur : ' + error.code, 'error');
-            progressBarContainer.style.display = 'none';
-          }, 
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-              const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId);
-              await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
-              showConfirmation(uploadStatus, 'Photo uploadée avec succès !', 'success');
-              uploadPhotoForm.reset();
-              setTimeout(() => { progressBarContainer.style.display = 'none'; }, 2000);
-            });
-          }
-        );
+        showConfirmation(uploadStatus, 'Vérification...', 'info');
+        try {
+            const chantierRef = doc(db, 'clients', clientUid, 'chantier', chantierId);
+            const docSnap = await firebaseGetDoc(chantierRef);
+            if (!docSnap.exists()) throw new Error("Le chantier sélectionné n'existe pas.");
+            const storageRef = ref(storage, `chantier-photos/${chantierId}/${Date.now()}-${file.name}`);
+            showConfirmation(uploadStatus, 'Upload en cours...', 'info');
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
+            showConfirmation(uploadStatus, 'Photo uploadée avec succès !', 'success');
+            uploadPhotoForm.reset();
+            chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
+            chantierIdSelect.disabled = true;
+        } catch (error) {
+            showConfirmation(uploadStatus, 'Erreur : ' + error.message, 'error');
+        }
     });
-
+    questionForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const question = questionText.value.trim();
+        if (question && auth.currentUser) {
+            await addDoc(collection(db, 'questions'), { userId: auth.currentUser.uid, question: question, timestamp: serverTimestamp() });
+            questionText.value = '';
+            showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
+        }
+    });
     adminQuestionForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const question = adminQuestionText.value.trim();
         const targetUid = targetClientUidSelect.value;
         if (question && targetUid && auth.currentUser) {
-            await addDoc(collection(db, 'questions'), {
-                askedBy: auth.currentUser.uid,
-                askedTo: targetUid,
-                question: question,
-                timestamp: serverTimestamp(),
-                status: 'ouverte'
-            });
+            await addDoc(collection(db, 'questions'), { askedBy: auth.currentUser.uid, askedTo: targetUid, question: question, timestamp: serverTimestamp() });
             adminQuestionText.value = '';
             showConfirmation(adminQuestionConfirmation, 'Question envoyée au client.', 'success');
         }
     });
 
-    function showConfirmation(element, message, type) { /* ... */ }
+    function showConfirmation(element, message, type) {
+        if (!element) return;
+        element.textContent = message;
+        element.className = `message-feedback ${type}`;
+        element.style.display = 'block';
+        setTimeout(() => { element.style.display = 'none'; }, 4000);
+    }
 
+    // --- GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION ---
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             loginContainer.style.display = 'none';
@@ -437,7 +488,15 @@ function startApp() {
         }
     });
 
-    function openLightbox(url) { /* ... */ }
+    // --- GESTION LIGHTBOX & ADMIN ---
+    function openLightbox(url) {
+        const lightbox = document.getElementById('image-lightbox');
+        const lightboxImg = document.getElementById('lightbox-image');
+        if (lightbox && lightboxImg) {
+            lightbox.style.display = "flex";
+            lightboxImg.src = url;
+        }
+    }
 
     const lightbox = document.getElementById('image-lightbox');
     const closeBtn = document.querySelector('.lightbox-close');
@@ -448,12 +507,11 @@ function startApp() {
         loadChantiersForClientSelect(clientUidSelect.value);
     });
   
-    appContainer.addEventListener('click', async (event) => {
+    adminQuestionsContainer?.addEventListener('click', async (event) => {
         const target = event.target;
         const questionId = target.dataset.questionId;
         if (!questionId) return;
         const questionRef = doc(db, 'questions', questionId);
-
         if (target.matches('.reply-button, .edit-reply-button')) {
             const form = document.getElementById(`reply-form-${questionId}`);
             if (form) form.style.display = 'block';
@@ -466,15 +524,13 @@ function startApp() {
                 form.style.display = 'none';
             }
         }
-        if (target.matches('.resolve-button')) {
-            await updateDoc(questionRef, { status: 'resolue' });
-        }
     });
 
+    // --- GESTION ZONE DE TEST ADMIN ---
     const callSetUserAdminStatus = async (makeAdmin) => {
         const user = auth.currentUser;
         if (!user) { testAdminStatus.textContent = "Erreur : Vous devez être connecté."; return; }
-        const targetAdminUID = document.getElementById('test-admin-uid').value.trim();
+        const targetAdminUID = testAdminUidInput.value.trim();
         if (!targetAdminUID) { testAdminStatus.textContent = "Erreur : UID cible manquant."; return; }
         testAdminStatus.textContent = "Appel en cours...";
         try {
@@ -487,15 +543,9 @@ function startApp() {
             });
             if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
             const result = await response.json();
-            document.getElementById('test-admin-status').textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
-        } catch (error) { document.getElementById('test-admin-status').textContent = "Erreur : " + error.message; }
+            testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
+        } catch (error) { testAdminStatus.textContent = "Erreur : " + error.message; }
     };
-    document.getElementById('test-set-admin-button').addEventListener('click', () => callSetUserAdminStatus(true));
-    document.getElementById('test-remove-admin-button').addEventListener('click', () => callSetUserAdminStatus(false));
-}
-
-startApp();
-
-    </script>
-</body>
-</html>
+    if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+    if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
+});
