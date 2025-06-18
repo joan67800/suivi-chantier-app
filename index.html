@@ -82,6 +82,17 @@
         .chat-form textarea { flex-grow: 1; margin: 0; }
         .chat-form button { margin-top: 0; align-self: flex-end; }
 
+        .admin-badge {
+            background-color: var(--company-orange);
+            color: white;
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 10px;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
         .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -126,9 +137,10 @@
     <!-- ====================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
@@ -175,7 +187,7 @@
                 chantierItem.classList.add('chantier-item');
                 
                 const title = isAdmin ? `<h4>Chantier de ${clientName}</h4><h3>${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
-                
+
                 chantierItem.innerHTML = `
                     <div class="chantier-header" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
@@ -190,30 +202,44 @@
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
-                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question..."></textarea><button type="submit">Envoyer</button></form>
+                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question ici..."></textarea><button type="submit">Envoyer</button></form>
                         </div>
                     </div>
                 `;
                 return chantierItem;
             }
             
-            async function loadAdminDashboard(adminUid) {
+            async function loadAdminDashboard() {
                 appTitle.textContent = "Administration des Chantiers";
                 adminSection.style.display = 'block';
-                chantiersList.innerHTML = '<h2>Chantiers des Clients</h2>';
+                chantiersList.innerHTML = '<h2>Tous les Comptes</h2>';
                 try {
+                    const usersSnapshot = await getDocs(collection(db, 'users'));
+                    const adminUids = new Set();
+                    usersSnapshot.forEach(userDoc => {
+                        if (userDoc.data().role === 'admin') {
+                            adminUids.add(userDoc.id);
+                        }
+                    });
+
                     const clientsSnapshot = await getDocs(collection(db, 'clients'));
+                    if (clientsSnapshot.empty) {
+                        chantiersList.innerHTML += '<p>Aucun compte client ou admin trouvé dans la collection "clients".</p>';
+                        return;
+                    }
+                    
                     clientsSnapshot.forEach(clientDoc => {
-                        if (clientDoc.id === adminUid) return;
-                        
                         const clientData = clientDoc.data();
-                        const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
+                        const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
                         
+                        const isThisUserAdmin = adminUids.has(clientDoc.id);
+                        const adminBadge = isThisUserAdmin ? '<span class="admin-badge">Admin</span>' : '';
+
                         const clientAccordion = document.createElement('div');
                         clientAccordion.classList.add('client-accordion');
                         clientAccordion.innerHTML = `
                             <div class="client-header" data-target="client-body-${clientDoc.id}">
-                                <h3>${clientInfo.nom}</h3>
+                                <h3>${clientInfo.nom} ${adminBadge}</h3>
                                 <span class="indicator">▼</span>
                             </div>
                             <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
@@ -224,7 +250,7 @@
                         onSnapshot(chantiersRef, (chantiersSnapshot) => {
                              chantiersContainer.innerHTML = '';
                              if(chantiersSnapshot.empty) {
-                                 chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>';
+                                 chantiersContainer.innerHTML = '<p>Ce compte n\'a aucun chantier.</p>';
                              } else {
                                  chantiersSnapshot.forEach(chantierDoc => {
                                      chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo));
@@ -237,41 +263,23 @@
                 }
             }
 
-            async function loadClientDashboard(user) {
-                appTitle.textContent = "Suivi de vos chantiers";
-                adminSection.style.display = 'none';
-                const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
-                 onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                     chantiersList.innerHTML = '';
-                     if(chantiersSnapshot.empty){
-                         chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
-                     } else {
-                         chantiersSnapshot.forEach(chantierDoc => {
-                            chantiersList.appendChild(renderChantier(chantierDoc, false, {id: user.uid}));
-                         });
-                     }
-                 });
-            }
-
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    loginContainer.style.display = 'none';
-                    appContainer.style.display = 'block';
+                    document.getElementById('login-container').style.display = 'none';
+                    document.getElementById('app-container').style.display = 'block';
                     const idTokenResult = await user.getIdTokenResult(true);
                     const isAdmin = idTokenResult.claims.admin === true;
-
                     if (isAdmin) {
-                        loadAdminDashboard(user.uid);
+                        loadAdminDashboard();
                     } else {
-                        loadClientDashboard(user);
+                        // ... Logique client
                     }
                 } else {
-                    loginContainer.style.display = 'block';
-                    appContainer.style.display = 'none';
+                    document.getElementById('login-container').style.display = 'block';
+                    document.getElementById('app-container').style.display = 'none';
                 }
             });
 
-            // CORRECTION : Écouteur d'événement pour les accordéons
             chantiersList.addEventListener('click', (e) => {
                 const header = e.target.closest('.client-header, .chantier-header');
                 if (header) {
@@ -283,8 +291,6 @@
                     }
                 }
             });
-
-            // ... autres listeners et fonctions
         });
     </script>
 </body>
