@@ -66,8 +66,7 @@
         .photos-container img:hover { transform: scale(1.05); }
 
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
-        .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
-        .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+        .admin-danger-zone { border: 1px solid red !important; padding: 15px; margin-top: 20px; }
 
         .chat-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
         .chat-box { max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
@@ -105,26 +104,7 @@
         <div id="chantiers-list"></div>
         <div id="admin-section" style="display: none;">
             <h2>Outils d'Administration</h2>
-            <div class="admin-subsection">
-                <h3>Créer un Nouveau Client</h3>
-                <form id="create-client-form">
-                    <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
-                    <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
-                    <div><label for="new-client-password">Mot de passe initial :</label><input type="text" id="new-client-password" required></div>
-                    <button type="submit">Créer le Client</button>
-                    <p id="create-client-status" class="message-feedback" style="display: none;"></p>
-                </form>
-            </div>
-            <div class="admin-subsection">
-                <h3>Ajouter un Nouveau Chantier</h3>
-                <form id="add-chantier-form">
-                    <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
-                    <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
-                    <button type="submit">Ajouter le Chantier</button>
-                    <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
-                </form>
-            </div>
-            <div class="admin-subsection admin-danger-zone">
+            <div class="admin-danger-zone">
                 <h3>Gérer les Rôles Admin</h3>
                 <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" />
                 <button id="test-set-admin-button">Rendre Admin</button>
@@ -143,28 +123,60 @@
     <!-- ====================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
-        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
-            const firebaseConfig = { /* ... votre config ... */ };
+            const firebaseConfig = {
+                apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
+                authDomain: "suivi-chantier-societe.firebaseapp.com",
+                projectId: "suivi-chantier-societe",
+                storageBucket: "suivi-chantier-societe.firebasestorage.app",
+                messagingSenderId: "888449140099",
+                appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
+            };
+
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
-            initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'), isTokenAutoRefreshEnabled: true });
+
+            initializeAppCheck(app, {
+              provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
+              isTokenAutoRefreshEnabled: true
+            });
 
             const loginContainer = document.getElementById('login-container');
+            const loginForm = document.getElementById('login-form');
+            const loginError = document.getElementById('login-error');
+            const appContainer = document.getElementById('app-container');
+            const appTitle = document.getElementById('app-title');
+            const logoutButton = document.getElementById('logout-button');
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
-            const appTitle = document.getElementById('app-title');
+            const testSetAdminButton = document.getElementById('test-set-admin-button');
+            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+            const testAdminUidInput = document.getElementById('test-admin-uid');
+            const testAdminStatus = document.getElementById('test-admin-status');
 
-            function renderChantier(chantierDoc, isAdmin, clientInfo) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loginError.textContent = '';
+                try {
+                    await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
+                } catch (error) {
+                    loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
+                }
+            });
+
+            logoutButton.addEventListener('click', () => signOut(auth));
+
+            function renderChantier(chantierDoc, isAdmin, clientInfo = {}) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
-                const clientId = clientInfo.id;
-                
+                const clientId = clientInfo.id || chantierDoc.ref.parent.parent.id;
+                const clientName = clientInfo.nom || '';
+
                 let chantierWrapper = document.getElementById(`chantier-${chantierId}`);
                 if (!chantierWrapper) {
                     chantierWrapper = document.createElement('div');
@@ -173,50 +185,105 @@
                     chantiersList.appendChild(chantierWrapper);
                 }
                 
-                const title = isAdmin ? `<h4>Client : ${clientInfo.nom}</h4><h3>Chantier : ${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
+                const title = isAdmin ? `<h4>Client : ${clientName}</h4><h3>Chantier : ${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
 
                 chantierWrapper.innerHTML = `
                     <div class="chantier-header" data-chantier-id="${chantierId}">
                         <div class="title-content">${title}</div>
+                        <span class="notification-dot" style="display: none;"></span>
                         <span class="indicator">▼</span>
                     </div>
                     <div class="chantier-body" id="body-${chantierId}">
-                        <div class="chantier-details" id="details-display-${chantierId}">
-                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
-                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                            ${isAdmin ? `<button class="edit-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Modifier les détails</button>` : ''}
-                        </div>
-                        <div class="chantier-edit-form" id="edit-form-${chantierId}" style="display:none;">
-                            <label>Jours d'intervention (séparés par une virgule):</label>
-                            <input type="text" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
-                            <label>Avancement (%):</label>
-                            <input type="number" min="0" max="100" value="${chantierData.pourcentageAvancement || 0}">
-                            <button class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
-                            <button type="button" class="cancel-edit-button">Annuler</button>
-                        </div>
+                        <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                         <h4>Photos :</h4>
                         <div class="photos-container">
-                           ${(chantierData.photos && chantierData.photos.length) ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier">`).join('') : 'Aucune photo pour le moment.'}
+                            ${(chantierData.photos && chantierData.photos.length) ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier">`).join('') : 'Aucune photo pour le moment.'}
                         </div>
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
-                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question..."></textarea><button type="submit">Envoyer</button></form>
+                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                                <textarea required placeholder="Posez votre question ici..."></textarea>
+                                <button type="submit">Envoyer</button>
+                            </form>
                         </div>
-                    </div>`;
+                    </div>
+                `;
                 listenForChatMessages(clientId, chantierId, isAdmin);
             }
-            
-            async function loadClientListForAdmin() {
-                const clientsSnapshot = await getDocs(collection(db, 'clients'));
-                const addChantierSelect = document.getElementById('add-chantier-client-select');
-                addChantierSelect.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
-                clientsSnapshot.forEach(docSnap => {
-                    const clientData = docSnap.data();
-                    const clientName = clientData.nom || 'Client sans nom';
-                    addChantierSelect.add(new Option(`${clientName} (${docSnap.id})`, docSnap.id));
+
+            function listenForChatMessages(clientId, chantierId, isAdmin) {
+                const chatBox = document.getElementById(`chat-box-${chantierId}`);
+                const q = query(collection(db, 'clients', clientId, 'chantier', chantierId, 'questions'), firestoreOrderBy('timestamp', 'asc'));
+                
+                onSnapshot(q, (snapshot) => {
+                    if (!chatBox) return;
+                    chatBox.innerHTML = '';
+                    if (snapshot.empty) {
+                        chatBox.innerHTML = '<p>Aucun message. Soyez le premier à poser une question !</p>';
+                        return;
+                    }
+                    snapshot.forEach(doc => {
+                        const messageData = doc.data();
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('chat-message');
+                        
+                        const senderIsAdmin = messageData.author === 'admin';
+                        let messageClass = senderIsAdmin ? 'message-received' : 'message-sent';
+                        if (isAdmin) {
+                            messageClass = senderIsAdmin ? 'message-sent' : 'message-received';
+                        }
+                        messageDiv.classList.add(messageClass);
+
+                        messageDiv.innerHTML = `<p>${messageData.text}</p><div class="meta">${new Date(messageData.timestamp.seconds * 1000).toLocaleString()}</div>`;
+                        chatBox.appendChild(messageDiv);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    
+                    const chantierBody = document.getElementById(`body-${chantierId}`);
+                    if (chantierBody && chantierBody.style.display === 'none') {
+                        const lastMessage = snapshot.docs[snapshot.docs.length - 1]?.data();
+                        if (lastMessage) {
+                            const lastMessageFromOther = (isAdmin && lastMessage.author !== 'admin') || (!isAdmin && lastMessage.author === 'admin');
+                            if (lastMessageFromOther) {
+                                const header = document.querySelector(`.chantier-header[data-chantier-id="${chantierId}"]`);
+                                const notifDot = header?.querySelector('.notification-dot');
+                                if (notifDot) notifDot.style.display = 'inline-block';
+                            }
+                        }
+                    }
                 });
             }
+
+            chantiersList.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!e.target.matches('.chat-form')) return;
+                const form = e.target;
+                const textarea = form.querySelector('textarea');
+                const text = textarea.value.trim();
+                const { chantierId, clientId } = form.dataset;
+                if (text && auth.currentUser) {
+                    const idTokenResult = await auth.currentUser.getIdTokenResult();
+                    const messageData = { text: text, author: idTokenResult.claims.admin ? 'admin' : auth.currentUser.uid, timestamp: serverTimestamp() };
+                    await addDoc(collection(db, 'clients', clientId, 'chantier', chantierId, 'questions'), messageData);
+                    textarea.value = '';
+                }
+            });
+            
+            chantiersList.addEventListener('click', (e) => {
+                if (e.target.tagName === 'IMG') {
+                    openLightbox(e.target.src);
+                    return;
+                }
+                const header = e.target.closest('.chantier-header');
+                if (header) {
+                    const notifDot = header.querySelector('.notification-dot');
+                    if (notifDot) notifDot.style.display = 'none';
+                    header.classList.toggle('is-open');
+                    const body = header.nextElementSibling;
+                    body.style.display = body.style.display === 'block' ? 'none' : 'block';
+                }
+            });
 
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
@@ -231,14 +298,20 @@
                         adminSection.style.display = 'block';
                         const clientsSnapshot = await getDocs(collection(db, 'clients'));
                         clientsSnapshot.forEach(clientDoc => {
+                            if (clientDoc.id === user.uid) return;
+                            
                             const clientData = clientDoc.data();
                             const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
+                            
                             const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
                             onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                                 chantiersSnapshot.forEach(chantierDoc => renderChantier(chantierDoc, true, clientInfo));
+                                 chantiersSnapshot.forEach(chantierDoc => {
+                                    if(!document.getElementById(`chantier-${chantierDoc.id}`)){
+                                        renderChantier(chantierDoc, true, clientInfo);
+                                    }
+                                 });
                             });
                         });
-                        loadClientListForAdmin();
                     } else {
                         appTitle.textContent = "Suivi de vos chantiers";
                         adminSection.style.display = 'none';
@@ -248,7 +321,9 @@
                              if(chantiersSnapshot.empty){
                                  chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
                              } else {
-                                 chantiersSnapshot.forEach(chantierDoc => renderChantier(chantierDoc, false, {id: user.uid}));
+                                 chantiersSnapshot.forEach(chantierDoc => {
+                                    renderChantier(chantierDoc, false, {id: user.uid});
+                                 });
                              }
                          });
                     }
@@ -258,35 +333,46 @@
                 }
             });
 
-            chantiersList.addEventListener('click', (e) => {
-                const header = e.target.closest('.chantier-header');
-                if (header) { /* ... logique accordéon ... */ }
-                
-                const target = e.target;
-                if(target.matches('.edit-chantier-button')) {
-                    const chantierId = target.dataset.chantierId;
-                    document.getElementById(`details-display-${chantierId}`).style.display = 'none';
-                    document.getElementById(`edit-form-${chantierId}`).style.display = 'block';
+            function openLightbox(url) {
+                const lightbox = document.getElementById('image-lightbox');
+                const lightboxImg = document.getElementById('lightbox-image');
+                if (lightbox && lightboxImg) {
+                    lightbox.style.display = "flex";
+                    lightboxImg.src = url;
                 }
-                if(target.matches('.cancel-edit-button')) {
-                    const chantierId = target.closest('.chantier-edit-form').id.replace('edit-form-', '');
-                    document.getElementById(`details-display-${chantierId}`).style.display = 'block';
-                    document.getElementById(`edit-form-${chantierId}`).style.display = 'none';
+            }
+
+            const lightbox = document.getElementById('image-lightbox');
+            const closeBtn = document.querySelector('.lightbox-close');
+            if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
+            if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
+
+            const callSetUserAdminStatus = async (makeAdmin) => {
+                const user = auth.currentUser;
+                const targetAdminUID = document.getElementById('test-admin-uid').value.trim();
+                const testAdminStatus = document.getElementById('test-admin-status');
+                if (!user || !targetAdminUID) {
+                    testAdminStatus.textContent = "Connectez-vous et entrez un UID.";
+                    return;
                 }
-                if(target.matches('.save-chantier-button')) {
-                    const chantierId = target.dataset.chantierId;
-                    const clientId = target.dataset.clientId;
-                    const form = target.closest('.chantier-edit-form');
-                    const jours = form.querySelector('input[type="text"]').value.split(',').map(s => s.trim()).filter(Boolean);
-                    const avancement = form.querySelector('input[type="number"]').value;
-                    const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
-                    updateDoc(chantierRef, { joursIntervention: jours, pourcentageAvancement: Number(avancement) });
-                    form.style.display = 'none';
-                    document.getElementById(`details-display-${chantierId}`).style.display = 'block';
+                testAdminStatus.textContent = "Appel en cours...";
+                try {
+                    const idToken = await user.getIdToken();
+                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
+                    const response = await fetch(functionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
+                    });
+                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
+                    const result = await response.json();
+                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
+                } catch (error) {
+                    testAdminStatus.textContent = "Erreur : " + error.message;
                 }
-            });
-            
-            // Le reste de votre code JavaScript...
+            };
+            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
+            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
         });
     </script>
 </body>
