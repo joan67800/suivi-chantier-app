@@ -50,7 +50,8 @@
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
         
         .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
-        .client-accordion > .chantier-header, .chantier-header { cursor: pointer; padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
+        .client-accordion, .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
+        .client-header, .chantier-header { cursor: pointer; padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
         .client-header { background-color: #e2efda; border-bottom: 2px solid var(--company-dark-green-action); }
         .chantier-header { background-color: #f8f9fa; margin: 0 15px 15px 15px; border: 1px solid #eee; }
         .client-header:hover, .chantier-header:hover { background-color: #e9ecef; }
@@ -140,12 +141,14 @@
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
+    <!-- ====================================================== -->
+    <!--   JAVASCRIPT COMPLET INTÉGRÉ DANS LE HTML            -->
+    <!-- ====================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
-        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
@@ -156,6 +159,7 @@
                 messagingSenderId: "888449140099",
                 appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
             };
+
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
@@ -171,8 +175,7 @@
             const adminSection = document.getElementById('admin-section');
             const appTitle = document.getElementById('app-title');
 
-            const loginForm = document.getElementById('login-form');
-            loginForm.addEventListener('submit', async (e) => {
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 document.getElementById('login-error').textContent = '';
                 try {
@@ -190,12 +193,12 @@
                 const clientId = clientInfo.id;
                 const clientName = clientInfo.nom;
 
-                const chantierWrapper = document.createElement('div');
-                chantierWrapper.classList.add('chantier-item');
+                const chantierItem = document.createElement('div');
+                chantierItem.classList.add('chantier-item');
                 
                 const title = isAdmin ? `<h4>Client : ${clientName}</h4><h3>Chantier : ${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
 
-                chantierWrapper.innerHTML = `
+                chantierItem.innerHTML = `
                     <div class="chantier-header" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
                         <span class="indicator">▼</span>
@@ -211,9 +214,8 @@
                             <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
                             <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question..."></textarea><button type="submit">Envoyer</button></form>
                         </div>
-                    </div>
-                `;
-                return chantierWrapper;
+                    </div>`;
+                return chantierItem;
             }
             
             async function loadAdminDashboard(adminUid) {
@@ -223,6 +225,7 @@
                 const clientsSnapshot = await getDocs(collection(db, 'clients'));
                 clientsSnapshot.forEach(clientDoc => {
                     if (clientDoc.id === adminUid) return;
+                    
                     const clientData = clientDoc.data();
                     const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
                     
@@ -267,7 +270,18 @@
                 }
             });
 
-            // ... le reste de votre JavaScript
+            chantiersList.addEventListener('click', (e) => {
+                const header = e.target.closest('.client-header, .chantier-header');
+                if (header) {
+                    const body = document.getElementById(header.dataset.target);
+                    if (body) {
+                        const isOpen = body.style.display === 'block';
+                        body.style.display = isOpen ? 'none' : 'block';
+                        header.classList.toggle('is-open', !isOpen);
+                    }
+                }
+            });
+            // ... autres listeners et fonctions
         });
     </script>
 </body>
