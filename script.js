@@ -1,15 +1,12 @@
-[⚠️ Suspicious Content] import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-// CORRECTION : `arrayUnion` est importé depuis `firebase/firestore`
-import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+[⚠️ Suspicious Content] // Importations des fonctions nécessaires depuis les SDK Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// CORRECTION : On importe `uploadBytesResumable` pour la barre de progression
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
-
-// Toute la logique de l'application est encapsulée ici
-// pour s'assurer qu'elle ne s'exécute qu'une fois le DOM prêt.
+// On attend que la page soit prête pour lancer l'application
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialisation de Firebase ---
@@ -29,9 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const storage = getStorage(app);
 
     // Initialisation d'App Check
-    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-    }
     initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
       isTokenAutoRefreshEnabled: true
@@ -62,6 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const clientUidSelect = document.getElementById('client-uid-select');
     const targetClientUidSelect = document.getElementById('target-client-uid-select');
     const chantierIdSelect = document.getElementById('chantier-id-select');
+    const testSetAdminButton = document.getElementById('test-set-admin-button');
+    const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+    const testAdminUidInput = document.getElementById('test-admin-uid');
+    const testAdminStatus = document.getElementById('test-admin-status');
 
 
     // --- Fonctions Login / Logout ---
@@ -177,42 +175,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadClientQuestions(uid) {
         const q = query(collection(db, 'questions'), where('userId', '==', uid));
-        onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, questionsContainer, false));
+        onSnapshot(q, (snapshot) => renderQuestions(snapshot, questionsContainer, false));
     }
 
     async function loadAdminQuestions() {
         const q = query(collection(db, 'questions'), firestoreOrderBy('timestamp', 'desc'));
-        onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, adminQuestionsContainer, true));
+        onSnapshot(q, (snapshot) => renderQuestions(snapshot, adminQuestionsContainer, true));
     }
 
-    async function renderQuestions(docs, container, isAdminView) {
+    async function renderQuestions(snapshot, container, isAdminView) {
         if (!container) return;
         container.innerHTML = '';
-        if (docs.length === 0) {
+        if (snapshot.empty) {
             container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question.'}</p>`;
             return;
         }
         let users = {};
         if (isAdminView) {
-            const userIds = [...new Set(docs.map(d => d.data().userId).filter(Boolean))];
+            const userIds = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
             const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
             userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
         }
-        const questionPromises = docs
-            .map(d => ({id: d.id, ...d.data()}))
-            .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
-            .map(async (questionData) => {
-                if (isAdminView && !questionData.userId) return '';
-                const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
-                return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
-                            ${header}
-                            <p><strong>Question :</strong> ${questionData.question}</p>
-                            <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                            ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${questionData.id}">Modifier</button>` : ''}</div>` : 
-                            (isAdminView ? `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
-                            ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
-                        </div>`;
-            });
+        const questionPromises = snapshot.docs.map(async (docSnap) => {
+            const questionData = docSnap.data();
+            if (isAdminView && !questionData.userId) return '';
+            const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
+            return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
+                        ${header}
+                        <p><strong>Question :</strong> ${questionData.question}</p>
+                        <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
+                        ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${docSnap.id}">Modifier</button>` : ''}</div>` : 
+                        (isAdminView ? `<button class="reply-button" data-question-id="${docSnap.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
+                        ${isAdminView ? `<div id="reply-form-${docSnap.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${docSnap.id}">Envoyer</button></div>` : ''}
+                    </div>`;
+        });
         container.innerHTML = (await Promise.all(questionPromises)).join('');
     }
 
@@ -357,7 +353,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
     if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
 
-}
-
-// On attend que la page soit prête pour lancer l'application
-document.addEventListener('DOMContentLoaded', startApp);
+});
