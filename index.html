@@ -63,7 +63,7 @@
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
         .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
         .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-        .question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
+        .question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
         .reponse-admin { background-color: var(--company-light-green); border-left: 3px solid var(--company-dark-green-action); padding: 10px; margin-top: 10px; border-radius: 3px; }
         .question-from-admin { background-color: #fff3cd; border-left: 3px solid #ffeeba; padding: 10px; margin-top: 10px; border-radius: 3px; }
 
@@ -73,36 +73,6 @@
 
         .admin-danger-zone { border: 1px solid red !important; }
 
-        /* Styles pour le statut des questions */
-        .question-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-ouverte {
-            background-color: #ffc107; /* Jaune/Orange */
-            color: #333;
-        }
-        .status-resolue {
-            background-color: var(--company-dark-green-action); /* Vert */
-            color: white;
-        }
-        .resolve-button {
-            background-color: #17a2b8; /* Bleu info */
-            color: white;
-            padding: 5px 10px;
-            font-size: 0.8em;
-            margin-top: 10px;
-        }
-        .resolve-button:hover {
-            background-color: #138496;
-        }
-
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; animation-name: lightbox-zoom; animation-duration: 0.6s; }
         @keyframes lightbox-zoom { from {transform: scale(0.1)} to {transform: scale(1)} }
@@ -111,7 +81,6 @@
     </style>
 </head>
 <body>
-    <!-- Contenu HTML -->
     <div id="login-container">
         <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
         <h2>Connexion</h2>
@@ -207,6 +176,7 @@
               isTokenAutoRefreshEnabled: true
             });
 
+            // Une seule déclaration pour toutes les variables d'éléments du DOM
             const loginContainer = document.getElementById('login-container');
             const loginForm = document.getElementById('login-form');
             const loginError = document.getElementById('login-error');
@@ -265,10 +235,7 @@
                         const chantierData = docSnap.data();
                         const chantierDiv = document.createElement('div');
                         chantierDiv.classList.add('chantier-item');
-                        chantierDiv.innerHTML = `
-                            <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
-                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                            <h4>Photos :</h4>`;
+                        chantierDiv.innerHTML = `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3><p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p><h4>Photos :</h4>`;
                         const photosContainer = document.createElement('div');
                         photosContainer.classList.add('photos-container');
                         if (chantierData.photos?.length) {
@@ -499,11 +466,6 @@
                     }
                 }
             });
-
-            const testSetAdminButton = document.getElementById('test-set-admin-button');
-            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
-            const testAdminUidInput = document.getElementById('test-admin-uid');
-            const testAdminStatus = document.getElementById('test-admin-status');
 
             const callSetUserAdminStatus = async (makeAdmin) => {
                 const user = auth.currentUser;
