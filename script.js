@@ -1,13 +1,14 @@
 [⚠️ Suspicious Content] import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteField, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
 
-// Cette fonction va démarrer toute la logique après le chargement de la page
-function startApp() {
+// Toute la logique de l'application est encapsulée ici
+// pour s'assurer qu'elle ne s'exécute qu'une fois le DOM prêt.
+document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialisation de Firebase ---
     const firebaseConfig = {
@@ -59,6 +60,10 @@ function startApp() {
     const clientUidSelect = document.getElementById('client-uid-select');
     const targetClientUidSelect = document.getElementById('target-client-uid-select');
     const chantierIdSelect = document.getElementById('chantier-id-select');
+    const testSetAdminButton = document.getElementById('test-set-admin-button');
+    const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
+    const testAdminUidInput = document.getElementById('test-admin-uid');
+    const testAdminStatus = document.getElementById('test-admin-status');
 
 
     // --- Fonctions Login / Logout ---
@@ -93,10 +98,8 @@ function startApp() {
                 const chantierData = docSnap.data();
                 const chantierDiv = document.createElement('div');
                 chantierDiv.classList.add('chantier-item');
-                // CORRECTION : La ligne "Jours d'intervention" est réintégrée ici
                 chantierDiv.innerHTML = `
                     <h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>
-                    <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                     <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                     <h4>Photos :</h4>`;
                 const photosContainer = document.createElement('div');
@@ -175,49 +178,32 @@ function startApp() {
     }
 
     async function loadClientQuestions(uid) {
-        const q1 = query(collection(db, 'questions'), where('userId', '==', uid));
-        const q2 = query(collection(db, 'questions'), where('askedTo', '==', uid));
-        onSnapshot(q1, (snap1) => {
-            onSnapshot(q2, (snap2) => {
-                const allQuestions = [
-                    ...snap1.docs.map(d => ({id: d.id, ...d.data()})),
-                    ...snap2.docs.map(d => ({id: d.id, ...d.data()}))
-                ];
-                renderQuestions(allQuestions, questionsContainer, false);
-            });
-        });
+        const q = query(collection(db, 'questions'), where('userId', '==', uid));
+        onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, questionsContainer, false));
     }
 
     async function loadAdminQuestions() {
         const q = query(collection(db, 'questions'), firestoreOrderBy('timestamp', 'desc'));
-        onSnapshot(q, (snapshot) => renderQuestions(snapshot, adminQuestionsContainer, true));
+        onSnapshot(q, (snapshot) => renderQuestions(snapshot.docs, adminQuestionsContainer, true));
     }
 
-    // CORRECTION DE LA FONCTION RENDERQUESTIONS
-    async function renderQuestions(snapshotOrArray, container, isAdminView) {
+    async function renderQuestions(docs, container, isAdminView) {
         if (!container) return;
-        container.innerHTML = ''; // Toujours commencer par vider
-
-        // Étape 1 : Unifier l'entrée en un tableau de données JS pures.
-        const questionsData = Array.isArray(snapshotOrArray)
-            ? snapshotOrArray // C'est déjà un tableau de données
-            : snapshotOrArray.docs.map(d => ({ id: d.id, ...d.data() })); // C'est un snapshot, on le transforme
-
-        if (questionsData.length === 0) {
+        container.innerHTML = '';
+        if (docs.length === 0) {
             container.innerHTML = `<p>${isAdminView ? 'Aucune question de client pour le moment.' : 'Aucune question.'}</p>`;
             return;
         }
-
         let users = {};
         if (isAdminView) {
-            const userIds = [...new Set(questionsData.map(d => d.userId).filter(Boolean))];
+            const userIds = [...new Set(docs.map(d => d.data().userId).filter(Boolean))];
             const userDocs = await Promise.all(userIds.map(id => firebaseGetDoc(doc(db, 'clients', id))));
             userDocs.forEach(d => { if(d.exists()) users[d.id] = d.data().nom || 'Client inconnu'; });
         }
-
-        const questionHtml = questionsData
+        const questionPromises = docs
+            .map(d => ({id: d.id, ...d.data()}))
             .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
-            .map((questionData) => { 
+            .map(async (questionData) => {
                 if (isAdminView && !questionData.userId) return '';
                 const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
                 return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
@@ -228,10 +214,9 @@ function startApp() {
                             (isAdminView ? `<button class="reply-button" data-question-id="${questionData.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
                             ${isAdminView ? `<div id="reply-form-${questionData.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${questionData.id}">Envoyer</button></div>` : ''}
                         </div>`;
-            }).join('');
-        container.innerHTML = questionHtml;
+            });
+        container.innerHTML = (await Promise.all(questionPromises)).join('');
     }
-
 
     // --- Écouteurs d'événements pour les formulaires ---
     uploadPhotoForm?.addEventListener('submit', async (e) => {
@@ -352,11 +337,6 @@ function startApp() {
     });
 
     // --- GESTION ZONE DE TEST ADMIN ---
-    const testSetAdminButton = document.getElementById('test-set-admin-button');
-    const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
-    const testAdminUidInput = document.getElementById('test-admin-uid');
-    const testAdminStatus = document.getElementById('test-admin-status');
-
     const callSetUserAdminStatus = async (makeAdmin) => {
         const user = auth.currentUser;
         if (!user) { testAdminStatus.textContent = "Erreur : Vous devez être connecté."; return; }
