@@ -1,12 +1,13 @@
-[⚠️ Suspicious Content] // Importations des fonctions nécessaires depuis les SDK Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+[⚠️ Suspicious Content] import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, addDoc, updateDoc, serverTimestamp, orderBy as firestoreOrderBy, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 
-// On attend que la page soit prête pour lancer l'application
+
+// Toute la logique de l'application est encapsulée ici
+// pour s'assurer qu'elle ne s'exécute qu'une fois le DOM prêt.
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialisation de Firebase ---
