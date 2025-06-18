@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
+    
+    <!-- ====================================================== -->
+    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML                     -->
+    <!-- ====================================================== -->
     <style>
         :root {
             --company-orange: #E57300;
@@ -177,20 +181,17 @@
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 document.getElementById('login-error').textContent = '';
-                try {
-                    await signInWithEmailAndPassword(auth, email.value, password.value);
-                } catch (error) {
-                    document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.';
-                }
+                try { await signInWithEmailAndPassword(auth, email.value, password.value); } 
+                catch (error) { document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.'; }
             });
 
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
 
-            function renderChantier(chantierDoc, isAdmin, clientInfo) {
+            function renderChantier(chantierDoc, isAdmin, clientInfo = {}) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
-                const clientId = clientInfo.id;
-                const clientName = clientInfo.nom;
+                const clientId = clientInfo.id || chantierDoc.ref.parent.parent.id;
+                const clientName = clientInfo.nom || '';
 
                 const chantierItem = document.createElement('div');
                 chantierItem.classList.add('chantier-item');
@@ -205,10 +206,6 @@
                     <div class="chantier-body" id="body-${chantierId}">
                         <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                         <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                        <h4>Photos :</h4>
-                        <div class="photos-container">
-                            ${(chantierData.photos?.length) ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier">`).join('') : 'Aucune photo pour le moment.'}
-                        </div>
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
@@ -219,15 +216,16 @@
                 return chantierItem;
             }
             
-            async function loadAdminDashboard(adminUid) {
+            async function loadAdminDashboard() {
                 appTitle.textContent = "Administration des Chantiers";
                 adminSection.style.display = 'block';
-                chantiersList.innerHTML = '';
+                chantiersList.innerHTML = '<h2>Tous les Chantiers</h2>';
                 try {
                     const clientsSnapshot = await getDocs(collection(db, 'clients'));
                     clientsSnapshot.forEach(clientDoc => {
-                        if (clientDoc.id === adminUid) return;
                         const clientData = clientDoc.data();
+                        if (clientData.role === 'admin') return; 
+
                         const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
                         
                         const clientAccordion = document.createElement('div');
@@ -253,16 +251,16 @@
                              }
                         });
                     });
-                    loadClientListForAdmin();
+                    loadClientListForAdminForms();
                 } catch(error) {
                     chantiersList.innerHTML = '<p class="error">Erreur de chargement du tableau de bord.</p>';
                 }
             }
-            
-            function loadClientDashboard(uid) {
+
+            async function loadClientDashboard(user) {
                 appTitle.textContent = "Suivi de vos chantiers";
                 adminSection.style.display = 'none';
-                const chantiersRef = collection(db, 'clients', uid, 'chantier');
+                const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
                  onSnapshot(chantiersRef, (chantiersSnapshot) => {
                      chantiersList.innerHTML = '';
                      if(chantiersSnapshot.empty){
@@ -276,16 +274,17 @@
             }
 
             onAuthStateChanged(auth, async (user) => {
+                const loginContainer = document.getElementById('login-container');
+                const appContainer = document.getElementById('app-container');
                 if (user) {
                     loginContainer.style.display = 'none';
                     appContainer.style.display = 'block';
                     const idTokenResult = await user.getIdTokenResult(true);
                     const isAdmin = idTokenResult.claims.admin === true;
-
                     if (isAdmin) {
-                        loadAdminDashboard(user.uid);
+                        loadAdminDashboard();
                     } else {
-                        loadClientDashboard(user.uid);
+                        loadClientDashboard(user);
                     }
                 } else {
                     loginContainer.style.display = 'block';
@@ -293,7 +292,18 @@
                 }
             });
 
-            // ... Le reste de votre code JavaScript ...
+            chantiersList.addEventListener('click', (e) => {
+                const header = e.target.closest('.client-header, .chantier-header');
+                if (header) {
+                    const body = document.getElementById(header.dataset.target);
+                    if (body) {
+                        const isOpen = body.style.display === 'block';
+                        body.style.display = isOpen ? 'none' : 'block';
+                        header.classList.toggle('is-open', !isOpen);
+                    }
+                }
+            });
+            // ... autres listeners et fonctions
         });
     </script>
 </body>
