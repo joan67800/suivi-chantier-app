@@ -228,9 +228,6 @@
                         chatBox.appendChild(messageDiv);
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
-                }, (error) => {
-                    console.error("Erreur listener chat: ", error);
-                    chatBox.innerHTML = '<p class="error">Erreur de chargement des messages.</p>';
                 });
             }
 
@@ -275,6 +272,7 @@
                         adminSection.style.display = 'block';
                         const clientsSnapshot = await getDocs(collection(db, 'clients'));
                         clientsSnapshot.forEach(clientDoc => {
+                            // CORRECTION : On ne montre que les chantiers des clients, et non ceux de l'admin
                             if (clientDoc.id === user.uid) return;
                             
                             const clientData = clientDoc.data();
