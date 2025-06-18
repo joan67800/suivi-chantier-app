@@ -63,7 +63,7 @@
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
         .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
         .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-        .question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        .question-item, .admin-question-item { border: 1px solid #eee; background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
         .reponse-admin { background-color: var(--company-light-green); border-left: 3px solid var(--company-dark-green-action); padding: 10px; margin-top: 10px; border-radius: 3px; }
         .question-from-admin { background-color: #fff3cd; border-left: 3px solid #ffeeba; padding: 10px; margin-top: 10px; border-radius: 3px; }
 
@@ -72,6 +72,36 @@
         #admin-client-list li:last-child { border-bottom: none; }
 
         .admin-danger-zone { border: 1px solid red !important; }
+
+        /* Styles pour le statut des questions */
+        .question-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-ouverte {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .status-resolue {
+            background-color: var(--company-dark-green-action);
+            color: white;
+        }
+        .resolve-button {
+            background-color: #17a2b8;
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+        .resolve-button:hover {
+            background-color: #138496;
+        }
 
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; animation-name: lightbox-zoom; animation-duration: 0.6s; }
@@ -361,12 +391,24 @@
                     const questionData = docSnap.data();
                     if (isAdminView && !questionData.userId) return '';
                     const header = isAdminView ? `<p><strong>Client :</strong> ${users[questionData.userId] || `UID: ${questionData.userId}`} (<code>${questionData.userId}</code>)</p>` : '';
+                    
+                    const status = questionData.status || 'ouverte';
+                    const statusBadge = `<span class="question-status status-${status}">${status}</span>`;
+                    
+                    let actionButton = '';
+                    if (!isAdminView && status === 'ouverte' && questionData.reponse) {
+                        actionButton = `<button class="resolve-button" data-question-id="${docSnap.id}">Marquer comme résolue</button>`;
+                    } else if (isAdminView && !questionData.reponse) {
+                        actionButton = `<button class="reply-button" data-question-id="${docSnap.id}">Répondre</button>`;
+                    }
+
                     return `<div class="question-item ${questionData.askedBy ? 'question-from-admin' : ''}">
+                                ${statusBadge}
                                 ${header}
                                 <p><strong>Question :</strong> ${questionData.question}</p>
                                 <p><em>Posée le : ${questionData.timestamp ? new Date(questionData.timestamp.seconds * 1000).toLocaleString() : 'Date inconnue'}</em></p>
-                                ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${docSnap.id}">Modifier</button>` : ''}</div>` : 
-                                (isAdminView ? `<button class="reply-button" data-question-id="${docSnap.id}">Répondre</button>` : '<p><em>En attente de réponse...</em></p>')}
+                                ${questionData.reponse ? `<div class="reponse-admin"><p><strong>Réponse :</strong> ${questionData.reponse}</p>${isAdminView ? `<button class="edit-reply-button" data-question-id="${docSnap.id}">Modifier</button>` : ''}</div>` : ''}
+                                ${actionButton}
                                 ${isAdminView ? `<div id="reply-form-${docSnap.id}" style="display: none; margin-top: 10px;"><textarea>${questionData.reponse || ''}</textarea><button class="submit-reply-button" data-question-id="${docSnap.id}">Envoyer</button></div>` : ''}
                             </div>`;
                 });
@@ -388,14 +430,32 @@
                     const docSnap = await firebaseGetDoc(chantierRef);
                     if (!docSnap.exists()) throw new Error("Le chantier sélectionné n'existe pas.");
                     const storageRef = ref(storage, `chantier-photos/${chantierId}/${Date.now()}-${file.name}`);
-                    showConfirmation(uploadStatus, 'Upload en cours...', 'info');
-                    await uploadBytes(storageRef, file);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
-                    showConfirmation(uploadStatus, 'Photo uploadée avec succès !', 'success');
-                    uploadPhotoForm.reset();
-                    chantierIdSelect.innerHTML = '<option value="">Sélectionnez d\'abord un client</option>';
-                    chantierIdSelect.disabled = true;
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+
+                    uploadStatus.style.display = 'none';
+                    progressBarContainer.style.display = 'block';
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
+
+                    uploadTask.on('state_changed', 
+                      (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressBar.style.width = progress + '%';
+                        progressBar.textContent = Math.round(progress) + '%';
+                      }, 
+                      (error) => {
+                        showConfirmation(uploadStatus, 'Erreur : ' + error.code, 'error');
+                        progressBarContainer.style.display = 'none';
+                      }, 
+                      () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+                          await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
+                          showConfirmation(uploadStatus, 'Photo uploadée avec succès !', 'success');
+                          uploadPhotoForm.reset();
+                          setTimeout(() => { progressBarContainer.style.display = 'none'; }, 2000);
+                        });
+                      }
+                    );
                 } catch (error) {
                     showConfirmation(uploadStatus, 'Erreur : ' + error.message, 'error');
                 }
@@ -404,7 +464,7 @@
                 e.preventDefault();
                 const question = questionText.value.trim();
                 if (question && auth.currentUser) {
-                    await addDoc(collection(db, 'questions'), { userId: auth.currentUser.uid, question: question, timestamp: serverTimestamp() });
+                    await addDoc(collection(db, 'questions'), { userId: auth.currentUser.uid, question: question, timestamp: serverTimestamp(), status: 'ouverte' });
                     questionText.value = '';
                     showConfirmation(questionConfirmation, 'Votre question a été envoyée.', 'success');
                 }
@@ -414,7 +474,7 @@
                 const question = adminQuestionText.value.trim();
                 const targetUid = targetClientUidSelect.value;
                 if (question && targetUid && auth.currentUser) {
-                    await addDoc(collection(db, 'questions'), { askedBy: auth.currentUser.uid, askedTo: targetUid, question: question, timestamp: serverTimestamp() });
+                    await addDoc(collection(db, 'questions'), { askedBy: auth.currentUser.uid, askedTo: targetUid, question: question, timestamp: serverTimestamp(), status: 'ouverte' });
                     adminQuestionText.value = '';
                     showConfirmation(adminQuestionConfirmation, 'Question envoyée au client.', 'success');
                 }
@@ -469,11 +529,12 @@
                 loadChantiersForClientSelect(clientUidSelect.value);
             });
           
-            adminQuestionsContainer?.addEventListener('click', async (event) => {
+            appContainer.addEventListener('click', async (event) => {
                 const target = event.target;
                 const questionId = target.dataset.questionId;
                 if (!questionId) return;
                 const questionRef = doc(db, 'questions', questionId);
+
                 if (target.matches('.reply-button, .edit-reply-button')) {
                     const form = document.getElementById(`reply-form-${questionId}`);
                     if (form) form.style.display = 'block';
@@ -485,6 +546,9 @@
                         await updateDoc(questionRef, { reponse: textarea.value, timestampReponse: serverTimestamp() });
                         form.style.display = 'none';
                     }
+                }
+                if (target.matches('.resolve-button')) {
+                    await updateDoc(questionRef, { status: 'resolue' });
                 }
             });
 
