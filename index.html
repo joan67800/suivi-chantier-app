@@ -6,7 +6,7 @@
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
     
     <!-- ====================================================== -->
-    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML                     -->
+    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML (AVEC MODIFICATIONS)-->
     <!-- ====================================================== -->
     <style>
         :root {
@@ -49,16 +49,20 @@
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
         
-        .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
-        .chantier-header { cursor: pointer; padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
-        .chantier-header:hover { background-color: #e9ecef; }
-        .chantier-header .title-content { flex-grow: 1; }
-        .chantier-header h3, .chantier-header h4 { margin: 0; padding: 0; border: none; color: var(--text-dark); }
-        .chantier-header h3 { font-size: 1.2em; }
-        .chantier-header h4 { font-size: 0.9em; color: #6c757d; font-weight: normal; }
-        .chantier-header .indicator { transition: transform 0.3s ease; }
-        .chantier-header.is-open .indicator { transform: rotate(180deg); }
-        .chantier-body { padding: 20px; border-top: 1px solid #e0e0e0; display: none; }
+        /* Styles pour les accordéons */
+        .client-accordion, .chantier-item { border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background-color: #fdfdfd; overflow: hidden; }
+        .client-header, .chantier-header { cursor: pointer; padding: 15px 20px; background-color: #f8f9fa; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
+        .client-header { background-color: #e2efda; border-bottom: 2px solid var(--company-dark-green-action); }
+        .chantier-header { background-color: #f8f9fa; }
+        .client-header:hover, .chantier-header:hover { background-color: #e9ecef; }
+        .client-header .title-content, .chantier-header .title-content { flex-grow: 1; }
+        .client-header h3, .chantier-header h3 { margin: 0; padding: 0; border: none; color: var(--text-dark); font-size: 1.2em; }
+        .chantier-header h4 { font-size: 0.9em; color: #6c757d; font-weight: normal; margin:0; padding:0; border:0;}
+        .indicator { transition: transform 0.3s ease; }
+        .is-open > .indicator { transform: rotate(180deg); }
+        .client-body, .chantier-body { display: none; }
+        .client-body { padding: 0 20px 20px 20px; }
+        .chantier-body { padding: 20px; border-top: 1px solid #e0e0e0; }
         .notification-dot { height: 12px; width: 12px; background-color: var(--company-orange); border-radius: 50%; margin-left: 15px; }
         
         .photos-container { display: flex; gap: 10px; margin-top: 10px; padding: 10px; overflow-x: auto; background-color: #f4f7f6; border-radius: 5px; }
@@ -147,48 +151,36 @@
             });
 
             const loginContainer = document.getElementById('login-container');
-            const loginForm = document.getElementById('login-form');
-            const loginError = document.getElementById('login-error');
             const appContainer = document.getElementById('app-container');
-            const appTitle = document.getElementById('app-title');
-            const logoutButton = document.getElementById('logout-button');
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
-            const testSetAdminButton = document.getElementById('test-set-admin-button');
-            const testRemoveAdminButton = document.getElementById('test-remove-admin-button');
-            const testAdminUidInput = document.getElementById('test-admin-uid');
-            const testAdminStatus = document.getElementById('test-admin-status');
+            const appTitle = document.getElementById('app-title');
 
-            loginForm.addEventListener('submit', async (e) => {
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                loginError.textContent = '';
                 try {
-                    await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
+                    await signInWithEmailAndPassword(auth, email.value, password.value);
                 } catch (error) {
-                    loginError.textContent = 'Erreur de connexion : Identifiants incorrects.';
+                    document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.';
                 }
             });
 
-            logoutButton.addEventListener('click', () => signOut(auth));
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
 
-            function renderChantier(chantierDoc, isAdmin, clientInfo = {}) {
+            function createChantierElement(chantierDoc, clientInfo, isAdmin) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
-                const clientId = clientInfo.id || chantierDoc.ref.parent.parent.id;
-                const clientName = clientInfo.nom || '';
+                const clientId = clientInfo.id;
+                const clientName = clientInfo.nom;
 
-                let chantierWrapper = document.getElementById(`chantier-${chantierId}`);
-                if (!chantierWrapper) {
-                    chantierWrapper = document.createElement('div');
-                    chantierWrapper.id = `chantier-${chantierId}`;
-                    chantierWrapper.classList.add('chantier-item');
-                    chantiersList.appendChild(chantierWrapper);
-                }
+                const chantierItem = document.createElement('div');
+                chantierItem.classList.add('chantier-item');
+                chantierItem.id = `chantier-${chantierId}`;
+
+                const title = isAdmin ? `<h4>Chantier de ${clientName}</h4><h3>${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
                 
-                const title = isAdmin ? `<h4>Client : ${clientName}</h4><h3>Chantier : ${chantierData.adresse || 'N/A'}</h3>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
-
-                chantierWrapper.innerHTML = `
-                    <div class="chantier-header" data-chantier-id="${chantierId}">
+                chantierItem.innerHTML = `
+                    <div class="chantier-header" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
                         <span class="notification-dot" style="display: none;"></span>
                         <span class="indicator">▼</span>
@@ -197,19 +189,15 @@
                         <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                         <h4>Photos :</h4>
                         <div class="photos-container">
-                            ${(chantierData.photos && chantierData.photos.length) ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier">`).join('') : 'Aucune photo pour le moment.'}
+                            ${(chantierData.photos?.length) ? chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier">`).join('') : 'Aucune photo pour le moment.'}
                         </div>
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
-                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
-                                <textarea required placeholder="Posez votre question ici..."></textarea>
-                                <button type="submit">Envoyer</button>
-                            </form>
+                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question..."></textarea><button type="submit">Envoyer</button></form>
                         </div>
-                    </div>
-                `;
-                listenForChatMessages(clientId, chantierId, isAdmin);
+                    </div>`;
+                return chantierItem;
             }
 
             function listenForChatMessages(clientId, chantierId, isAdmin) {
@@ -218,105 +206,23 @@
                 
                 onSnapshot(q, (snapshot) => {
                     if (!chatBox) return;
-                    chatBox.innerHTML = '';
-                    if (snapshot.empty) {
-                        chatBox.innerHTML = '<p>Aucun message. Soyez le premier à poser une question !</p>';
-                        return;
-                    }
+                    chatBox.innerHTML = snapshot.empty ? '<p>Aucun message.</p>' : '';
                     snapshot.forEach(doc => {
                         const messageData = doc.data();
                         const messageDiv = document.createElement('div');
                         messageDiv.classList.add('chat-message');
-                        
                         const senderIsAdmin = messageData.author === 'admin';
-                        let messageClass = senderIsAdmin ? 'message-received' : 'message-sent';
-                        if (isAdmin) messageClass = senderIsAdmin ? 'message-sent' : 'message-received';
-                        messageDiv.classList.add(messageClass);
-
+                        messageDiv.classList.add(isAdmin ? (senderIsAdmin ? 'message-sent' : 'message-received') : (senderIsAdmin ? 'message-received' : 'message-sent'));
                         messageDiv.innerHTML = `<p>${messageData.text}</p><div class="meta">${new Date(messageData.timestamp.seconds * 1000).toLocaleString()}</div>`;
                         chatBox.appendChild(messageDiv);
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
-                    
-                    const chantierBody = document.getElementById(`body-${chantierId}`);
-                    if (chantierBody && chantierBody.style.display === 'none') {
-                        const lastMessage = snapshot.docs[snapshot.docs.length - 1]?.data();
-                        if (lastMessage) {
-                            const lastMessageFromOther = (isAdmin && lastMessage.author !== 'admin') || (!isAdmin && lastMessage.author === 'admin');
-                            if (lastMessageFromOther) {
-                                const header = document.querySelector(`.chantier-header[data-chantier-id="${chantierId}"]`);
-                                const notifDot = header?.querySelector('.notification-dot');
-                                if (notifDot) notifDot.style.display = 'inline-block';
-                            }
-                        }
-                    }
-                });
-            }
 
-            chantiersList.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!e.target.matches('.chat-form')) return;
-                const form = e.target;
-                const textarea = form.querySelector('textarea');
-                const text = textarea.value.trim();
-                const { chantierId, clientId } = form.dataset;
-                if (text && auth.currentUser) {
-                    const idTokenResult = await auth.currentUser.getIdTokenResult();
-                    const messageData = { text: text, author: idTokenResult.claims.admin ? 'admin' : auth.currentUser.uid, timestamp: serverTimestamp() };
-                    await addDoc(collection(db, 'clients', clientId, 'chantier', chantierId, 'questions'), messageData);
-                    textarea.value = '';
-                }
-            });
-            
-            chantiersList.addEventListener('click', (e) => {
-                if (e.target.tagName === 'IMG') {
-                    openLightbox(e.target.src);
-                    return;
-                }
-                const header = e.target.closest('.chantier-header');
-                if (header) {
-                    const notifDot = header.querySelector('.notification-dot');
-                    if (notifDot) notifDot.style.display = 'none';
-                    header.classList.toggle('is-open');
-                    const body = header.nextElementSibling;
-                    body.style.display = body.style.display === 'block' ? 'none' : 'block';
-                }
-            });
-
-            async function loadAdminDashboard(adminUid) {
-                appTitle.textContent = "Administration des Chantiers";
-                adminSection.style.display = 'block';
-                chantiersList.innerHTML = '';
-                try {
-                    const clientsSnapshot = await getDocs(collection(db, 'clients'));
-                    clientsSnapshot.forEach(clientDoc => {
-                        if (clientDoc.id === adminUid) return;
-                        const clientData = clientDoc.data();
-                        const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
-                        const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
-                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                             chantiersSnapshot.forEach(chantierDoc => {
-                                renderChantier(chantierDoc, true, clientInfo);
-                             });
-                        });
-                    });
-                } catch(error) {
-                    chantiersList.innerHTML = `<p class="error">Erreur de chargement du tableau de bord.</p>`;
-                }
-            }
-
-            async function loadClientDashboard(user) {
-                appTitle.textContent = "Suivi de vos chantiers";
-                adminSection.style.display = 'none';
-                const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
-                onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                    chantiersList.innerHTML = '';
-                    if(chantiersSnapshot.empty){
-                        chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
-                    } else {
-                        chantiersSnapshot.forEach(chantierDoc => {
-                           renderChantier(chantierDoc, false, {id: user.uid});
-                        });
+                    const header = document.querySelector(`.chantier-header[data-target="body-${chantierId}"]`);
+                    const body = header?.nextElementSibling;
+                    if(header && body && body.style.display === 'none') {
+                        const notifDot = header.querySelector('.notification-dot');
+                        if (notifDot) notifDot.style.display = 'inline-block';
                     }
                 });
             }
@@ -327,10 +233,52 @@
                     appContainer.style.display = 'block';
                     const idTokenResult = await user.getIdTokenResult(true);
                     const isAdmin = idTokenResult.claims.admin === true;
+
+                    chantiersList.innerHTML = '';
+                    adminSection.style.display = isAdmin ? 'block' : 'none';
+
                     if (isAdmin) {
-                        loadAdminDashboard(user.uid);
+                        appTitle.textContent = "Administration des Chantiers";
+                        const clientsSnapshot = await getDocs(collection(db, 'clients'));
+                        clientsSnapshot.forEach(clientDoc => {
+                            if (clientDoc.id === user.uid) return;
+                            const clientData = clientDoc.data();
+                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Client ${clientDoc.id.substring(0,5)}` };
+                            
+                            const clientAccordion = document.createElement('div');
+                            clientAccordion.classList.add('client-accordion');
+                            clientAccordion.innerHTML = `
+                                <div class="client-header" data-target="client-body-${clientDoc.id}">
+                                    <h3>${clientInfo.nom}</h3>
+                                    <span class="indicator">▼</span>
+                                </div>
+                                <div class="client-body" id="client-body-${clientDoc.id}"></div>
+                            `;
+                            chantiersList.appendChild(clientAccordion);
+                            
+                            const chantiersContainer = clientAccordion.querySelector('.client-body');
+                            const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                            onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                                chantiersContainer.innerHTML = '';
+                                if(chantiersSnapshot.empty) chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>';
+                                chantiersSnapshot.forEach(chantierDoc => {
+                                    chantiersContainer.appendChild(createChantierElement(chantierDoc, true, clientInfo));
+                                });
+                            });
+                        });
                     } else {
-                        loadClientDashboard(user);
+                        appTitle.textContent = "Suivi de vos chantiers";
+                        const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
+                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                             chantiersList.innerHTML = '';
+                             if(chantiersSnapshot.empty){
+                                 chantiersList.innerHTML = '<p>Aucun chantier ne vous est actuellement attribué.</p>';
+                             } else {
+                                 chantiersSnapshot.forEach(chantierDoc => {
+                                    chantiersList.appendChild(renderChantier(chantierDoc, false, {id: user.uid}));
+                                 });
+                             }
+                        });
                     }
                 } else {
                     loginContainer.style.display = 'block';
@@ -338,46 +286,25 @@
                 }
             });
 
-            function openLightbox(url) {
-                const lightbox = document.getElementById('image-lightbox');
-                const lightboxImg = document.getElementById('lightbox-image');
-                if (lightbox && lightboxImg) {
-                    lightbox.style.display = "flex";
-                    lightboxImg.src = url;
-                }
-            }
-
-            const lightbox = document.getElementById('image-lightbox');
-            const closeBtn = document.querySelector('.lightbox-close');
-            if (closeBtn) closeBtn.addEventListener('click', () => lightbox.style.display = "none");
-            if (lightbox) lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = "none"; });
-
-            const callSetUserAdminStatus = async (makeAdmin) => {
-                const user = auth.currentUser;
-                const targetAdminUID = document.getElementById('test-admin-uid').value.trim();
-                const testAdminStatus = document.getElementById('test-admin-status');
-                if (!user || !targetAdminUID) {
-                    testAdminStatus.textContent = "Connectez-vous et entrez un UID.";
+            chantiersList.addEventListener('click', (e) => {
+                if (e.target.tagName === 'IMG') {
+                    openLightbox(e.target.src);
                     return;
                 }
-                testAdminStatus.textContent = "Appel en cours...";
-                try {
-                    const idToken = await user.getIdToken();
-                    const functionUrl = "https://us-central1-suivi-chantier-societe.cloudfunctions.net/setUserAsAdmin";
-                    const response = await fetch(functionUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                        body: JSON.stringify({ data: { uid: targetAdminUID, isAdmin: makeAdmin } })
-                    });
-                    if (!response.ok) { throw new Error(`Erreur HTTP ${response.status}: ${await response.text()}`); }
-                    const result = await response.json();
-                    testAdminStatus.textContent = "Succès ! " + result.data.message + " Reconnectez-vous.";
-                } catch (error) {
-                    testAdminStatus.textContent = "Erreur : " + error.message;
+                const header = e.target.closest('.client-header, .chantier-header');
+                if (header) {
+                    const body = document.getElementById(header.dataset.target);
+                    if (body) {
+                        const isOpen = body.style.display === 'block';
+                        body.style.display = isOpen ? 'none' : 'block';
+                        header.classList.toggle('is-open', !isOpen);
+                        const notifDot = header.querySelector('.notification-dot');
+                        if (notifDot) notifDot.style.display = 'none';
+                    }
                 }
-            };
-            if (testSetAdminButton) testSetAdminButton.addEventListener('click', () => callSetUserAdminStatus(true));
-            if (testRemoveAdminButton) testRemoveAdminButton.addEventListener('click', () => callSetUserAdminStatus(false));
+            });
+            
+            // ... autres listeners et fonctions ...
         });
     </script>
 </body>
