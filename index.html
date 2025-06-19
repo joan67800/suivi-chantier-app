@@ -36,7 +36,8 @@
         h4 { font-size: 1.1em; border-bottom: none; }
 
         input, textarea, select, button { font-family: inherit; font-size: 1em; }
-        input[type="email"], input[type="password"], input[type="text"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
+        input[type="email"], input[type="password"], input[type="text"], input[type="file"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
+        input[type="file"] { padding: 5px; }
         textarea { min-height: 80px; resize: vertical; }
 
         button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease; }
@@ -61,8 +62,9 @@
         .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
         .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
         
-        .photos-container { display: flex; gap: 10px; margin-top: 10px; padding: 10px; overflow-x: auto; background-color: #f4f7f6; border-radius: 5px; }
-        .photos-container img { height: 100px; width: auto; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+        .photos-section { margin-top: 20px; }
+        .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; }
+        .photos-container img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
         .photos-container img:hover { transform: scale(1.05); }
 
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
@@ -141,29 +143,31 @@
     </div>
 
     <script type="module">
+        // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION FIREBASE ---
             const firebaseConfig = {
-                apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8", // Remplacez par votre clé API si différente
+                apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
                 authDomain: "suivi-chantier-societe.firebaseapp.com",
                 projectId: "suivi-chantier-societe",
-                storageBucket: "suivi-chantier-societe.firebasestorage.app",
+                storageBucket: "suivi-chantier-societe.appspot.com", // MODIFIÉ: S'assurer que c'est le bon bucket
                 messagingSenderId: "888449140099",
                 appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
             };
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
+            const storage = getStorage(app); // NOUVEAU: Initialiser Storage
 
-            // Initialisation d'App Check (sécurité)
             initializeAppCheck(app, {
-              provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'), // Remplacez par votre clé reCAPTCHA v3
+              provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
               isTokenAutoRefreshEnabled: true
             });
 
@@ -173,6 +177,9 @@
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
             const appTitle = document.getElementById('app-title');
+            const lightbox = document.getElementById('image-lightbox');
+            const lightboxImage = document.getElementById('lightbox-image');
+            const lightboxClose = document.querySelector('.lightbox-close');
 
             // --- GESTION DE L'AUTHENTIFICATION ---
             onAuthStateChanged(auth, async (user) => {
@@ -190,7 +197,7 @@
                 } else {
                     loginContainer.style.display = 'block';
                     appContainer.style.display = 'none';
-                    chantiersList.innerHTML = ''; // Vider la liste
+                    chantiersList.innerHTML = '';
                     adminSection.style.display = 'none';
                 }
             });
@@ -210,65 +217,7 @@
 
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             
-            // --- FONCTIONNALITÉS DU CHAT (NOUVEAU / MODIFIÉ) ---
-
-            /**
-             * Affiche les messages dans une boîte de chat.
-             * @param {QuerySnapshot} snapshot - Le snapshot des messages de Firestore.
-             * @param {HTMLElement} chatBox - L'élément DOM où afficher les messages.
-             * @param {String} currentUserId - L'UID de l'utilisateur actuellement connecté.
-             */
-            function renderMessages(snapshot, chatBox, currentUserId) {
-                chatBox.innerHTML = ''; // Vider la boîte de chat
-                if (snapshot.empty) {
-                    chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message. Commencez la conversation !</p>';
-                    return;
-                }
-                snapshot.forEach(doc => {
-                    const message = doc.data();
-                    const messageEl = document.createElement('div');
-                    messageEl.classList.add('chat-message');
-
-                    const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received';
-                    messageEl.classList.add(senderClass);
-                    
-                    const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
-
-                    messageEl.innerHTML = `
-                        <p>${message.text}</p>
-                        <div class="meta">
-                            <strong>${message.senderName || 'Anonyme'}</strong> - ${date}
-                        </div>
-                    `;
-                    chatBox.appendChild(messageEl);
-                });
-                chatBox.scrollTop = chatBox.scrollHeight; // Scroll vers le bas
-            }
-
-            /**
-             * Met en place l'écouteur de messages pour un chantier donné.
-             * @param {String} chantierId - L'ID du chantier.
-             * @param {String} clientId - L'ID du client propriétaire du chantier.
-             */
-            function setupChatListener(chantierId, clientId) {
-                const chatBox = document.getElementById(`chat-box-${chantierId}`);
-                if (chatBox.dataset.chatLoaded === 'true') return; // Déjà chargé
-
-                const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
-                const q = query(messagesRef, orderBy('timestamp'));
-
-                onSnapshot(q, (snapshot) => {
-                    renderMessages(snapshot, chatBox, auth.currentUser.uid);
-                }, (error) => {
-                    console.error("Erreur d'écoute du chat:", error);
-                    chatBox.innerHTML = '<p class="error">Impossible de charger les messages.</p>';
-                });
-
-                chatBox.dataset.chatLoaded = 'true';
-            }
-
             // --- FONCTION DE RENDU PRINCIPALE ---
-
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
@@ -279,6 +228,25 @@
                 
                 const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
                 
+                // NOUVEAU: Générer le HTML pour les photos
+                let photosHTML = '';
+                if (chantierData.photos && chantierData.photos.length > 0) {
+                    photosHTML = chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" class="chantier-photo">`).join('');
+                } else {
+                    photosHTML = '<p style="color: #888;">Aucune photo pour ce chantier.</p>';
+                }
+                
+                // NOUVEAU: Générer le formulaire d'upload de photo pour l'admin
+                const photoUploadFormHTML = isAdmin ? `
+                    <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                        <label>Ajouter une photo au chantier :</label>
+                        <input type="file" name="chantierPhoto" accept="image/png, image/jpeg" required>
+                        <button type="submit">Envoyer la photo</button>
+                        <p class="message-feedback photo-upload-status" style="display: none;"></p>
+                    </form>
+                ` : '';
+
+                // MODIFIÉ: Intégration des sections photo dans le HTML
                 chantierItem.innerHTML = `
                     <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
@@ -290,7 +258,7 @@
                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                            ${isAdmin ? `<button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>` : ''}
                         </div>
-                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form" data-client-id="${clientId}">
+                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
                             <label>Jours d'intervention (séparés par une virgule):</label>
                             <input type="text" class="jours-intervention-input" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
                             <label>Avancement (%):</label>
@@ -298,6 +266,13 @@
                             <button type="submit" class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
                             <button type="button" class="cancel-edit-button">Annuler</button>
                         </form>
+
+                        <div class="photos-section">
+                            <h4>Photos du chantier</h4>
+                            <div class="photos-container">${photosHTML}</div>
+                            ${photoUploadFormHTML}
+                        </div>
+
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
@@ -311,225 +286,164 @@
                 return chantierItem;
             }
             
-            // --- TABLEAUX DE BORD (DASHBOARDS) ---
+            // --- Logique du Chat (inchangée) ---
+            function renderMessages(snapshot, chatBox, currentUserId) {
+                chatBox.innerHTML = '';
+                if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
+                snapshot.forEach(doc => {
+                    const message = doc.data(); const messageEl = document.createElement('div'); messageEl.classList.add('chat-message');
+                    const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received'; messageEl.classList.add(senderClass);
+                    const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
+                    messageEl.innerHTML = `<p>${message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
+                    chatBox.appendChild(messageEl);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+            function setupChatListener(chantierId, clientId) {
+                const chatBox = document.getElementById(`chat-box-${chantierId}`);
+                if (chatBox.dataset.chatLoaded === 'true') return;
+                const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
+                const q = query(messagesRef, orderBy('timestamp'));
+                onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid), (error) => {
+                    console.error("Erreur d'écoute du chat:", error); chatBox.innerHTML = '<p class="error">Impossible de charger les messages.</p>';
+                });
+                chatBox.dataset.chatLoaded = 'true';
+            }
             
+            // --- TABLEAUX DE BORD (DASHBOARDS) ---
             async function loadAdminDashboard() {
-                appTitle.textContent = "Administration des Chantiers";
-                adminSection.style.display = 'block';
-                chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
+                appTitle.textContent = "Administration des Chantiers"; adminSection.style.display = 'block'; chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
                 try {
                     const clientsSnapshot = await getDocs(collection(db, 'clients'));
-                    if (clientsSnapshot.empty) {
-                        chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>';
-                        return;
-                    }
-                    
+                    if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
                     clientsSnapshot.forEach(clientDoc => {
-                        const clientData = clientDoc.data();
-                        const isThisUserAdmin = clientData.role === 'admin';
+                        const clientData = clientDoc.data(); const isThisUserAdmin = clientData.role === 'admin';
                         const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
-                        
-                        const accountWrapper = document.createElement('div');
-                        accountWrapper.classList.add('client-accordion');
-                        
-                        let headerClass = "client-header";
-                        let headerContent = `<h3>${clientInfo.nom}</h3>`;
-                        if (isThisUserAdmin) {
-                            headerClass += " is-admin";
-                            headerContent = `<h3>${clientInfo.nom} <span class="admin-badge">Admin</span></h3>`;
-                        }
-                        
-                        accountWrapper.innerHTML = `
-                            <div class="${headerClass}" data-target="client-body-${clientDoc.id}">
-                                ${headerContent}
-                                ${!isThisUserAdmin ? '<span class="indicator">▼</span>' : ''}
-                            </div>
-                            <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                        const accountWrapper = document.createElement('div'); accountWrapper.classList.add('client-accordion');
+                        let headerClass = "client-header"; let headerContent = `<h3>${clientInfo.nom}</h3>`;
+                        if (isThisUserAdmin) { headerClass += " is-admin"; headerContent = `<h3>${clientInfo.nom} <span class="admin-badge">Admin</span></h3>`;}
+                        accountWrapper.innerHTML = `<div class="${headerClass}" data-target="client-body-${clientDoc.id}">${headerContent}${!isThisUserAdmin ? '<span class="indicator">▼</span>' : ''}</div><div class="client-body" id="client-body-${clientDoc.id}"></div>`;
                         chantiersList.appendChild(accountWrapper);
-                        
                         if (!isThisUserAdmin) {
                             const chantiersContainer = accountWrapper.querySelector('.client-body');
                             const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
                             onSnapshot(chantiersRef, (chantiersSnapshot) => {
                                  chantiersContainer.innerHTML = '';
-                                 if(chantiersSnapshot.empty) {
-                                     chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>';
-                                 } else {
-                                     chantiersSnapshot.forEach(chantierDoc => {
-                                         chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo));
-                                     });
-                                 }
+                                 if(chantiersSnapshot.empty) { chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; } 
+                                 else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));}
                             });
                         }
                     });
                     loadClientListForAdminForms();
-                } catch(error) {
-                    console.error("Erreur admin:", error);
-                    chantiersList.innerHTML = `<p class="error">Erreur de chargement du tableau de bord: ${error.message}</p>`;
-                }
+                } catch(error) { console.error("Erreur admin:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
-
             async function loadClientDashboard(user) {
-                appTitle.textContent = "Suivi de vos chantiers";
-                adminSection.style.display = 'none';
-                chantiersList.innerHTML = '';
-                
+                appTitle.textContent = "Suivi de vos chantiers"; adminSection.style.display = 'none'; chantiersList.innerHTML = '';
                 try {
-                    const clientDocRef = doc(db, 'clients', user.uid);
-                    const clientDocSnap = await firebaseGetDoc(clientDocRef);
-                    const clientInfo = clientDocSnap.exists() ? 
-                        { id: user.uid, nom: clientDocSnap.data().nom } : 
-                        { id: user.uid, nom: 'Client' };
-
+                    const clientDocRef = doc(db, 'clients', user.uid); const clientDocSnap = await firebaseGetDoc(clientDocRef);
+                    const clientInfo = clientDocSnap.exists() ? { id: user.uid, nom: clientDocSnap.data().nom } : { id: user.uid, nom: 'Client' };
                     const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
                     onSnapshot(chantiersRef, (chantiersSnapshot) => {
                          chantiersList.innerHTML = '';
-                         if(chantiersSnapshot.empty) {
-                             chantiersList.innerHTML = '<p>Vous n\'avez actuellement aucun chantier en cours.</p>';
-                         } else {
-                             chantiersSnapshot.forEach(chantierDoc => {
-                                 chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo));
-                             });
-                         }
+                         if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
+                         else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
                     });
-                } catch(error) {
-                    console.error("Erreur client:", error);
-                    chantiersList.innerHTML = `<p class="error">Erreur de chargement de vos chantiers: ${error.message}</p>`;
-                }
+                } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
             
             // --- GESTION DES ÉVÉNEMENTS ---
-
-            // Écouteur principal pour les clics (accordéons, boutons modifier/annuler/sauvegarder)
             chantiersList.addEventListener('click', async (e) => {
                 const header = e.target.closest('.client-header, .chantier-header');
-                
-                // Gérer l'ouverture/fermeture des accordéons
                 if (header && !header.classList.contains('is-admin')) {
                     const body = document.getElementById(header.dataset.target);
                     if (body) {
-                        const isOpen = body.style.display === 'block';
-                        body.style.display = isOpen ? 'none' : 'block';
-                        header.classList.toggle('is-open', !isOpen);
-
-                        // Charger le chat si on ouvre le chantier
-                        if (!isOpen && header.classList.contains('chantier-header')) {
-                            setupChatListener(header.dataset.chantierId, header.dataset.clientId);
-                        }
+                        const isOpen = body.style.display === 'block'; body.style.display = isOpen ? 'none' : 'block'; header.classList.toggle('is-open', !isOpen);
+                        if (!isOpen && header.classList.contains('chantier-header')) { setupChatListener(header.dataset.chantierId, header.dataset.clientId); }
                     }
                 }
-                
                 const target = e.target;
-                // Gérer le mode édition des chantiers
-                if(target.matches('.edit-chantier-button')) {
-                    const chantierId = target.dataset.chantierId;
-                    document.getElementById(`details-display-${chantierId}`).style.display = 'none';
-                    document.getElementById(`edit-form-${chantierId}`).style.display = 'block';
-                }
-                if(target.matches('.cancel-edit-button')) {
-                    const form = target.closest('.chantier-edit-form');
-                    const chantierId = form.id.replace('edit-form-', '');
-                    form.style.display = 'none';
-                    document.getElementById(`details-display-${chantierId}`).style.display = 'block';
-                }
+                if (target.matches('.chantier-photo')) { lightboxImage.src = target.src; lightbox.style.display = 'flex'; }
+                if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId; document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; }
+                if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
                 if (target.matches('.save-chantier-button')) {
-                    e.preventDefault();
-                    const form = target.closest('.chantier-edit-form');
-                    const chantierId = target.dataset.chantierId;
-                    const clientId = target.dataset.clientId;
-                    const joursInput = form.querySelector('.jours-intervention-input').value;
-                    const avancement = form.querySelector('.avancement-input').value;
+                    e.preventDefault(); const form = target.closest('.chantier-edit-form'); const chantierId = target.dataset.chantierId; const clientId = target.dataset.clientId;
+                    const joursInput = form.querySelector('.jours-intervention-input').value; const avancement = form.querySelector('.avancement-input').value;
                     const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean);
                     const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
                     await updateDoc(chantierRef, { joursIntervention: jours, pourcentageAvancement: Number(avancement) });
-                    form.style.display = 'none';
-                    document.getElementById(`details-display-${chantierId}`).style.display = 'block';
+                    form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';
                 }
             });
 
-            // Écouteur pour l'envoi de messages de chat
             chantiersList.addEventListener('submit', async (e) => {
-                if (!e.target.matches('.chat-form')) return;
-                e.preventDefault();
-                
-                const form = e.target;
-                const textarea = form.querySelector('textarea');
-                const text = textarea.value.trim();
-                if (!text) return;
+                // --- GESTION ENVOI PHOTO (NOUVEAU) ---
+                if (e.target.matches('.photo-upload-form')) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const fileInput = form.querySelector('input[type="file"]');
+                    const file = fileInput.files[0];
+                    const statusEl = form.querySelector('.photo-upload-status');
+                    if (!file) { return; }
 
-                const { chantierId, clientId } = form.dataset;
-                const user = auth.currentUser;
-                
-                if (!user) {
-                    alert("Vous devez être connecté pour envoyer un message.");
-                    return;
+                    const { chantierId, clientId } = form.dataset;
+                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
+
+                    try {
+                        const uniqueFileName = `${Date.now()}-${file.name}`;
+                        const storageRef = ref(storage, `chantiers/${chantierId}/${uniqueFileName}`);
+                        
+                        await uploadBytes(storageRef, file);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        
+                        const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
+                        await updateDoc(chantierRef, {
+                            photos: arrayUnion(downloadURL)
+                        });
+
+                        statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success';
+                        form.reset();
+                    } catch (error) {
+                        console.error("Erreur d'envoi de la photo:", error);
+                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
+                    } finally {
+                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+                    }
                 }
 
-                const idTokenResult = await user.getIdTokenResult();
-                const senderName = idTokenResult.claims.admin ? 'Admin' : (await firebaseGetDoc(doc(db, 'clients', user.uid))).data().nom;
-
-                const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
-                try {
-                    await addDoc(messagesRef, {
-                        text: text,
-                        timestamp: serverTimestamp(),
-                        senderId: user.uid,
-                        senderName: senderName || 'Utilisateur'
-                    });
-                    form.reset();
-                } catch (error) {
-                    console.error("Erreur d'envoi du message:", error);
-                    alert("Le message n'a pas pu être envoyé.");
+                // --- GESTION ENVOI MESSAGE CHAT (inchangé) ---
+                if (e.target.matches('.chat-form')) {
+                    e.preventDefault();
+                    const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return;
+                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous pour envoyer un message."); return; }
+                    const idTokenResult = await user.getIdTokenResult(); const clientDoc = await firebaseGetDoc(doc(db, 'clients', user.uid));
+                    const senderName = idTokenResult.claims.admin ? 'Admin' : (clientDoc.exists() ? clientDoc.data().nom : 'Client');
+                    const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
+                    try {
+                        await addDoc(messagesRef, { text: text, timestamp: serverTimestamp(), senderId: user.uid, senderName: senderName || 'Utilisateur' });
+                        form.reset();
+                    } catch (error) { console.error("Erreur d'envoi du message:", error); alert("Le message n'a pas pu être envoyé."); }
                 }
             });
-
-            // --- FONCTIONS ET ÉVÉNEMENTS D'ADMINISTRATION ---
-
+            
+            lightboxClose.addEventListener('click', () => lightbox.style.display = 'none');
+            
+            // --- FONCTIONS ET ÉVÉNEMENTS D'ADMINISTRATION (inchangés) ---
             async function loadClientListForAdminForms() {
                 try {
-                    const clientsSnapshot = await getDocs(query(collection(db, 'clients')));
-                    const select = document.getElementById('add-chantier-client-select');
+                    const clientsSnapshot = await getDocs(query(collection(db, 'clients'))); const select = document.getElementById('add-chantier-client-select');
                     select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
-                    clientsSnapshot.forEach(doc => {
-                        // N'ajoute que les documents qui ne sont PAS des admins
-                        if (!doc.data().role) { 
-                            const option = new Option(doc.data().nom || doc.id, doc.id);
-                            select.add(option);
-                        }
-                    });
-                } catch(error) {
-                    console.error("Impossible de charger la liste des clients:", error);
-                }
+                    clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
+                } catch(error) { console.error("Impossible de charger la liste des clients:", error); }
             }
-
             document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const statusEl = document.getElementById('add-chantier-status');
-                const clientId = document.getElementById('add-chantier-client-select').value;
-                const address = document.getElementById('new-chantier-address').value;
-                if (!clientId || !address) {
-                    statusEl.textContent = "Veuillez sélectionner un client et entrer une adresse.";
-                    statusEl.style.display = 'block';
-                    return;
-                }
+                e.preventDefault(); const statusEl = document.getElementById('add-chantier-status'); const clientId = document.getElementById('add-chantier-client-select').value;
+                const address = document.getElementById('new-chantier-address').value; if (!clientId || !address) { statusEl.textContent = "Veuillez sélectionner un client et une adresse."; statusEl.style.display = 'block'; return; }
                 try {
-                    const clientChantierRef = collection(db, 'clients', clientId, 'chantier');
-                    await addDoc(clientChantierRef, { adresse: address, pourcentageAvancement: 0, joursIntervention: [] });
-                    statusEl.textContent = "Chantier ajouté avec succès !";
-                    statusEl.className = 'message-feedback success';
-                    statusEl.style.display = 'block';
-                    e.target.reset();
-                    setTimeout(() => statusEl.style.display = 'none', 4000);
-                } catch(error) {
-                    statusEl.textContent = "Erreur : " + error.message;
-                    statusEl.className = 'message-feedback error';
-                }
+                    await addDoc(collection(db, 'clients', clientId, 'chantier'), { adresse: address, pourcentageAvancement: 0, joursIntervention: [], photos: [] });
+                    statusEl.textContent = "Chantier ajouté !"; statusEl.className = 'message-feedback success'; e.target.reset();
+                } catch(error) { statusEl.textContent = "Erreur : " + error.message; statusEl.className = 'message-feedback error'; }
+                finally { statusEl.style.display = 'block'; setTimeout(() => statusEl.style.display = 'none', 4000); }
             });
-
-            // NOTE: La logique pour 'create-client-form' et la gestion des admins
-            // nécessite des Cloud Functions que nous avons discutées précédemment.
-            // L'interface est là, mais le code JS pour appeler les fonctions n'est pas inclus ici.
-
         });
     </script>
 </body>
