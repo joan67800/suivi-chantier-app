@@ -1,7 +1,18 @@
 [
   {
-    "origin": ["https://suividechantier2hr.netlify.app", "http://localhost:5500"],
-    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "origin": [
+      "https://suividechantier2hr.netlify.app",
+      "http://localhost:5500"
+    ],
+    "method": [
+      "GET",
+      "POST",
+      "HEAD"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Access-Control-Allow-Origin"
+    ],
     "maxAgeSeconds": 3600
   }
 ]
