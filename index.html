@@ -14,6 +14,8 @@
             --text-light: #FFFFFF;
             --border-color: #cccccc;
             --error-red: #dc3545;
+            --button-danger: #d9534f;
+            --button-danger-hover: #c9302c;
         }
 
         body {
@@ -44,6 +46,10 @@
         button:hover { background-color: #D46900; }
         #logout-button { background-color: #6c757d; }
         #logout-button:hover { background-color: #5a6268; }
+        .delete-client-button { background-color: var(--button-danger); }
+        .delete-client-button:hover { background-color: var(--button-danger-hover); }
+        .delete-client-button:disabled { background-color: #aaa; }
+
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
         .message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
@@ -52,6 +58,8 @@
         
         .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
         .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
+        .client-header-content { flex-grow: 1; }
+        .client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0; }
         .client-header:hover { background-color: #d4e7c7; }
         .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; }
         .client-header.is-admin:hover { background-color: #f1f1f1; }
@@ -148,17 +156,17 @@
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION FIREBASE ---
-            // !!! CORRECTION FINALE CI-DESSOUS !!!
             const firebaseConfig = {
                 apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
                 authDomain: "suivi-chantier-societe.firebaseapp.com",
                 projectId: "suivi-chantier-societe",
-                storageBucket: "suivi-chantier-societe.firebasestorage.app", // <-- CORRIGÉ: C'est la bonne adresse
+                storageBucket: "suivi-chantier-societe.firebasestorage.app",
                 messagingSenderId: "888449140099",
                 appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
             };
@@ -166,6 +174,7 @@
             const auth = getAuth(app);
             const db = getFirestore(app);
             const storage = getStorage(app);
+            const functions = getFunctions(app); // Initialiser Functions
 
             initializeAppCheck(app, {
               provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
@@ -284,7 +293,6 @@
                 return chantierItem;
             }
             
-            // --- Logique du Chat (inchangée) ---
             function renderMessages(snapshot, chatBox, currentUserId) {
                 chatBox.innerHTML = '';
                 if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
@@ -308,20 +316,40 @@
                 chatBox.dataset.chatLoaded = 'true';
             }
             
-            // --- TABLEAUX DE BORD (DASHBOARDS) ---
             async function loadAdminDashboard() {
                 appTitle.textContent = "Administration des Chantiers"; adminSection.style.display = 'block'; chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
                 try {
                     const clientsSnapshot = await getDocs(collection(db, 'clients'));
                     if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
+                    
+                    chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>'; // Réinitialiser avant de remplir
                     clientsSnapshot.forEach(clientDoc => {
-                        const clientData = clientDoc.data(); const isThisUserAdmin = clientData.role === 'admin';
+                        const clientData = clientDoc.data(); 
+                        const isThisUserAdmin = clientData.role === 'admin';
                         const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
-                        const accountWrapper = document.createElement('div'); accountWrapper.classList.add('client-accordion');
-                        let headerClass = "client-header"; let headerContent = `<h3>${clientInfo.nom}</h3>`;
-                        if (isThisUserAdmin) { headerClass += " is-admin"; headerContent = `<h3>${clientInfo.nom} <span class="admin-badge">Admin</span></h3>`;}
-                        accountWrapper.innerHTML = `<div class="${headerClass}" data-target="client-body-${clientDoc.id}">${headerContent}${!isThisUserAdmin ? '<span class="indicator">▼</span>' : ''}</div><div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                        
+                        const accountWrapper = document.createElement('div'); 
+                        accountWrapper.classList.add('client-accordion');
+                        accountWrapper.id = `client-wrapper-${clientDoc.id}`; // ID pour suppression facile
+                        
+                        const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
+                        const deleteButtonHTML = !isThisUserAdmin ? 
+                            `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer</button>` : 
+                            '';
+
+                        accountWrapper.innerHTML = `
+                            <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
+                                <div class="client-header-content">
+                                    <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                                </div>
+                                <div class="client-header-actions">
+                                    ${deleteButtonHTML}
+                                </div>
+                                ${!isThisUserAdmin ? '<span class="indicator">▼</span>' : ''}
+                            </div>
+                            <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
                         chantiersList.appendChild(accountWrapper);
+                        
                         if (!isThisUserAdmin) {
                             const chantiersContainer = accountWrapper.querySelector('.client-body');
                             const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
@@ -351,6 +379,40 @@
             
             // --- GESTION DES ÉVÉNEMENTS ---
             chantiersList.addEventListener('click', async (e) => {
+                 if (e.target.matches('.delete-client-button')) {
+                    e.stopPropagation(); // Empêche l'accordéon de s'ouvrir/fermer
+                    const button = e.target;
+                    const clientId = button.dataset.clientId;
+                    const clientName = button.dataset.clientName;
+
+                    const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action supprimera son compte, tous ses chantiers, messages et photos. L'action est irréversible.`);
+                    
+                    if (confirmation1) {
+                        const confirmation2 = prompt(`Pour confirmer, veuillez taper le nom du client à supprimer : "${clientName}"`);
+                        
+                        if (confirmation2 === clientName) {
+                            try {
+                                button.disabled = true;
+                                button.textContent = 'Suppression...';
+                                const deleteClient = httpsCallable(functions, 'deleteClient');
+                                await deleteClient({ clientId: clientId });
+                                
+                                document.getElementById(`client-wrapper-${clientId}`).remove();
+                                alert(`Le client "${clientName}" a été supprimé avec succès.`);
+
+                            } catch (error) {
+                                console.error("Erreur lors de la suppression du client:", error);
+                                alert(`Une erreur est survenue : ${error.message}`);
+                                button.disabled = false;
+                                button.textContent = 'Supprimer';
+                            }
+                        } else if (confirmation2 !== null) { // Gérer le cas où l'utilisateur clique sur "Annuler"
+                            alert("La confirmation a échoué. Suppression annulée.");
+                        }
+                    }
+                    return; 
+                }
+
                 const header = e.target.closest('.client-header, .chantier-header');
                 if (header && !header.classList.contains('is-admin')) {
                     const body = document.getElementById(header.dataset.target);
@@ -376,27 +438,18 @@
             chantiersList.addEventListener('submit', async (e) => {
                 if (e.target.matches('.photo-upload-form')) {
                     e.preventDefault();
-                    const form = e.target;
-                    const fileInput = form.querySelector('input[type="file"]');
-                    const file = fileInput.files[0];
-                    const statusEl = form.querySelector('.photo-upload-status');
+                    const form = e.target; const fileInput = form.querySelector('input[type="file"]');
+                    const file = fileInput.files[0]; const statusEl = form.querySelector('.photo-upload-status');
                     if (!file) { return; }
-
                     const { chantierId, clientId } = form.dataset;
                     statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
-
                     try {
                         const uniqueFileName = `${Date.now()}-${file.name}`;
                         const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
-                        
                         await uploadBytes(storageRef, file);
                         const downloadURL = await getDownloadURL(storageRef);
-                        
                         const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
-                        await updateDoc(chantierRef, {
-                            photos: arrayUnion(downloadURL)
-                        });
-
+                        await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
                         statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success';
                         form.reset();
                     } catch (error) {
