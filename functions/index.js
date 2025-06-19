@@ -1,9 +1,9 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-// NOUVEAUX IMPORTS pour les fonctions v2 (onCall et onRequest)
+// IMPORTS pour les fonctions v2
 const { onRequest } = require("firebase-functions/v2/https");
-const { onCall } = require("firebase-functions/v2/https"); // <- Pour notre nouvelle fonction
+const { onCall } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2");
 
 admin.initializeApp();
@@ -15,7 +15,6 @@ const cors = require("cors")({ origin: true });
 // VOS FONCTIONS EXISTANTES (inchangées)
 // ==========================================================
 
-// Fonction existante pour gérer les rôles admin
 exports.setUserAsAdmin = onRequest((request, response) => {
   cors(request, response, async () => {
     if (!request.headers.authorization || !request.headers.authorization.startsWith("Bearer ")) {
@@ -47,16 +46,12 @@ exports.setUserAsAdmin = onRequest((request, response) => {
   });
 });
 
-// NOUVELLE FONCTION pour créer un client
 exports.createClientUser = onRequest((request, response) => {
   cors(request, response, async () => {
-    console.log("--- Début de l'exécution de createClientUser ---");
-
     if (!request.headers.authorization || !request.headers.authorization.startsWith("Bearer ")) {
       console.error("Aucun jeton Firebase ID n'a été fourni.");
       return response.status(403).send("Unauthorized");
     }
-
     try {
       const idToken = request.headers.authorization.split("Bearer ")[1];
       const decodedIdToken = await admin.auth().verifyIdToken(idToken);
@@ -76,16 +71,13 @@ exports.createClientUser = onRequest((request, response) => {
         password: password,
         displayName: nom,
       });
-      console.log("Utilisateur créé avec succès dans Auth:", userRecord.uid);
       
       await admin.firestore().collection('clients').doc(userRecord.uid).set({
         nom: nom,
         email: email
       });
-      console.log("Document client créé avec succès dans Firestore pour:", userRecord.uid);
       
       return response.status(200).send({ data: { message: `Client '${nom}' créé avec succès.` } });
-
     } catch (error) {
       console.error("Erreur lors de la création du client :", error);
       const errorMessage = error.code === 'auth/email-already-exists' 
@@ -96,70 +88,68 @@ exports.createClientUser = onRequest((request, response) => {
   });
 });
 
-
-// ==========================================================
-// NOUVELLE FONCTION POUR SUPPRIMER UN CLIENT
-// ==========================================================
+// =================================================================
+// FONCTION DE SUPPRESSION DE CLIENT (VERSION FINALE CORRIGÉE)
+// =================================================================
 exports.deleteClient = onCall(async (request) => {
   // 1. Vérification de sécurité : l'appelant est-il authentifié et admin ?
   if (!request.auth || !request.auth.token.admin) {
     throw new functions.https.HttpsError(
-        "permission-denied",
-        "Action non autorisée. Seul un administrateur peut supprimer un client.",
+      "permission-denied",
+      "Action non autorisée. Seul un administrateur peut supprimer un client."
     );
   }
 
   const clientId = request.data.clientId;
   if (!clientId) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "L'ID du client est manquant dans la requête.",
+      "invalid-argument",
+      "L'ID du client est manquant dans la requête."
     );
   }
 
   const db = admin.firestore();
   const bucket = admin.storage().bucket();
-  const clientPath = `clients/${clientId}`;
+  const clientRef = db.collection("clients").doc(clientId);
 
   try {
-    // 2. Supprimer tous les fichiers du client dans Storage
-    // On liste tous ses chantiers pour trouver les dossiers de photos
-    const chantiersSnapshot = await db.collection(clientPath).doc("chantier").collection("chantiers").get();
+    // Étape A: Lister tous les chantiers pour supprimer les fichiers associés dans Storage
+    // Le chemin correct est 'clients/{id}/chantier'
+    const chantiersSnapshot = await clientRef.collection("chantier").get();
     
-    for (const chantierDoc of chantiersSnapshot.docs) {
-      const chantierId = chantierDoc.id;
-      const prefix = `chantier-photos/${chantierId}/`;
-      // Suppression de tous les fichiers dans le dossier du chantier
-      await bucket.deleteFiles({ prefix: prefix });
-      console.log(`Fichiers de Storage supprimés pour le chantier: ${chantierId}`);
+    const deleteStoragePromises = [];
+    if (!chantiersSnapshot.empty) {
+        for (const chantierDoc of chantiersSnapshot.docs) {
+          const chantierId = chantierDoc.id;
+          // Le chemin dans Storage est 'chantier-photos/{chantierId}'
+          const prefix = `chantier-photos/${chantierId}/`;
+          // Ajoute la promesse de suppression des fichiers au tableau
+          deleteStoragePromises.push(bucket.deleteFiles({ prefix: prefix }));
+        }
+
+        // Étape B: Exécuter toutes les suppressions de fichiers en parallèle
+        await Promise.all(deleteStoragePromises);
+        console.log(`Tous les fichiers de Storage pour le client ${clientId} ont été traités.`);
     }
 
-    // 3. Supprimer tous les documents et sous-collections dans Firestore
-    // Firebase a une fonction pour cela dans la CLI, mais dans les fonctions,
-    // nous devons le faire manuellement pour être sûr. La méthode la plus
-    // simple et sécurisée est de le faire via la console ou un script,
-    // mais pour une suppression complète ici, on cible le document principal
-    // (après avoir géré les fichiers, la partie la plus critique).
-    // Une suppression récursive complète serait beaucoup plus complexe.
-    // Pour notre cas, supprimer les fichiers, le compte Auth et le doc client est le 80/20.
-    
-    // Pour une suppression complète, on peut utiliser cette logique de suppression récursive
-    // (plus avancée mais plus propre)
-    await db.recursiveDelete(db.collection('clients').doc(clientId));
-    console.log(`Document Firestore et toutes les sous-collections pour ${clientId} supprimés.`);
+    // Étape C: Supprimer le document client et TOUTES ses sous-collections dans Firestore
+    // C'est la méthode la plus propre et la plus sûre.
+    await db.recursiveDelete(clientRef);
+    console.log(`Document Firestore et sous-collections pour ${clientId} supprimés.`);
 
-    // 4. Supprimer le compte d'authentification de l'utilisateur
+    // Étape D: Supprimer le compte d'authentification de l'utilisateur
     await admin.auth().deleteUser(clientId);
-    console.log(`Compte d'authentification supprimé pour: ${clientId}`);
+    console.log(`Compte d'authentification supprimé pour : ${clientId}`);
 
     return { success: true, message: `Le client ${clientId} et toutes ses données ont été supprimés.` };
 
   } catch (error) {
     console.error(`Erreur lors de la suppression complète du client ${clientId}:`, error);
+    // Renvoyer une erreur claire au client
     throw new functions.https.HttpsError(
-        "internal",
-        "Une erreur est survenue lors de la suppression du client.",
-        error.message
+      "internal",
+      "Une erreur interne est survenue lors de la suppression du client.",
+      error.message
     );
   }
 });
