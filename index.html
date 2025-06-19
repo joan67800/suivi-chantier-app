@@ -153,18 +153,19 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION FIREBASE ---
+            // !!! CORRECTION FINALE CI-DESSOUS !!!
             const firebaseConfig = {
                 apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
                 authDomain: "suivi-chantier-societe.firebaseapp.com",
                 projectId: "suivi-chantier-societe",
-                storageBucket: "suivi-chantier-societe.appspot.com", // MODIFIÉ: S'assurer que c'est le bon bucket
+                storageBucket: "suivi-chantier-societe.firebasestorage.app", // <-- CORRIGÉ: C'est la bonne adresse
                 messagingSenderId: "888449140099",
                 appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
             };
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
-            const storage = getStorage(app); // NOUVEAU: Initialiser Storage
+            const storage = getStorage(app);
 
             initializeAppCheck(app, {
               provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
@@ -228,7 +229,6 @@
                 
                 const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
                 
-                // NOUVEAU: Générer le HTML pour les photos
                 let photosHTML = '';
                 if (chantierData.photos && chantierData.photos.length > 0) {
                     photosHTML = chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" class="chantier-photo">`).join('');
@@ -236,7 +236,6 @@
                     photosHTML = '<p style="color: #888;">Aucune photo pour ce chantier.</p>';
                 }
                 
-                // NOUVEAU: Générer le formulaire d'upload de photo pour l'admin
                 const photoUploadFormHTML = isAdmin ? `
                     <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
                         <label>Ajouter une photo au chantier :</label>
@@ -246,7 +245,6 @@
                     </form>
                 ` : '';
 
-                // MODIFIÉ: Intégration des sections photo dans le HTML
                 chantierItem.innerHTML = `
                     <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
@@ -376,7 +374,6 @@
             });
 
             chantiersList.addEventListener('submit', async (e) => {
-                // --- GESTION ENVOI PHOTO (NOUVEAU) ---
                 if (e.target.matches('.photo-upload-form')) {
                     e.preventDefault();
                     const form = e.target;
@@ -410,7 +407,6 @@
                     }
                 }
 
-                // --- GESTION ENVOI MESSAGE CHAT (inchangé) ---
                 if (e.target.matches('.chat-form')) {
                     e.preventDefault();
                     const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return;
@@ -427,7 +423,6 @@
             
             lightboxClose.addEventListener('click', () => lightbox.style.display = 'none');
             
-            // --- FONCTIONS ET ÉVÉNEMENTS D'ADMINISTRATION (inchangés) ---
             async function loadClientListForAdminForms() {
                 try {
                     const clientsSnapshot = await getDocs(query(collection(db, 'clients'))); const select = document.getElementById('add-chantier-client-select');
