@@ -390,7 +390,7 @@
 
                     try {
                         const uniqueFileName = `${Date.now()}-${file.name}`;
-                        const storageRef = ref(storage, `chantiers/${chantierId}/${uniqueFileName}`);
+                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
                         
                         await uploadBytes(storageRef, file);
                         const downloadURL = await getDownloadURL(storageRef);
