@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
     
+    <!-- ====================================================== -->
+    <!--   CSS COMPLET INTÉGRÉ DANS LE HTML                     -->
+    <!-- ====================================================== -->
     <style>
         :root {
             --company-orange: #E57300;
@@ -52,12 +55,18 @@
         .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
         .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
         .client-header:hover { background-color: #d4e7c7; }
+        .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; }
+        .client-header.is-admin:hover { background-color: #f1f1f1; }
         .client-header h3 { margin: 0; padding: 0; border: none; color: var(--text-dark); font-size: 1.3em; }
-        .indicator { transition: transform 0.3s ease; font-size: 1.5em; color: var(--company-dark-green-action) }
-        .is-open > .indicator { transform: rotate(180deg); }
+        .indicator { transition: transform 0.3s ease; font-size: 1.5em; color: var(--company-dark-green-action); }
+        .is-open .indicator { transform: rotate(180deg); }
         .client-body { display: none; padding: 15px; }
         .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
         .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+        
+        .photos-container { display: flex; gap: 10px; margin-top: 10px; padding: 10px; overflow-x: auto; background-color: #f4f7f6; border-radius: 5px; }
+        .photos-container img { height: 100px; width: auto; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+        .photos-container img:hover { transform: scale(1.05); }
 
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
         .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
@@ -74,6 +83,12 @@
         .chat-form { display: flex; gap: 10px; margin-top: 15px; }
         .chat-form textarea { flex-grow: 1; margin: 0; }
         .chat-form button { margin-top: 0; align-self: flex-end; }
+        
+        .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; }
+
+        .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
+        .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
+        .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -103,7 +118,7 @@
                     <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
                     <div><label for="new-client-password">Mot de passe initial :</label><input type="text" id="new-client-password" required></div>
                     <button type="submit">Créer le Client</button>
-                    <p id="create-client-status" class="message-feedback" style="display: none;"></p>
+                    <p id="create-client-status" style="display: none;"></p>
                 </form>
             </div>
             <div class="admin-subsection">
@@ -112,7 +127,7 @@
                     <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
                     <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
                     <button type="submit">Ajouter le Chantier</button>
-                    <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
+                    <p id="add-chantier-status" style="display: none;"></p>
                 </form>
             </div>
             <div class="admin-danger-zone">
@@ -124,6 +139,10 @@
             </div>
         </div>
     </div>
+    <div id="image-lightbox" class="lightbox" style="display: none;">
+      <span class="lightbox-close">&times;</span>
+      <img class="lightbox-content" id="lightbox-image">
+    </div>
 
     <!-- ====================================================== -->
     <!--   JAVASCRIPT COMPLET INTÉGRÉ DANS LE HTML            -->
@@ -133,6 +152,7 @@
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy as firestoreOrderBy, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
@@ -143,7 +163,6 @@
                 messagingSenderId: "888449140099",
                 appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
             };
-
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
@@ -154,20 +173,16 @@
             });
 
             const loginContainer = document.getElementById('login-container');
-            const loginForm = document.getElementById('login-form');
             const appContainer = document.getElementById('app-container');
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
             const appTitle = document.getElementById('app-title');
-            
-            loginForm.addEventListener('submit', async (e) => {
+
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 document.getElementById('login-error').textContent = '';
-                try {
-                    await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
-                } catch (error) {
-                    document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.';
-                }
+                try { await signInWithEmailAndPassword(auth, email.value, password.value); } 
+                catch (error) { document.getElementById('login-error').textContent = 'Erreur: Identifiants incorrects.'; }
             });
 
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
@@ -180,25 +195,28 @@
 
                 const chantierItem = document.createElement('div');
                 chantierItem.classList.add('chantier-item');
+                
                 const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
+                
                 chantierItem.innerHTML = `
                     <div class="chantier-header" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
                         <span class="indicator">▼</span>
                     </div>
                     <div class="chantier-body" id="body-${chantierId}">
+                        <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
+                        <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p>Chargement...</p></div>
                             <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"><textarea required placeholder="Posez votre question..."></textarea><button type="submit">Envoyer</button></form>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 listenForChatMessages(clientId, chantierId, isAdmin);
                 return chantierItem;
             }
             
-            async function loadAdminDashboard(adminUid) {
+            async function loadAdminDashboard() {
                 appTitle.textContent = "Administration des Chantiers";
                 adminSection.style.display = 'block';
                 chantiersList.innerHTML = '<h2>Chantiers des Clients</h2>';
@@ -239,8 +257,85 @@
                 }
             }
 
-            // ... Le reste de votre code JavaScript reste ici (loadClientDashboard, onAuthStateChanged, etc.)
+            async function loadClientListForAdminForms() {
+                const clientsSnapshot = await getDocs(collection(db, 'clients'));
+                const select = document.getElementById('add-chantier-client-select');
+                select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
+                clientsSnapshot.forEach(doc => {
+                    if (!doc.data().role) {
+                        select.add(new Option(doc.data().nom || doc.id, doc.id));
+                    }
+                });
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    document.getElementById('login-container').style.display = 'none';
+                    document.getElementById('app-container').style.display = 'block';
+                    const idTokenResult = await user.getIdTokenResult(true);
+                    const isAdmin = idTokenResult.claims.admin === true;
+                    if (isAdmin) {
+                        loadAdminDashboard();
+                    } else {
+                        // ... Logique client inchangée ...
+                    }
+                } else {
+                    document.getElementById('login-container').style.display = 'block';
+                    document.getElementById('app-container').style.display = 'none';
+                }
+            });
+
+            chantiersList.addEventListener('click', (e) => {
+                const header = e.target.closest('.client-header, .chantier-header');
+                if (header) {
+                    const body = document.getElementById(header.dataset.target);
+                    if (body) {
+                        const isOpen = body.style.display === 'block';
+                        body.style.display = isOpen ? 'none' : 'block';
+                        header.classList.toggle('is-open', !isOpen);
+                    }
+                }
+            });
             
+            document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const clientId = document.getElementById('add-chantier-client-select').value;
+                const address = document.getElementById('new-chantier-address').value;
+                if (!clientId || !address) {
+                    alert("Veuillez sélectionner un client et entrer une adresse.");
+                    return;
+                }
+                const chantierRef = collection(db, 'clients', clientId, 'chantier');
+                await addDoc(chantierRef, { adresse: address, pourcentageAvancement: 0, joursIntervention: [] });
+                e.target.reset();
+            });
+
+            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const statusEl = document.getElementById('create-client-status');
+                statusEl.textContent = "Création en cours...";
+                statusEl.style.display = 'block';
+                const idToken = await auth.currentUser.getIdToken();
+                try {
+                    const response = await fetch("https://us-central1-suivi-chantier-societe.cloudfunctions.net/createClientUser", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                        body: JSON.stringify({ data: { 
+                            email: document.getElementById('new-client-email').value,
+                            password: document.getElementById('new-client-password').value,
+                            nom: document.getElementById('new-client-name').value
+                        }})
+                    });
+                    if (!response.ok) throw new Error(await response.text());
+                    const result = await response.json();
+                    statusEl.textContent = result.data.message;
+                    e.target.reset();
+                    loadClientListForAdminForms();
+                } catch(error) {
+                    statusEl.textContent = "Erreur : " + error.message;
+                }
+            });
+            // ... autres listeners et fonctions
         });
     </script>
 </body>
