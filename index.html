@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
-    
     <style>
+        /* Votre CSS reste inchangé */
         :root {
             --company-orange: #E57300;
             --company-light-green: #E2EFDA;
@@ -19,31 +19,20 @@
             --button-info: #5bc0de;
             --button-info-hover: #31b0d5;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            background-color: #f4f7f6;
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; color: var(--text-dark); line-height: 1.6; }
         .company-logo { display: block; margin: 0 auto 20px auto; max-height: 120px; width: auto; }
         .app-header { background-color: #ffffff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--company-orange); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .app-header .company-logo { margin: 0; max-height: 50px; }
         .app-header h1 { margin: 0 20px; flex-grow: 1; font-size: 1.5em; color: var(--company-orange); }
         #login-container, #app-container { background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 900px; }
         #login-container { max-width: 400px; text-align: center; }
-
         h2, h3, h4 { color: var(--company-orange); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 25px; }
         h2:first-child, h3:first-child, h4:first-child { margin-top: 0; }
         h4 { font-size: 1.1em; border-bottom: none; }
-
         input, textarea, select, button { font-family: inherit; font-size: 1em; }
         input[type="email"], input[type="password"], input[type="text"], input[type="file"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
         input[type="file"] { padding: 5px; }
         textarea { min-height: 80px; resize: vertical; }
-
         button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease; }
         button:hover { background-color: #D46900; }
         .edit-chantier-button { background-color: var(--button-info); }
@@ -53,13 +42,10 @@
         .delete-client-button, .delete-button { background-color: var(--button-danger); }
         .delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); }
         .delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; }
-
-
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
         .message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
         .message-feedback.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
         .message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; }
-        
         .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
         .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
         .client-header-content { flex-grow: 1; display: flex; align-items: center; gap: 10px; }
@@ -73,19 +59,16 @@
         .client-body, .chantier-body { display: none; padding: 15px; }
         .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
         .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
-        
         .photos-section { margin-top: 20px; }
         .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; }
         .photo-wrapper { position: relative; }
         .photo-wrapper img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
         .photo-wrapper img:hover { transform: scale(1.05); }
         .delete-photo-button { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; padding: 0; margin: 0; line-height: 24px; text-align: center; border-radius: 50%; font-size: 14px; font-weight: bold; cursor: pointer; }
-
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
         .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
         .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
         .admin-danger-zone { border: 1px solid red !important; padding: 15px; margin-top: 20px; }
-
         .chat-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
         .chat-box { max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
         .chat-message { max-width: 70%; padding: 10px 15px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; position: relative; }
@@ -100,10 +83,8 @@
         .chat-form { display: flex; gap: 10px; margin-top: 15px; }
         .chat-form textarea { flex-grow: 1; margin: 0; }
         .chat-form button { margin-top: 0; align-self: flex-end; height: fit-content; }
-        
         .chantier-actions { display: flex; gap: 10px; margin-bottom: 15px; }
         .chantier-actions button { margin-top: 0; font-size: 0.9em; padding: 8px 12px; }
-
         .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin:0; }
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
@@ -112,11 +93,7 @@
 </head>
 <body>
     <div id="login-container"></div>
-    <div id="app-container" style="display: none;">
-        <header class="app-header"></header>
-        <div id="chantiers-list"></div>
-        <div id="admin-section" style="display: none;"></div>
-    </div>
+    <div id="app-container" style="display: none;"></div>
     <div id="image-lightbox" class="lightbox" style="display: none;"></div>
 
     <script type="module">
@@ -128,7 +105,10 @@
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // TOUT LE CODE EST MAINTENANT DANS CET ÉCOUTEUR
         document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- CONFIGURATION FIREBASE ---
             const firebaseConfig = {
                 apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
                 authDomain: "suivi-chantier-societe.firebaseapp.com",
@@ -148,6 +128,7 @@
               isTokenAutoRefreshEnabled: true
             });
 
+            // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
             const chantiersList = document.getElementById('chantiers-list');
@@ -156,38 +137,8 @@
             const lightbox = document.getElementById('image-lightbox');
             const lightboxImage = document.getElementById('lightbox-image');
             const lightboxClose = document.querySelector('.lightbox-close');
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    loginContainer.style.display = 'none';
-                    appContainer.style.display = 'block';
-                    const idTokenResult = await user.getIdTokenResult(true);
-                    const isAdmin = idTokenResult.claims.admin === true;
-                    if (isAdmin) {
-                        loadAdminDashboard();
-                    } else {
-                        loadClientDashboard(user);
-                    }
-                } else {
-                    loginContainer.style.display = 'block';
-                    appContainer.style.display = 'none';
-                }
-            });
-
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const errorEl = document.getElementById('login-error');
-                errorEl.style.display = 'none';
-                try {
-                    await signInWithEmailAndPassword(auth, email.value, password.value);
-                } catch (error) {
-                    errorEl.textContent = 'Erreur : Identifiants incorrects.';
-                    errorEl.style.display = 'block';
-                }
-            });
-
-            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             
+            // --- FONCTIONS DE RENDU ---
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
@@ -212,7 +163,7 @@
                 }
                 
                 const photoUploadFormHTML = isAdmin ? `
-                    <form class="photo-upload-form" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">
+                    <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
                         <label>Ajouter une photo au chantier :</label>
                         <input type="file" name="chantierPhoto" accept="image/png, image/jpeg" required>
                         <button type="submit">Envoyer la photo</button>
@@ -222,39 +173,39 @@
 
                 const adminChantierActions = isAdmin ? `
                     <div class="chantier-actions">
-                        <button class="edit-chantier-button" data-chantier-id="<span class="math-inline">\{chantierId\}"\>Modifier</button\>
-<button class\="delete\-button delete\-chantier\-button" data\-client\-id\="</span>{clientId}" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-chantier\-adresse\="</span>{chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
+                        <button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>
+                        <button class="delete-button delete-chantier-button" data-client-id="${clientId}" data-chantier-id="${chantierId}" data-chantier-adresse="${chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
                     </div>
                 ` : '';
 
                 chantierItem.innerHTML = `
-                    <div class="chantier-header" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}" data-target="body-<span class="math-inline">\{chantierId\}"\>
-<div class\="title\-content"\></span>{title}</div>
+                    <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
+                        <div class="title-content">${title}</div>
                         <span class="indicator">▼</span>
                     </div>
-                    <div class="chantier-body" id="body-<span class="math-inline">\{chantierId\}"\>
-<div id\="details\-display\-</span>{chantierId}">
+                    <div class="chantier-body" id="body-${chantierId}">
+                        <div id="details-display-${chantierId}">
                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                           <span class="math-inline">\{adminChantierActions\}
-</div\>
-<form id\="edit\-form\-</span>{chantierId}" style="display:none;" class="chantier-edit-form">
+                           ${adminChantierActions}
+                        </div>
+                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
                             <label>Jours d'intervention (séparés par une virgule):</label>
-                            <input type="text" class="jours-intervention-input" value="<span class="math-inline">\{chantierData\.joursIntervention ? chantierData\.joursIntervention\.join\(', '\) \: ''\}"\>
-<label\>Avancement \(%\)\:</label\>
-<input type\="number" min\="0" max\="100" class\="avancement\-input" value\="</span>{chantierData.pourcentageAvancement || 0}">
+                            <input type="text" class="jours-intervention-input" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
+                            <label>Avancement (%):</label>
+                            <input type="number" min="0" max="100" class="avancement-input" value="${chantierData.pourcentageAvancement || 0}">
                             <button type="submit" class="save-chantier-button">Sauvegarder</button>
                             <button type="button" class="cancel-edit-button">Annuler</button>
                         </form>
                         <div class="photos-section">
                             <h4>Photos du chantier</h4>
                             <div class="photos-container">${photosHTML}</div>
-                            <span class="math-inline">\{photoUploadFormHTML\}
-</div\>
-<div class\="chat\-section"\>
-<h4\>Questions & Réponses</h4\>
-<div class\="chat\-box" id\="chat\-box\-</span>{chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
-                            <form class="chat-form" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">
+                            ${photoUploadFormHTML}
+                        </div>
+                        <div class="chat-section">
+                            <h4>Questions & Réponses</h4>
+                            <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
+                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
                                 <textarea name="messageText" required placeholder="Votre message..."></textarea>
                                 <button type="submit">Envoyer</button>
                             </form>
@@ -276,7 +227,7 @@
                     messageEl.classList.add(senderClass);
                     const deleteButtonHTML = isAdmin ? `<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : '';
                     const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
-                    messageEl.innerHTML = `<span class="math-inline">\{deleteButtonHTML\}<p\></span>{message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
+                    messageEl.innerHTML = `${deleteButtonHTML}<p>${message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
                     chatBox.appendChild(messageEl);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -287,82 +238,87 @@
                 if (!chatBox || chatBox.dataset.chatLoaded === 'true') return;
                 const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
                 const q = query(messagesRef, orderBy('timestamp'));
-                onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid, isAdmin), (error) => {
-                    console.error("Erreur d'écoute du chat:", error); chatBox.innerHTML = '<p class="error">Impossible de charger les messages.</p>';
-                });
+                onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid, isAdmin));
                 chatBox.dataset.chatLoaded = 'true';
             }
             
             async function loadAdminDashboard() {
-                appTitle.textContent = "Administration des Chantiers"; adminSection.style.display = 'block';
-                try {
-                    const clientsQuery = query(collection(db, 'clients'));
-                    onSnapshot(clientsQuery, (clientsSnapshot) => {
-                        chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
-                        if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
+                appTitle.textContent = "Administration des Chantiers"; 
+                adminSection.style.display = 'block';
+                const clientsQuery = query(collection(db, 'clients'));
+                onSnapshot(clientsQuery, (clientsSnapshot) => {
+                    chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
+                    if (clientsSnapshot.empty) { 
+                        chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; 
+                        return; 
+                    }
+                    clientsSnapshot.forEach(clientDoc => {
+                        const clientData = clientDoc.data(); 
+                        const isThisUserAdmin = clientData.role === 'admin';
+                        const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
                         
-                        clientsSnapshot.forEach(clientDoc => {
-                            const clientData = clientDoc.data(); 
-                            const isThisUserAdmin = clientData.role === 'admin';
-                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
-                            
-                            const accountWrapper = document.createElement('div'); 
-                            accountWrapper.classList.add('client-accordion');
-                            accountWrapper.id = `client-wrapper-${clientDoc.id}`;
-                            
-                            const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
-                            const deleteButtonHTML = !isThisUserAdmin ? 
-                                `<button class="delete-client-button" data-client-id="<span class="math-inline">\{clientDoc\.id\}" data\-client\-name\="</span>{clientInfo.nom}">Supprimer Client</button>` : '';
+                        const accountWrapper = document.createElement('div'); 
+                        accountWrapper.classList.add('client-accordion');
+                        accountWrapper.id = `client-wrapper-${clientDoc.id}`;
+                        
+                        const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
+                        const deleteButtonHTML = !isThisUserAdmin ? 
+                            `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer Client</button>` : '';
 
-                            accountWrapper.innerHTML = `
-                                <div class="<span class="math-inline">\{isThisUserAdmin ? 'client\-header is\-admin' \: 'client\-header'\}" data\-target\="client\-body\-</span>{clientDoc.id}">
-                                    <div class="client-header-content">
-                                        <h3>${clientInfo.nom}</h3>
-                                        ${adminBadgeHTML}
-                                    </div>
-                                    <div class="client-header-actions">
-                                        <span class="math-inline">\{deleteButtonHTML\}
-</div\>
-<span class\="indicator"\></span>{!isThisUserAdmin ? '▼' : ''}</span>
+                        accountWrapper.innerHTML = `
+                            <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
+                                <div class="client-header-content">
+                                    <h3>${clientInfo.nom}</h3>
+                                    ${adminBadgeHTML}
                                 </div>
-                                <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
-                            chantiersList.appendChild(accountWrapper);
-                            
-                            if (!isThisUserAdmin) {
-                                const chantiersContainer = accountWrapper.querySelector('.client-body');
-                                const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
-                                onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                                     chantiersContainer.innerHTML = '';
-                                     if(chantiersSnapshot.empty) { chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; } 
-                                     else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));}
-                                });
-                            }
-                        });
+                                <div class="client-header-actions">
+                                    ${deleteButtonHTML}
+                                </div>
+                                <span class="indicator">${!isThisUserAdmin ? '▼' : ''}</span>
+                            </div>
+                            <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                        chantiersList.appendChild(accountWrapper);
+                        
+                        if (!isThisUserAdmin) {
+                            const chantiersContainer = accountWrapper.querySelector('.client-body');
+                            const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                            onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                                 chantiersContainer.innerHTML = '';
+                                 if(chantiersSnapshot.empty) { 
+                                     chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; 
+                                 } else { 
+                                     chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));
+                                 }
+                            });
+                        }
                     });
-                    loadClientListForAdminForms();
-                } catch(error) { console.error("Erreur admin:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
+                });
+                loadClientListForAdminForms();
             }
             async function loadClientDashboard(user) {
-                appTitle.textContent = "Suivi de vos chantiers"; adminSection.style.display = 'none';
-                try {
-                    const clientDocRef = doc(db, 'clients', user.uid);
-                    onSnapshot(clientDocRef, (clientDocSnap) => {
+                appTitle.textContent = "Suivi de vos chantiers"; 
+                adminSection.style.display = 'none';
+                const clientDocRef = doc(db, 'clients', user.uid);
+                onSnapshot(clientDocRef, (clientDocSnap) => {
+                    chantiersList.innerHTML = '';
+                    if (!clientDocSnap.exists()) {
+                        chantiersList.innerHTML = '<p>Votre compte est en cours de configuration.</p>';
+                        return;
+                    }
+                    const clientInfo = { id: user.uid, nom: clientDocSnap.data().nom };
+                    const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
+                    onSnapshot(chantiersRef, (chantiersSnapshot) => {
                         chantiersList.innerHTML = '';
-                        if (!clientDocSnap.exists()) {
-                            chantiersList.innerHTML = '<p>Votre compte est en cours de configuration.</p>';
-                            return;
+                        if(chantiersSnapshot.empty) { 
+                            chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; 
+                        } else { 
+                            chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); 
                         }
-                        const clientInfo = { id: user.uid, nom: clientDocSnap.data().nom };
-                        const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
-                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                            chantiersList.innerHTML = '';
-                            if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
-                            else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
-                        });
                     });
-                } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
+                });
             }
             
+            // --- GESTION DES ÉVÉNEMENTS ---
             chantiersList.addEventListener('click', async (e) => {
                  const target = e.target;
 
@@ -380,7 +336,7 @@
                                 await deleteClient({ clientId: clientId });
                                 alert(`Le client "${clientName}" a été supprimé avec succès.`);
                             } catch (error) {
-                                console.error("Erreur lors de la suppression du client:", error);
+                                console.error("Erreur suppression client:", error);
                                 alert(`Une erreur est survenue : ${error.message}`);
                                 button.disabled = false; button.textContent = 'Supprimer Client';
                             }
@@ -414,15 +370,17 @@
                     if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return;
                     
                     const messageId = target.dataset.messageId;
-                    const chantierHeader = target.closest('.chantier-body').previousElementSibling;
-                    const { clientId, chantierId } = chantierHeader.dataset;
-                    
-                    try {
-                        const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
-                        await deleteDoc(messageRef);
-                    } catch (error) {
-                        console.error("Erreur suppression message:", error);
-                        alert("Une erreur est survenue.");
+                    const chantierBody = target.closest('.chantier-body');
+                    if(chantierBody) {
+                        const chantierHeader = chantierBody.previousElementSibling;
+                        const { clientId, chantierId } = chantierHeader.dataset;
+                        try {
+                            const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
+                            await deleteDoc(messageRef);
+                        } catch (error) {
+                            console.error("Erreur suppression message:", error);
+                            alert("Une erreur est survenue.");
+                        }
                     }
                     return;
                 }
@@ -446,7 +404,7 @@
                     return;
                 }
 
-                const header = e.target.closest('.client-header, .chantier-header');
+                const header = target.closest('.client-header, .chantier-header');
                 if (header && !header.classList.contains('is-admin')) {
                     const body = document.getElementById(header.dataset.target);
                     if (body) {
@@ -463,7 +421,7 @@
                 if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
                 if (target.matches('.save-chantier-button')) {
                     e.preventDefault(); const form = target.closest('.chantier-edit-form');
-                    const header = form.closest('.chantier-body').previousElementSibling; // Remonter pour trouver le header
+                    const header = form.closest('.chantier-body').previousElementSibling;
                     const { clientId, chantierId } = header.dataset;
                     const joursInput = form.querySelector('.jours-intervention-input').value; const avancement = form.querySelector('.avancement-input').value;
                     const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean);
@@ -482,8 +440,8 @@
                     const { chantierId, clientId } = form.dataset;
                     statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
                     try {
-                        const uniqueFileName = `<span class="math-inline">\{Date\.now\(\)\}\-</span>{file.name}`;
-                        const storageRef = ref(storage, `chantier-photos/<span class="math-inline">\{chantierId\}/</span>{uniqueFileName}`);
+                        const uniqueFileName = `${Date.now()}-${file.name}`;
+                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
                         await uploadBytes(storageRef, file);
                         const downloadURL = await getDownloadURL(storageRef);
                         const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
@@ -491,7 +449,7 @@
                         statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success';
                         form.reset();
                     } catch (error) {
-                        console.error("Erreur d'envoi de la photo:", error);
+                        console.error("Erreur envoi photo:", error);
                         statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
                     } finally {
                         setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
@@ -501,14 +459,14 @@
                 if (e.target.matches('.chat-form')) {
                     e.preventDefault();
                     const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return;
-                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous pour envoyer un message."); return; }
+                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous."); return; }
                     const idTokenResult = await user.getIdTokenResult(); const clientDoc = await firebaseGetDoc(doc(db, 'clients', user.uid));
                     const senderName = idTokenResult.claims.admin ? 'Admin' : (clientDoc.exists() ? clientDoc.data().nom : 'Client');
                     const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
                     try {
                         await addDoc(messagesRef, { text: text, timestamp: serverTimestamp(), senderId: user.uid, senderName: senderName || 'Utilisateur' });
                         form.reset();
-                    } catch (error) { console.error("Erreur d'envoi du message:", error); alert("Le message n'a pas pu être envoyé."); }
+                    } catch (error) { console.error("Erreur envoi message:", error); alert("Message non envoyé."); }
                 }
             });
             
