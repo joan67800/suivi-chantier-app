@@ -593,6 +593,7 @@
                     clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
                 } catch(error) { console.error("Impossible de charger la liste des clients:", error); }
             }
+
             document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
                 e.preventDefault(); const statusEl = document.getElementById('add-chantier-status'); const clientId = document.getElementById('add-chantier-client-select').value;
                 const address = document.getElementById('new-chantier-address').value; if (!clientId || !address) { statusEl.textContent = "Veuillez sélectionner un client et une adresse."; statusEl.style.display = 'block'; return; }
@@ -603,47 +604,47 @@
                 finally { statusEl.style.display = 'block'; setTimeout(() => statusEl.style.display = 'none', 4000); }
             });
 
+            // GESTION DES FORMULAIRES DE L'ESPACE ADMIN
+            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const statusEl = document.getElementById('create-client-status');
+                const nom = document.getElementById('new-client-name').value;
+                const email = document.getElementById('new-client-email').value;
+                const password = document.getElementById('new-client-password').value;
+
+                if (!nom || !email || !password) {
+                    statusEl.textContent = "Veuillez remplir tous les champs.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    statusEl.textContent = "Création en cours...";
+                    statusEl.className = 'message-feedback';
+                    statusEl.style.display = 'block';
+
+                    const createClientUser = httpsCallable(functions, 'createClientUser');
+                    const result = await createClientUser({ nom: nom, email: email, password: password });
+                    
+                    statusEl.textContent = result.data.message;
+                    statusEl.className = 'message-feedback success';
+                    form.reset();
+                    loadClientListForAdminForms();
+
+                } catch (error) {
+                    console.error("Erreur lors de la création du client:", error);
+                    statusEl.textContent = "Erreur : " + error.message;
+                    statusEl.className = 'message-feedback error';
+                } finally {
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+                }
+            });
+
             // Logique pour les boutons de la danger zone (non implémentée dans la demande initiale)
             document.getElementById('test-set-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
             document.getElementById('test-remove-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
-            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const statusEl = document.getElementById('create-client-status');
-    const nom = document.getElementById('new-client-name').value;
-    const email = document.getElementById('new-client-email').value;
-    const password = document.getElementById('new-client-password').value;
-
-    if (!nom || !email || !password) {
-        statusEl.textContent = "Veuillez remplir tous les champs.";
-        statusEl.className = 'message-feedback error';
-        statusEl.style.display = 'block';
-        return;
-    }
-
-    try {
-        statusEl.textContent = "Création en cours...";
-        statusEl.className = 'message-feedback';
-        statusEl.style.display = 'block';
-
-        // NOTE : On doit migrer la fonction vers "onCall" pour que ce soit plus simple
-        // Pour l'instant, on laisse comme ça et on l'adaptera si besoin.
-        const createClientUser = httpsCallable(functions, 'createClientUser'); // Assurez-vous que 'functions' est bien votre instance getFunctions()
-        const result = await createClientUser({ nom: nom, email: email, password: password });
-        
-        statusEl.textContent = result.data.message;
-        statusEl.className = 'message-feedback success';
-        form.reset();
-        loadClientListForAdminForms(); // Recharger la liste des clients dans le formulaire d'ajout de chantier
-
-    } catch (error) {
-        console.error("Erreur lors de la création du client:", error);
-        statusEl.textContent = "Erreur : " + error.message;
-        statusEl.className = 'message-feedback error';
-    } finally {
-        setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
-    }
-});
         });
     </script>
 </body>
