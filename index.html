@@ -606,10 +606,44 @@
             // Logique pour les boutons de la danger zone (non implémentée dans la demande initiale)
             document.getElementById('test-set-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
             document.getElementById('test-remove-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
-            document.getElementById('create-client-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                alert("Fonctionnalité de création de client non reliée à une Cloud Function dans ce script.");
-            });
+            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const statusEl = document.getElementById('create-client-status');
+    const nom = document.getElementById('new-client-name').value;
+    const email = document.getElementById('new-client-email').value;
+    const password = document.getElementById('new-client-password').value;
+
+    if (!nom || !email || !password) {
+        statusEl.textContent = "Veuillez remplir tous les champs.";
+        statusEl.className = 'message-feedback error';
+        statusEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        statusEl.textContent = "Création en cours...";
+        statusEl.className = 'message-feedback';
+        statusEl.style.display = 'block';
+
+        // NOTE : On doit migrer la fonction vers "onCall" pour que ce soit plus simple
+        // Pour l'instant, on laisse comme ça et on l'adaptera si besoin.
+        const createClientUser = httpsCallable(functions, 'createClientUser'); // Assurez-vous que 'functions' est bien votre instance getFunctions()
+        const result = await createClientUser({ nom: nom, email: email, password: password });
+        
+        statusEl.textContent = result.data.message;
+        statusEl.className = 'message-feedback success';
+        form.reset();
+        loadClientListForAdminForms(); // Recharger la liste des clients dans le formulaire d'ajout de chantier
+
+    } catch (error) {
+        console.error("Erreur lors de la création du client:", error);
+        statusEl.textContent = "Erreur : " + error.message;
+        statusEl.className = 'message-feedback error';
+    } finally {
+        setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+    }
+});
         });
     </script>
 </body>
