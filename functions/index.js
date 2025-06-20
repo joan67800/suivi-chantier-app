@@ -13,7 +13,6 @@ setGlobalOptions({ region: "us-central1" });
 // VOS FONCTIONS
 // ==========================================================
 
-// Note : Cette fonction est de type onRequest. Pour la cohérence, elle pourrait être migrée en onCall.
 exports.setUserAsAdmin = onRequest(async (request, response) => {
     const cors = require("cors")({ origin: true });
     cors(request, response, async () => {
@@ -43,56 +42,62 @@ exports.setUserAsAdmin = onRequest(async (request, response) => {
     });
 });
 
-// MODIFIÉ : La fonction accepte et sauvegarde maintenant telephone et adresse
+
+// MODIFIÉ: Ajout de la conversion du numéro de téléphone au format E.164
 exports.createClientUser = onCall(async (request) => {
     if (!request.auth || !request.auth.token.admin) {
-        throw new functions.https.HttpsError(
-            "permission-denied",
-            "Action non autorisée. Seul un administrateur peut créer un client."
-        );
+        throw new functions.https.HttpsError("permission-denied", "Seul un administrateur peut créer un client.");
     }
 
-    // Récupération des nouvelles données
     const { email, password, nom, telephone, adresse } = request.data;
-
     if (!email || !password || !nom) {
-        throw new functions.https.HttpsError(
-            "invalid-argument",
-            "Les champs 'email', 'password' et 'nom' sont requis."
-        );
+        throw new functions.https.HttpsError("invalid-argument", "Email, password, et nom sont requis.");
     }
     if (password.length < 6) {
-        throw new functions.https.HttpsError(
-            "invalid-argument",
-            "Le mot de passe doit faire au moins 6 caractères."
-        );
+        throw new functions.https.HttpsError("invalid-argument", "Le mot de passe doit faire au moins 6 caractères.");
     }
+
+    // --- DÉBUT DE LA MODIFICATION ---
+    let formattedPhoneNumber;
+    if (telephone) {
+        // Supprime les espaces et autres caractères non numériques, sauf le '+' initial
+        let cleanedPhone = telephone.replace(/[\s-()]/g, '');
+        // Si le numéro commence par 0, on le remplace par +33
+        if (cleanedPhone.startsWith('0')) {
+            formattedPhoneNumber = `+33${cleanedPhone.substring(1)}`;
+        } else {
+            formattedPhoneNumber = cleanedPhone; // On suppose qu'il est déjà dans un format international
+        }
+    }
+    // --- FIN DE LA MODIFICATION ---
 
     try {
         const userRecord = await admin.auth().createUser({
             email: email,
             password: password,
             displayName: nom,
-            // Le SDK Admin attend `undefined` si le champ est vide, et non une chaîne vide ''
-            phoneNumber: telephone || undefined 
+            // On utilise le numéro formaté. S'il est vide, on passe `undefined`.
+            phoneNumber: formattedPhoneNumber || undefined
         });
         
-        // Sauvegarde des nouvelles données dans le document Firestore
         await admin.firestore().collection('clients').doc(userRecord.uid).set({
             nom: nom,
             email: email,
-            telephone: telephone || '', // On sauvegarde une chaîne vide si non fourni
-            adresse: adresse || ''   // On sauvegarde une chaîne vide si non fourni
+            telephone: telephone || '',
+            adresse: adresse || ''
         });
         
         return { message: `Le client '${nom}' a été créé avec succès.` };
 
     } catch (error) {
         console.error("Erreur lors de la création du client :", error);
-        if (error.code === 'auth/email-already-exists') {
-            throw new functions.https.HttpsError('already-exists', 'Cet email est déjà utilisé par un autre compte.');
+        if (error.code === 'auth/invalid-phone-number') {
+             throw new functions.https.HttpsError('invalid-argument', 'Le format du numéro de téléphone est invalide.');
         }
-        throw new functions.https.HttpsError("internal", "Une erreur interne est survenue lors de la création du client.");
+        if (error.code === 'auth/email-already-exists') {
+            throw new functions.https.HttpsError('already-exists', 'Cet email est déjà utilisé.');
+        }
+        throw new functions.https.HttpsError("internal", "Erreur interne lors de la création du client.");
     }
 });
 
