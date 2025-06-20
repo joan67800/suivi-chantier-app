@@ -257,7 +257,7 @@
                 }
                 
                 const photoUploadFormHTML = isAdmin ? `
-                    <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                    <form class="photo-upload-form" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">
                         <label>Ajouter une photo au chantier :</label>
                         <input type="file" name="chantierPhoto" accept="image/png, image/jpeg" required>
                         <button type="submit">Envoyer la photo</button>
@@ -267,39 +267,39 @@
 
                 const adminChantierActions = isAdmin ? `
                     <div class="chantier-actions">
-                        <button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>
-                        <button class="delete-button delete-chantier-button" data-client-id="${clientId}" data-chantier-id="${chantierId}" data-chantier-adresse="${chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
+                        <button class="edit-chantier-button" data-chantier-id="<span class="math-inline">\{chantierId\}"\>Modifier</button\>
+<button class\="delete\-button delete\-chantier\-button" data\-client\-id\="</span>{clientId}" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-chantier\-adresse\="</span>{chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
                     </div>
                 ` : '';
 
                 chantierItem.innerHTML = `
-                    <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
-                        <div class="title-content">${title}</div>
+                    <div class="chantier-header" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}" data-target="body-<span class="math-inline">\{chantierId\}"\>
+<div class\="title\-content"\></span>{title}</div>
                         <span class="indicator">▼</span>
                     </div>
-                    <div class="chantier-body" id="body-${chantierId}">
-                        <div id="details-display-${chantierId}">
+                    <div class="chantier-body" id="body-<span class="math-inline">\{chantierId\}"\>
+<div id\="details\-display\-</span>{chantierId}">
                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                           ${adminChantierActions}
-                        </div>
-                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
+                           <span class="math-inline">\{adminChantierActions\}
+</div\>
+<form id\="edit\-form\-</span>{chantierId}" style="display:none;" class="chantier-edit-form">
                             <label>Jours d'intervention (séparés par une virgule):</label>
-                            <input type="text" class="jours-intervention-input" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
-                            <label>Avancement (%):</label>
-                            <input type="number" min="0" max="100" class="avancement-input" value="${chantierData.pourcentageAvancement || 0}">
-                            <button type="submit" class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
+                            <input type="text" class="jours-intervention-input" value="<span class="math-inline">\{chantierData\.joursIntervention ? chantierData\.joursIntervention\.join\(', '\) \: ''\}"\>
+<label\>Avancement \(%\)\:</label\>
+<input type\="number" min\="0" max\="100" class\="avancement\-input" value\="</span>{chantierData.pourcentageAvancement || 0}">
+                            <button type="submit" class="save-chantier-button" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">Sauvegarder</button>
                             <button type="button" class="cancel-edit-button">Annuler</button>
                         </form>
                         <div class="photos-section">
                             <h4>Photos du chantier</h4>
                             <div class="photos-container">${photosHTML}</div>
-                            ${photoUploadFormHTML}
-                        </div>
-                        <div class="chat-section">
-                            <h4>Questions & Réponses</h4>
-                            <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
-                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                            <span class="math-inline">\{photoUploadFormHTML\}
+</div\>
+<div class\="chat\-section"\>
+<h4\>Questions & Réponses</h4\>
+<div class\="chat\-box" id\="chat\-box\-</span>{chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
+                            <form class="chat-form" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">
                                 <textarea name="messageText" required placeholder="Votre message..."></textarea>
                                 <button type="submit">Envoyer</button>
                             </form>
@@ -321,7 +321,7 @@
                     messageEl.classList.add(senderClass);
                     const deleteButtonHTML = isAdmin ? `<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : '';
                     const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
-                    messageEl.innerHTML = `${deleteButtonHTML}<p>${message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
+                    messageEl.innerHTML = `<span class="math-inline">\{deleteButtonHTML\}<p\></span>{message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
                     chatBox.appendChild(messageEl);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -357,18 +357,18 @@
                             
                             const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
                             const deleteButtonHTML = !isThisUserAdmin ? 
-                                `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer Client</button>` : '';
+                                `<button class="delete-client-button" data-client-id="<span class="math-inline">\{clientDoc\.id\}" data\-client\-name\="</span>{clientInfo.nom}">Supprimer Client</button>` : '';
 
                             accountWrapper.innerHTML = `
-                                <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
+                                <div class="<span class="math-inline">\{isThisUserAdmin ? 'client\-header is\-admin' \: 'client\-header'\}" data\-target\="client\-body\-</span>{clientDoc.id}">
                                     <div class="client-header-content">
                                         <h3>${clientInfo.nom}</h3>
                                         ${adminBadgeHTML}
                                     </div>
                                     <div class="client-header-actions">
-                                        ${deleteButtonHTML}
-                                    </div>
-                                    <span class="indicator">${!isThisUserAdmin ? '▼' : ''}</span>
+                                        <span class="math-inline">\{deleteButtonHTML\}
+</div\>
+<span class\="indicator"\></span>{!isThisUserAdmin ? '▼' : ''}</span>
                                 </div>
                                 <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
                             chantiersList.appendChild(accountWrapper);
@@ -457,9 +457,11 @@
                 if (target.matches('.delete-message-button')) {
                     e.stopPropagation();
                     if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return;
+                    
                     const messageId = target.dataset.messageId;
                     const chantierHeader = target.closest('.chantier-body').previousElementSibling;
                     const { clientId, chantierId } = chantierHeader.dataset;
+                    
                     try {
                         const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
                         await deleteDoc(messageRef);
@@ -505,7 +507,9 @@
                 if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId; document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; }
                 if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
                 if (target.matches('.save-chantier-button')) {
-                    e.preventDefault(); const form = target.closest('.chantier-edit-form'); const { clientId, chantierId } = form.closest('.chantier-header').dataset;
+                    e.preventDefault(); const form = target.closest('.chantier-edit-form');
+                    const header = form.closest('.chantier-body').previousElementSibling; // Remonter pour trouver le header
+                    const { clientId, chantierId } = header.dataset;
                     const joursInput = form.querySelector('.jours-intervention-input').value; const avancement = form.querySelector('.avancement-input').value;
                     const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean);
                     const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
@@ -523,8 +527,8 @@
                     const { chantierId, clientId } = form.dataset;
                     statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
                     try {
-                        const uniqueFileName = `${Date.now()}-${file.name}`;
-                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
+                        const uniqueFileName = `<span class="math-inline">\{Date\.now\(\)\}\-</span>{file.name}`;
+                        const storageRef = ref(storage, `chantier-photos/<span class="math-inline">\{chantierId\}/</span>{uniqueFileName}`);
                         await uploadBytes(storageRef, file);
                         const downloadURL = await getDownloadURL(storageRef);
                         const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
