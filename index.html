@@ -18,6 +18,8 @@
             --button-danger-hover: #c9302c;
             --button-info: #5bc0de;
             --button-info-hover: #31b0d5;
+            --status-orange: #f0ad4e;
+            --status-green: #5cb85c;
         }
 
         body {
@@ -74,7 +76,22 @@
         .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
         .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
         
-        .photos-section { margin-top: 20px; }
+        /* NOUVEAU: Styles pour la section documents */
+        .documents-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
+        .document-list { list-style: none; padding: 0; }
+        .document-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .document-item:last-child { border-bottom: none; }
+        .document-item a { text-decoration: none; color: var(--company-orange); font-weight: bold; }
+        .document-info { flex-grow: 1; }
+        .document-status { font-style: italic; font-size: 0.9em; margin-left: 15px; }
+        .document-status.status-attente { color: var(--status-orange); }
+        .document-status.status-valide { color: var(--status-green); }
+        .document-actions { display: flex; align-items: center; gap: 10px; }
+        .document-actions .delete-button { padding: 5px 8px; font-size: 0.8em; margin: 0; }
+        .document-actions .validate-payment-button { background-color: var(--status-green); padding: 5px 8px; font-size: 0.8em; margin: 0; }
+        .document-actions .validate-payment-button:hover { background-color: #4cae4c; }
+
+        .photos-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px;}
         .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; }
         .photo-wrapper { position: relative; }
         .photo-wrapper img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
@@ -135,9 +152,7 @@
                 <form id="create-client-form">
                     <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
                     <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
-                    
                     <div><label for="new-client-password">Mot de passe initial (6 caractères min.) :</label><input type="text" id="new-client-password" required minlength="6"></div>
-                    
                     <button type="submit">Créer le Client</button>
                     <p id="create-client-status" class="message-feedback" style="display: none;"></p>
                 </form>
@@ -275,6 +290,20 @@
                     </form>
                 ` : '';
 
+                // NOUVEAU: Formulaire d'envoi de document pour l'admin
+                const documentUploadFormHTML = isAdmin ? `
+                    <form class="document-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                        <h4>Ajouter un document</h4>
+                        <select name="documentType" required>
+                            <option value="devis">Devis</option>
+                            <option value="facture">Facture</option>
+                        </select>
+                        <input type="file" name="documentFile" accept=".pdf" required>
+                        <button type="submit">Envoyer le document</button>
+                        <p class="message-feedback document-upload-status" style="display: none;"></p>
+                    </form>
+                ` : '';
+
                 const adminChantierActions = isAdmin ? `
                     <div class="chantier-actions">
                         <button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>
@@ -302,9 +331,15 @@
                             <button type="button" class="cancel-edit-button">Annuler</button>
                         </form>
 
+                        <div class="documents-section">
+                            <h4>Documents du chantier</h4>
+                            <ul class="document-list" id="document-list-${chantierId}"></ul>
+                            ${documentUploadFormHTML}
+                        </div>
+
                         <div class="photos-section">
                             <h4>Photos du chantier</h4>
-                            <div class="photos-container">${photosHTML}</div>
+                            <div class="photos-container" id="photos-container-${chantierId}">${photosHTML}</div>
                             ${photoUploadFormHTML}
                         </div>
 
@@ -318,9 +353,66 @@
                         </div>
                     </div>
                 `;
+                // NOUVEAU: Appel pour charger les documents
+                setTimeout(() => renderDocuments(chantierId, clientId, isAdmin), 0);
                 return chantierItem;
             }
             
+            // NOUVEAU: Fonction dédiée au rendu des documents
+            function renderDocuments(chantierId, clientId, isAdmin) {
+                const listEl = document.getElementById(`document-list-${chantierId}`);
+                if (!listEl) return;
+
+                const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
+                const q = query(documentsRef, orderBy('dateUpload', 'desc'));
+
+                onSnapshot(q, (snapshot) => {
+                    listEl.innerHTML = '';
+                    if (snapshot.empty) {
+                        listEl.innerHTML = '<p style="color: #888; padding: 10px;">Aucun document.</p>';
+                        return;
+                    }
+                    snapshot.forEach(doc => {
+                        const docData = doc.data();
+                        const docId = doc.id;
+                        const li = document.createElement('li');
+                        li.classList.add('document-item');
+
+                        let statusHTML = '';
+                        if (docData.type === 'facture') {
+                            switch(docData.statutPaiement) {
+                                case 'non_payee':
+                                    statusHTML = isAdmin 
+                                        ? '<span class="document-status">En attente de paiement</span>'
+                                        : `<label><input type="checkbox" class="payment-checkbox" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}"> J'ai payé cette facture</label>`;
+                                    break;
+                                case 'attente_validation':
+                                    statusHTML = '<span class="document-status status-attente">Payée, en attente de réception</span>';
+                                    if (isAdmin) {
+                                        statusHTML += `<button class="validate-payment-button" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}">Valider le paiement</button>`;
+                                    }
+                                    break;
+                                case 'valide':
+                                    statusHTML = '<span class="document-status status-valide">Paiement validé</span>';
+                                    break;
+                            }
+                        }
+
+                        li.innerHTML = `
+                            <div class="document-info">
+                                <a href="${docData.url}" target="_blank">${docData.nom}</a>
+                                <div style="font-size: 0.8em; color: #777;">Ajouté le: ${docData.dateUpload.toDate().toLocaleDateString('fr-FR')}</div>
+                            </div>
+                            <div class="document-actions">
+                                ${statusHTML}
+                                ${isAdmin ? `<button class="delete-button delete-document-button" data-doc-id="${docId}" data-doc-url="${docData.url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer le document">X</button>` : ''}
+                            </div>
+                        `;
+                        listEl.appendChild(li);
+                    });
+                });
+            }
+
             function renderMessages(snapshot, chatBox, currentUserId, isAdmin) {
                 chatBox.innerHTML = '';
                 if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
@@ -429,6 +521,32 @@
             // --- GESTION DES ÉVÉNEMENTS ---
             chantiersList.addEventListener('click', async (e) => {
                  const target = e.target;
+                
+                // NOUVEAU: Logique pour les documents
+                if (target.matches('.payment-checkbox')) {
+                    const { docId, clientId, chantierId } = target.dataset;
+                    const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                    await updateDoc(docRef, { statutPaiement: 'attente_validation' });
+                    target.disabled = true;
+                }
+                if (target.matches('.validate-payment-button')) {
+                    const { docId, clientId, chantierId } = target.dataset;
+                    const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                    await updateDoc(docRef, { statutPaiement: 'valide' });
+                }
+                if (target.matches('.delete-document-button')) {
+                    if (!confirm("Voulez-vous vraiment supprimer ce document ?")) return;
+                    const { docId, docUrl, clientId, chantierId } = target.dataset;
+                    try {
+                        const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                        await deleteDoc(docRef);
+                        const fileRef = ref(storage, docUrl);
+                        await deleteObject(fileRef);
+                    } catch (err) {
+                        console.error("Erreur suppression document:", err);
+                        alert("Impossible de supprimer le document.");
+                    }
+                }
 
                 if (target.matches('.delete-client-button')) {
                     e.stopPropagation();
@@ -546,6 +664,44 @@
             });
 
             chantiersList.addEventListener('submit', async (e) => {
+                // NOUVEAU: Logique pour l'envoi de document
+                if (e.target.matches('.document-upload-form')) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const fileInput = form.querySelector('input[type="file"]');
+                    const typeSelect = form.querySelector('select[name="documentType"]');
+                    const statusEl = form.querySelector('.document-upload-status');
+                    const file = fileInput.files[0];
+                    if (!file) return;
+
+                    const { chantierId, clientId } = form.dataset;
+                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
+                    
+                    try {
+                        const uniqueFileName = `${Date.now()}-${file.name}`;
+                        const storageRef = ref(storage, `chantier-documents/${chantierId}/${uniqueFileName}`);
+                        await uploadBytes(storageRef, file);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        
+                        const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
+                        await addDoc(documentsRef, {
+                            nom: file.name,
+                            url: downloadURL,
+                            type: typeSelect.value,
+                            statutPaiement: typeSelect.value === 'facture' ? 'non_payee' : 'non_applicable',
+                            dateUpload: serverTimestamp()
+                        });
+
+                        statusEl.textContent = "Document envoyé !"; statusEl.className = 'message-feedback success';
+                        form.reset();
+                    } catch (error) {
+                        console.error("Erreur d'envoi du document:", error);
+                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
+                    } finally {
+                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+                    }
+                }
+
                 if (e.target.matches('.photo-upload-form')) {
                     e.preventDefault();
                     const form = e.target; const fileInput = form.querySelector('input[type="file"]');
@@ -615,7 +771,6 @@
                 const email = document.getElementById('new-client-email').value;
                 const password = document.getElementById('new-client-password').value;
 
-                // MODIFICATION ICI : Ajout de la validation de la longueur du mot de passe
                 if (!nom || !email || !password) {
                     statusEl.textContent = "Veuillez remplir tous les champs.";
                     statusEl.className = 'message-feedback error';
