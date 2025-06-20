@@ -46,13 +46,13 @@
 
         button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease; }
         button:hover { background-color: #D46900; }
+        .edit-chantier-button { background-color: var(--button-info); }
+        .edit-chantier-button:hover { background-color: var(--button-info-hover); }
         #logout-button { background-color: #6c757d; }
         #logout-button:hover { background-color: #5a6268; }
         .delete-client-button, .delete-button { background-color: var(--button-danger); }
         .delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); }
         .delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; }
-        .edit-chantier-button { background-color: var(--button-info); }
-        .edit-chantier-button:hover { background-color: var(--button-info-hover); }
 
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
@@ -62,8 +62,8 @@
         
         .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
         .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
-        .client-header-content { flex-grow: 1; }
-        .client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0; }
+        .client-header-content { flex-grow: 1; display: flex; align-items: center; gap: 10px; }
+        .client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0 0 0 10px; }
         .client-header:hover { background-color: #d4e7c7; }
         .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; }
         .client-header.is-admin:hover { background-color: #f1f1f1; }
@@ -104,7 +104,7 @@
         .chantier-actions { display: flex; gap: 10px; margin-bottom: 15px; }
         .chantier-actions button { margin-top: 0; font-size: 0.9em; padding: 8px 12px; }
 
-        .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; }
+        .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin:0; }
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
         .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -164,7 +164,6 @@
     </div>
 
     <script type="module">
-        // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -174,7 +173,6 @@
         import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CONFIGURATION FIREBASE ---
             const firebaseConfig = {
                 apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
                 authDomain: "suivi-chantier-societe.firebaseapp.com",
@@ -194,7 +192,6 @@
               isTokenAutoRefreshEnabled: true
             });
 
-            // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
             const chantiersList = document.getElementById('chantiers-list');
@@ -204,7 +201,6 @@
             const lightboxImage = document.getElementById('lightbox-image');
             const lightboxClose = document.querySelector('.lightbox-close');
 
-            // --- GESTION DE L'AUTHENTIFICATION ---
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     loginContainer.style.display = 'none';
@@ -220,8 +216,6 @@
                 } else {
                     loginContainer.style.display = 'block';
                     appContainer.style.display = 'none';
-                    chantiersList.innerHTML = '';
-                    adminSection.style.display = 'none';
                 }
             });
 
@@ -229,18 +223,16 @@
                 e.preventDefault();
                 const errorEl = document.getElementById('login-error');
                 errorEl.style.display = 'none';
-                errorEl.textContent = '';
                 try {
                     await signInWithEmailAndPassword(auth, email.value, password.value);
                 } catch (error) {
-                    errorEl.textContent = 'Erreur : Identifiants incorrects ou problème de connexion.';
+                    errorEl.textContent = 'Erreur : Identifiants incorrects.';
                     errorEl.style.display = 'block';
                 }
             });
 
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             
-            // --- FONCTION DE RENDU PRINCIPALE ---
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
@@ -299,13 +291,11 @@
                             <button type="submit" class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
                             <button type="button" class="cancel-edit-button">Annuler</button>
                         </form>
-
                         <div class="photos-section">
                             <h4>Photos du chantier</h4>
                             <div class="photos-container">${photosHTML}</div>
                             ${photoUploadFormHTML}
                         </div>
-
                         <div class="chat-section">
                             <h4>Questions & Réponses</h4>
                             <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
@@ -329,15 +319,9 @@
                     messageEl.classList.add('chat-message');
                     const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received';
                     messageEl.classList.add(senderClass);
-                    
                     const deleteButtonHTML = isAdmin ? `<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : '';
-
                     const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
-                    messageEl.innerHTML = `
-                        ${deleteButtonHTML}
-                        <p>${message.text}</p>
-                        <div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>
-                    `;
+                    messageEl.innerHTML = `${deleteButtonHTML}<p>${message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
                     chatBox.appendChild(messageEl);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -345,8 +329,7 @@
 
             function setupChatListener(chantierId, clientId, isAdmin) {
                 const chatBox = document.getElementById(`chat-box-${chantierId}`);
-                if (!chatBox) return;
-                if (chatBox.dataset.chatLoaded === 'true') return;
+                if (!chatBox || chatBox.dataset.chatLoaded === 'true') return;
                 const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
                 const q = query(messagesRef, orderBy('timestamp'));
                 onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid, isAdmin), (error) => {
@@ -379,7 +362,8 @@
                             accountWrapper.innerHTML = `
                                 <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
                                     <div class="client-header-content">
-                                        <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                                        <h3>${clientInfo.nom}</h3>
+                                        ${adminBadgeHTML}
                                     </div>
                                     <div class="client-header-actions">
                                         ${deleteButtonHTML}
@@ -407,7 +391,7 @@
                 appTitle.textContent = "Suivi de vos chantiers"; adminSection.style.display = 'none';
                 try {
                     const clientDocRef = doc(db, 'clients', user.uid);
-                    onSnapshot(clientDocRef, async (clientDocSnap) => {
+                    onSnapshot(clientDocRef, (clientDocSnap) => {
                         chantiersList.innerHTML = '';
                         if (!clientDocSnap.exists()) {
                             chantiersList.innerHTML = '<p>Votre compte est en cours de configuration.</p>';
@@ -416,7 +400,7 @@
                         const clientInfo = { id: user.uid, nom: clientDocSnap.data().nom };
                         const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
                         onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                            chantiersList.innerHTML = ''; // Vider avant de reconstruire
+                            chantiersList.innerHTML = '';
                             if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
                             else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
                         });
@@ -424,16 +408,13 @@
                 } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
             
-            // --- GESTION DES ÉVÉNEMENTS ---
             chantiersList.addEventListener('click', async (e) => {
                  const target = e.target;
 
                 if (target.matches('.delete-client-button')) {
                     e.stopPropagation();
                     const button = e.target;
-                    const clientId = button.dataset.clientId;
-                    const clientName = button.dataset.clientName;
-
+                    const { clientId, clientName } = button.dataset;
                     const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action est irréversible.`);
                     if (confirmation1) {
                         const confirmation2 = prompt(`Pour confirmer, veuillez taper le nom du client à supprimer : "${clientName}"`);
@@ -458,11 +439,7 @@
                 if (target.matches('.delete-photo-button')) {
                     e.stopPropagation();
                     if (!confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
-
-                    const photoUrl = target.dataset.photoUrl;
-                    const clientId = target.dataset.clientId;
-                    const chantierId = target.dataset.chantierId;
-
+                    const { photoUrl, clientId, chantierId } = target.dataset;
                     try {
                         target.disabled = true; target.textContent = '...';
                         const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
@@ -470,7 +447,7 @@
                         const photoRef = ref(storage, photoUrl);
                         await deleteObject(photoRef);
                     } catch (error) {
-                        console.error("Erreur lors de la suppression de la photo:", error);
+                        console.error("Erreur suppression photo:", error);
                         alert("Une erreur est survenue.");
                         target.disabled = false; target.textContent = 'X';
                     }
@@ -480,12 +457,9 @@
                 if (target.matches('.delete-message-button')) {
                     e.stopPropagation();
                     if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return;
-                    
                     const messageId = target.dataset.messageId;
                     const chantierHeader = target.closest('.chantier-body').previousElementSibling;
-                    const clientId = chantierHeader.dataset.clientId;
-                    const chantierId = chantierHeader.dataset.chantierId;
-                    
+                    const { clientId, chantierId } = chantierHeader.dataset;
                     try {
                         const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
                         await deleteDoc(messageRef);
@@ -500,19 +474,16 @@
                     e.stopPropagation();
                     const button = target;
                     const { clientId, chantierId, chantierAdresse } = button.dataset;
-
                     if (confirm(`Êtes-vous sûr de vouloir supprimer le chantier "${chantierAdresse}" ?\n\nCette action est définitive et supprimera aussi toutes les photos et tous les messages associés.`)) {
                         try {
-                            button.disabled = true;
-                            button.textContent = "Suppression...";
+                            button.disabled = true; button.textContent = "Suppression...";
                             const deleteChantier = httpsCallable(functions, 'deleteChantier');
                             await deleteChantier({ clientId: clientId, chantierId: chantierId });
                             alert(`Le chantier "${chantierAdresse}" a été supprimé.`);
                         } catch (error) {
-                            console.error("Erreur lors de la suppression du chantier:", error);
+                            console.error("Erreur suppression chantier:", error);
                             alert("Une erreur est survenue: " + error.message);
-                            button.disabled = false;
-                            button.textContent = "Supprimer le chantier";
+                            button.disabled = false; button.textContent = "Supprimer le chantier";
                         }
                     }
                     return;
@@ -534,7 +505,7 @@
                 if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId; document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; }
                 if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
                 if (target.matches('.save-chantier-button')) {
-                    e.preventDefault(); const form = target.closest('.chantier-edit-form'); const chantierId = target.dataset.chantierId; const clientId = target.dataset.clientId;
+                    e.preventDefault(); const form = target.closest('.chantier-edit-form'); const { clientId, chantierId } = form.closest('.chantier-header').dataset;
                     const joursInput = form.querySelector('.jours-intervention-input').value; const avancement = form.querySelector('.avancement-input').value;
                     const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean);
                     const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
@@ -603,12 +574,11 @@
                 finally { statusEl.style.display = 'block'; setTimeout(() => statusEl.style.display = 'none', 4000); }
             });
 
-            // Logique pour les boutons de la danger zone (non implémentée dans la demande initiale)
-            document.getElementById('test-set-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
-            document.getElementById('test-remove-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
+            document.getElementById('test-set-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée."));
+            document.getElementById('test-remove-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée."));
             document.getElementById('create-client-form').addEventListener('submit', (e) => {
                 e.preventDefault();
-                alert("Fonctionnalité de création de client non reliée à une Cloud Function dans ce script.");
+                alert("Fonctionnalité non reliée à une Cloud Function. Veuillez utiliser la fonction 'setUserAsAdmin' pour gérer les rôles.");
             });
         });
     </script>
