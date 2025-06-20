@@ -111,57 +111,13 @@
     </style>
 </head>
 <body>
-    <div id="login-container">
-        <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
-        <h2>Connexion</h2>
-        <form id="login-form">
-            <div><label for="email">E-mail :</label><input type="email" id="email" name="email" required></div>
-            <div><label for="password">Mot de passe :</label><input type="password" id="password" name="password" required></div>
-            <button type="submit">Se connecter</button>
-            <p id="login-error" class="error" style="display: none;"></p>
-        </form>
-    </div>
+    <div id="login-container"></div>
     <div id="app-container" style="display: none;">
-        <header class="app-header">
-            <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="app-logo" class="company-logo">
-            <h1 id="app-title">Suivi de vos chantiers</h1>
-            <button id="logout-button">Se déconnecter</button>
-        </header>
+        <header class="app-header"></header>
         <div id="chantiers-list"></div>
-        <div id="admin-section" style="display: none;">
-            <h2>Outils d'Administration</h2>
-            <div class="admin-subsection">
-                <h3>Créer un Nouveau Client</h3>
-                <form id="create-client-form">
-                    <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
-                    <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
-                    <div><label for="new-client-password">Mot de passe initial :</label><input type="text" id="new-client-password" required></div>
-                    <button type="submit">Créer le Client</button>
-                    <p id="create-client-status" class="message-feedback" style="display: none;"></p>
-                </form>
-            </div>
-            <div class="admin-subsection">
-                <h3>Ajouter un Nouveau Chantier</h3>
-                <form id="add-chantier-form">
-                    <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
-                    <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
-                    <button type="submit">Ajouter le Chantier</button>
-                    <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
-                </form>
-            </div>
-            <div class="admin-danger-zone">
-                <h3>Gérer les Rôles Admin</h3>
-                <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" />
-                <button id="test-set-admin-button">Rendre Admin</button>
-                <button id="test-remove-admin-button">Enlever Admin</button>
-                <p id="test-admin-status"></p>
-            </div>
-        </div>
+        <div id="admin-section" style="display: none;"></div>
     </div>
-    <div id="image-lightbox" class="lightbox" style="display: none;">
-      <span class="lightbox-close">&times;</span>
-      <img class="lightbox-content" id="lightbox-image">
-    </div>
+    <div id="image-lightbox" class="lightbox" style="display: none;"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -207,7 +163,6 @@
                     appContainer.style.display = 'block';
                     const idTokenResult = await user.getIdTokenResult(true);
                     const isAdmin = idTokenResult.claims.admin === true;
-                    
                     if (isAdmin) {
                         loadAdminDashboard();
                     } else {
