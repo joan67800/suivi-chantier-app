@@ -135,7 +135,9 @@
                 <form id="create-client-form">
                     <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
                     <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
-                    <div><label for="new-client-password">Mot de passe initial :</label><input type="text" id="new-client-password" required></div>
+                    
+                    <div><label for="new-client-password">Mot de passe initial (6 caractères min.) :</label><input type="text" id="new-client-password" required minlength="6"></div>
+                    
                     <button type="submit">Créer le Client</button>
                     <p id="create-client-status" class="message-feedback" style="display: none;"></p>
                 </form>
@@ -613,8 +615,15 @@
                 const email = document.getElementById('new-client-email').value;
                 const password = document.getElementById('new-client-password').value;
 
+                // MODIFICATION ICI : Ajout de la validation de la longueur du mot de passe
                 if (!nom || !email || !password) {
                     statusEl.textContent = "Veuillez remplir tous les champs.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+                if (password.length < 6) {
+                    statusEl.textContent = "Le mot de passe doit faire au moins 6 caractères.";
                     statusEl.className = 'message-feedback error';
                     statusEl.style.display = 'block';
                     return;
