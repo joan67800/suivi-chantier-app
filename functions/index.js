@@ -12,7 +12,7 @@ setGlobalOptions({ region: "us-central1" });
 const cors = require("cors")({ origin: true });
 
 // ==========================================================
-// VOS FONCTIONS EXISTANTES (inchangées)
+// VOS FONCTIONS EXISTANTES
 // ==========================================================
 
 exports.setUserAsAdmin = onRequest((request, response) => {
@@ -88,11 +88,7 @@ exports.createClientUser = onRequest((request, response) => {
   });
 });
 
-// =================================================================
-// FONCTION DE SUPPRESSION DE CLIENT (VERSION FINALE CORRIGÉE)
-// =================================================================
 exports.deleteClient = onCall(async (request) => {
-  // 1. Vérification de sécurité : l'appelant est-il authentifié et admin ?
   if (!request.auth || !request.auth.token.admin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -113,42 +109,78 @@ exports.deleteClient = onCall(async (request) => {
   const clientRef = db.collection("clients").doc(clientId);
 
   try {
-    // Étape A: Lister tous les chantiers pour supprimer les fichiers associés dans Storage
-    // Le chemin correct est 'clients/{id}/chantier'
     const chantiersSnapshot = await clientRef.collection("chantier").get();
     
     const deleteStoragePromises = [];
     if (!chantiersSnapshot.empty) {
         for (const chantierDoc of chantiersSnapshot.docs) {
           const chantierId = chantierDoc.id;
-          // Le chemin dans Storage est 'chantier-photos/{chantierId}'
           const prefix = `chantier-photos/${chantierId}/`;
-          // Ajoute la promesse de suppression des fichiers au tableau
           deleteStoragePromises.push(bucket.deleteFiles({ prefix: prefix }));
         }
-
-        // Étape B: Exécuter toutes les suppressions de fichiers en parallèle
         await Promise.all(deleteStoragePromises);
         console.log(`Tous les fichiers de Storage pour le client ${clientId} ont été traités.`);
     }
 
-    // Étape C: Supprimer le document client et TOUTES ses sous-collections dans Firestore
-    // C'est la méthode la plus propre et la plus sûre.
     await db.recursiveDelete(clientRef);
     console.log(`Document Firestore et sous-collections pour ${clientId} supprimés.`);
 
-    // Étape D: Supprimer le compte d'authentification de l'utilisateur
     await admin.auth().deleteUser(clientId);
     console.log(`Compte d'authentification supprimé pour : ${clientId}`);
 
     return { success: true, message: `Le client ${clientId} et toutes ses données ont été supprimés.` };
-
   } catch (error) {
     console.error(`Erreur lors de la suppression complète du client ${clientId}:`, error);
-    // Renvoyer une erreur claire au client
     throw new functions.https.HttpsError(
       "internal",
       "Une erreur interne est survenue lors de la suppression du client.",
+      error.message
+    );
+  }
+});
+
+
+// ==========================================================
+// NOUVELLE FONCTION POUR SUPPRIMER UN CHANTIER
+// ==========================================================
+exports.deleteChantier = onCall(async (request) => {
+  // 1. Sécurité : vérifier que l'appelant est un admin
+  if (!request.auth || !request.auth.token.admin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Action non autorisée. Seul un administrateur peut supprimer un chantier."
+    );
+  }
+
+  const { clientId, chantierId } = request.data;
+  if (!clientId || !chantierId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Les IDs du client et du chantier sont manquants."
+    );
+  }
+
+  const db = admin.firestore();
+  const bucket = admin.storage().bucket();
+  const chantierRef = db.collection("clients").doc(clientId).collection("chantier").doc(chantierId);
+
+  try {
+    // Étape A: Supprimer le dossier de photos associé dans Storage
+    const prefix = `chantier-photos/${chantierId}/`;
+    await bucket.deleteFiles({ prefix: prefix });
+    console.log(`Fichiers de Storage supprimés pour le chantier: ${chantierId}`);
+
+    // Étape B: Supprimer le document du chantier et toutes ses sous-collections (messages)
+    await db.recursiveDelete(chantierRef);
+    console.log(`Document chantier ${chantierId} et ses sous-collections supprimés de Firestore.`);
+
+    return { success: true, message: `Le chantier ${chantierId} a été supprimé.` };
+
+  } catch (error) {
+    console.error(`Erreur lors de la suppression du chantier ${chantierId} pour le client ${clientId}:`, error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Une erreur interne est survenue lors de la suppression du chantier.",
       error.message
     );
   }

@@ -16,6 +16,8 @@
             --error-red: #dc3545;
             --button-danger: #d9534f;
             --button-danger-hover: #c9302c;
+            --button-info: #5bc0de;
+            --button-info-hover: #31b0d5;
         }
 
         body {
@@ -49,6 +51,8 @@
         .delete-client-button, .delete-button { background-color: var(--button-danger); }
         .delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); }
         .delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; }
+        .edit-chantier-button { background-color: var(--button-info); }
+        .edit-chantier-button:hover { background-color: var(--button-info-hover); }
 
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
@@ -96,6 +100,9 @@
         .chat-form { display: flex; gap: 10px; margin-top: 15px; }
         .chat-form textarea { flex-grow: 1; margin: 0; }
         .chat-form button { margin-top: 0; align-self: flex-end; height: fit-content; }
+        
+        .chantier-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+        .chantier-actions button { margin-top: 0; font-size: 0.9em; padding: 8px 12px; }
 
         .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; }
         .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
@@ -241,6 +248,7 @@
                 
                 const chantierItem = document.createElement('div');
                 chantierItem.classList.add('chantier-item');
+                chantierItem.id = `chantier-item-${chantierId}`;
                 
                 const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
                 
@@ -265,6 +273,13 @@
                     </form>
                 ` : '';
 
+                const adminChantierActions = isAdmin ? `
+                    <div class="chantier-actions">
+                        <button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>
+                        <button class="delete-button delete-chantier-button" data-client-id="${clientId}" data-chantier-id="${chantierId}" data-chantier-adresse="${chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
+                    </div>
+                ` : '';
+
                 chantierItem.innerHTML = `
                     <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
                         <div class="title-content">${title}</div>
@@ -274,7 +289,7 @@
                         <div id="details-display-${chantierId}">
                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
-                           ${isAdmin ? `<button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>` : ''}
+                           ${adminChantierActions}
                         </div>
                         <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
                             <label>Jours d'intervention (séparés par une virgule):</label>
@@ -330,6 +345,7 @@
 
             function setupChatListener(chantierId, clientId, isAdmin) {
                 const chatBox = document.getElementById(`chat-box-${chantierId}`);
+                if (!chatBox) return;
                 if (chatBox.dataset.chatLoaded === 'true') return;
                 const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
                 const q = query(messagesRef, orderBy('timestamp'));
@@ -399,10 +415,11 @@
                         }
                         const clientInfo = { id: user.uid, nom: clientDocSnap.data().nom };
                         const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
-                        const chantiersSnapshot = await getDocs(chantiersRef);
-                        
-                        if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
-                        else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
+                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                            chantiersList.innerHTML = ''; // Vider avant de reconstruire
+                            if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
+                            else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
+                        });
                     });
                 } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
@@ -457,6 +474,7 @@
                         alert("Une erreur est survenue.");
                         target.disabled = false; target.textContent = 'X';
                     }
+                    return;
                 }
 
                 if (target.matches('.delete-message-button')) {
@@ -475,6 +493,29 @@
                         console.error("Erreur suppression message:", error);
                         alert("Une erreur est survenue.");
                     }
+                    return;
+                }
+                
+                if (target.matches('.delete-chantier-button')) {
+                    e.stopPropagation();
+                    const button = target;
+                    const { clientId, chantierId, chantierAdresse } = button.dataset;
+
+                    if (confirm(`Êtes-vous sûr de vouloir supprimer le chantier "${chantierAdresse}" ?\n\nCette action est définitive et supprimera aussi toutes les photos et tous les messages associés.`)) {
+                        try {
+                            button.disabled = true;
+                            button.textContent = "Suppression...";
+                            const deleteChantier = httpsCallable(functions, 'deleteChantier');
+                            await deleteChantier({ clientId: clientId, chantierId: chantierId });
+                            alert(`Le chantier "${chantierAdresse}" a été supprimé.`);
+                        } catch (error) {
+                            console.error("Erreur lors de la suppression du chantier:", error);
+                            alert("Une erreur est survenue: " + error.message);
+                            button.disabled = false;
+                            button.textContent = "Supprimer le chantier";
+                        }
+                    }
+                    return;
                 }
 
                 const header = e.target.closest('.client-header, .chantier-header');
@@ -545,7 +586,9 @@
             
             async function loadClientListForAdminForms() {
                 try {
-                    const clientsSnapshot = await getDocs(query(collection(db, 'clients'))); const select = document.getElementById('add-chantier-client-select');
+                    const clientsQuery = query(collection(db, 'clients'));
+                    const clientsSnapshot = await getDocs(clientsQuery);
+                    const select = document.getElementById('add-chantier-client-select');
                     select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
                     clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
                 } catch(error) { console.error("Impossible de charger la liste des clients:", error); }
