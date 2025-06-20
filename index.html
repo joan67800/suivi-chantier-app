@@ -42,7 +42,7 @@
         h4 { font-size: 1.1em; border-bottom: none; }
 
         input, textarea, select, button { font-family: inherit; font-size: 1em; }
-        input[type="email"], input[type="password"], input[type="text"], input[type="file"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
+        input[type="email"], input[type="password"], input[type="text"], input[type="tel"], input[type="date"], input[type="file"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
         input[type="file"] { padding: 5px; }
         textarea { min-height: 80px; resize: vertical; }
 
@@ -65,6 +65,7 @@
         .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
         .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
         .client-header-content { flex-grow: 1; }
+        .client-details-preview { font-size: 0.85em; color: #555; } /* NOUVEAU */
         .client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0; }
         .client-header:hover { background-color: #d4e7c7; }
         .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; }
@@ -75,8 +76,8 @@
         .client-body, .chantier-body { display: none; padding: 15px; }
         .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
         .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+        .chantier-description { background-color: #f9f9f9; border-left: 3px solid var(--company-orange); padding: 10px; margin: 10px 0; border-radius: 4px; } /* NOUVEAU */
         
-        /* NOUVEAU: Styles pour la section documents */
         .documents-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
         .document-list { list-style: none; padding: 0; }
         .document-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
@@ -152,6 +153,8 @@
                 <form id="create-client-form">
                     <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
                     <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
+                    <div><label for="new-client-phone">N° de téléphone :</label><input type="tel" id="new-client-phone"></div>
+                    <div><label for="new-client-address">Adresse Postale :</label><input type="text" id="new-client-address"></div>
                     <div><label for="new-client-password">Mot de passe initial (6 caractères min.) :</label><input type="text" id="new-client-password" required minlength="6"></div>
                     <button type="submit">Créer le Client</button>
                     <p id="create-client-status" class="message-feedback" style="display: none;"></p>
@@ -159,9 +162,12 @@
             </div>
             <div class="admin-subsection">
                 <h3>Ajouter un Nouveau Chantier</h3>
-                <form id="add-chantier-form">
+                 <form id="add-chantier-form">
                     <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
                     <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
+                    <div><label for="new-chantier-description">Description du chantier :</label><textarea id="new-chantier-description"></textarea></div>
+                    <div><label for="new-chantier-start-date">Date de début :</label><input type="date" id="new-chantier-start-date"></div>
+                    <div><label for="new-chantier-end-date">Date de fin estimée :</label><input type="date" id="new-chantier-end-date"></div>
                     <button type="submit">Ajouter le Chantier</button>
                     <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
                 </form>
@@ -269,6 +275,12 @@
                 
                 const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
                 
+                // MODIFIÉ: Logique pour afficher les nouvelles infos de chantier
+                const descriptionHTML = chantierData.description ? `<p class="chantier-description">${chantierData.description}</p>` : '';
+                const datesHTML = chantierData.dateDebut 
+                    ? `<p><strong>Début :</strong> ${new Date(chantierData.dateDebut).toLocaleDateString('fr-FR')} | <strong>Fin estimée :</strong> ${chantierData.dateFin ? new Date(chantierData.dateFin).toLocaleDateString('fr-FR') : 'N/A'}</p>`
+                    : '';
+
                 let photosHTML = '';
                 if (chantierData.photos && chantierData.photos.length > 0) {
                     photosHTML = chantierData.photos.map(url => `
@@ -290,7 +302,6 @@
                     </form>
                 ` : '';
 
-                // NOUVEAU: Formulaire d'envoi de document pour l'admin
                 const documentUploadFormHTML = isAdmin ? `
                     <form class="document-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
                         <h4>Ajouter un document</h4>
@@ -318,6 +329,8 @@
                     </div>
                     <div class="chantier-body" id="body-${chantierId}">
                         <div id="details-display-${chantierId}">
+                           ${descriptionHTML}
+                           ${datesHTML}
                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                            ${adminChantierActions}
@@ -353,12 +366,10 @@
                         </div>
                     </div>
                 `;
-                // NOUVEAU: Appel pour charger les documents
                 setTimeout(() => renderDocuments(chantierId, clientId, isAdmin), 0);
                 return chantierItem;
             }
             
-            // NOUVEAU: Fonction dédiée au rendu des documents
             function renderDocuments(chantierId, clientId, isAdmin) {
                 const listEl = document.getElementById(`document-list-${chantierId}`);
                 if (!listEl) return;
@@ -470,10 +481,20 @@
                             const deleteButtonHTML = !isThisUserAdmin ? 
                                 `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer Client</button>` : '';
 
+                            // MODIFIÉ: Affichage des détails du client dans l'en-tête de l'accordéon
+                            const clientDetailsPreview = `
+                                <div class="client-details-preview">
+                                    ${clientData.email || ''} 
+                                    ${clientData.telephone ? ` | ${clientData.telephone}` : ''}
+                                    ${clientData.adresse ? `<br>${clientData.adresse}` : ''}
+                                </div>
+                            `;
+
                             accountWrapper.innerHTML = `
                                 <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
                                     <div class="client-header-content">
                                         <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                                        ${clientDetailsPreview}
                                     </div>
                                     <div class="client-header-actions">
                                         ${deleteButtonHTML}
@@ -522,7 +543,6 @@
             chantiersList.addEventListener('click', async (e) => {
                  const target = e.target;
                 
-                // NOUVEAU: Logique pour les documents
                 if (target.matches('.payment-checkbox')) {
                     const { docId, clientId, chantierId } = target.dataset;
                     const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
@@ -664,7 +684,6 @@
             });
 
             chantiersList.addEventListener('submit', async (e) => {
-                // NOUVEAU: Logique pour l'envoi de document
                 if (e.target.matches('.document-upload-form')) {
                     e.preventDefault();
                     const form = e.target;
@@ -751,18 +770,48 @@
                     clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
                 } catch(error) { console.error("Impossible de charger la liste des clients:", error); }
             }
-
+            
+            // MODIFIÉ: Logique d'ajout de chantier pour inclure les nouvelles données
             document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
-                e.preventDefault(); const statusEl = document.getElementById('add-chantier-status'); const clientId = document.getElementById('add-chantier-client-select').value;
-                const address = document.getElementById('new-chantier-address').value; if (!clientId || !address) { statusEl.textContent = "Veuillez sélectionner un client et une adresse."; statusEl.style.display = 'block'; return; }
+                e.preventDefault();
+                const form = e.target;
+                const statusEl = document.getElementById('add-chantier-status');
+                const clientId = document.getElementById('add-chantier-client-select').value;
+                const address = document.getElementById('new-chantier-address').value;
+                const description = document.getElementById('new-chantier-description').value;
+                const dateDebut = document.getElementById('new-chantier-start-date').value;
+                const dateFin = document.getElementById('new-chantier-end-date').value;
+
+                if (!clientId || !address) {
+                    statusEl.textContent = "Veuillez sélectionner un client et une adresse.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+                
                 try {
-                    await addDoc(collection(db, 'clients', clientId, 'chantier'), { adresse: address, pourcentageAvancement: 0, joursIntervention: [], photos: [] });
-                    statusEl.textContent = "Chantier ajouté !"; statusEl.className = 'message-feedback success'; e.target.reset();
-                } catch(error) { statusEl.textContent = "Erreur : " + error.message; statusEl.className = 'message-feedback error'; }
-                finally { statusEl.style.display = 'block'; setTimeout(() => statusEl.style.display = 'none', 4000); }
+                    await addDoc(collection(db, 'clients', clientId, 'chantier'), {
+                        adresse: address,
+                        description: description || '',
+                        dateDebut: dateDebut || '',
+                        dateFin: dateFin || '',
+                        pourcentageAvancement: 0,
+                        joursIntervention: [],
+                        photos: []
+                    });
+                    statusEl.textContent = "Chantier ajouté !";
+                    statusEl.className = 'message-feedback success';
+                    form.reset();
+                } catch(error) {
+                    statusEl.textContent = "Erreur : " + error.message;
+                    statusEl.className = 'message-feedback error';
+                } finally {
+                    statusEl.style.display = 'block';
+                    setTimeout(() => statusEl.style.display = 'none', 4000);
+                }
             });
 
-            // GESTION DES FORMULAIRES DE L'ESPACE ADMIN
+            // MODIFIÉ: Logique de création de client pour inclure les nouvelles données
             document.getElementById('create-client-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = e.target;
@@ -770,9 +819,11 @@
                 const nom = document.getElementById('new-client-name').value;
                 const email = document.getElementById('new-client-email').value;
                 const password = document.getElementById('new-client-password').value;
+                const telephone = document.getElementById('new-client-phone').value;
+                const adresse = document.getElementById('new-client-address').value;
 
                 if (!nom || !email || !password) {
-                    statusEl.textContent = "Veuillez remplir tous les champs.";
+                    statusEl.textContent = "Veuillez remplir tous les champs obligatoires.";
                     statusEl.className = 'message-feedback error';
                     statusEl.style.display = 'block';
                     return;
@@ -790,7 +841,13 @@
                     statusEl.style.display = 'block';
 
                     const createClientUser = httpsCallable(functions, 'createClientUser');
-                    const result = await createClientUser({ nom: nom, email: email, password: password });
+                    const result = await createClientUser({ 
+                        nom: nom, 
+                        email: email, 
+                        password: password,
+                        telephone: telephone || '',
+                        adresse: adresse || ''
+                    });
                     
                     statusEl.textContent = result.data.message;
                     statusEl.className = 'message-feedback success';
