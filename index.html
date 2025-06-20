@@ -46,9 +46,9 @@
         button:hover { background-color: #D46900; }
         #logout-button { background-color: #6c757d; }
         #logout-button:hover { background-color: #5a6268; }
-        .delete-client-button { background-color: var(--button-danger); }
-        .delete-client-button:hover { background-color: var(--button-danger-hover); }
-        .delete-client-button:disabled { background-color: #aaa; }
+        .delete-client-button, .delete-button { background-color: var(--button-danger); }
+        .delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); }
+        .delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; }
 
 
         .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
@@ -72,8 +72,10 @@
         
         .photos-section { margin-top: 20px; }
         .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; }
-        .photos-container img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
-        .photos-container img:hover { transform: scale(1.05); }
+        .photo-wrapper { position: relative; }
+        .photo-wrapper img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+        .photo-wrapper img:hover { transform: scale(1.05); }
+        .delete-photo-button { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; padding: 0; margin: 0; line-height: 24px; text-align: center; border-radius: 50%; font-size: 14px; font-weight: bold; cursor: pointer; }
 
         #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
         .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
@@ -82,11 +84,15 @@
 
         .chat-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
         .chat-box { max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
-        .chat-message { max-width: 70%; padding: 10px 15px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; }
+        .chat-message { max-width: 70%; padding: 10px 15px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; position: relative; }
+        .chat-message:hover .delete-message-button { opacity: 1; }
         .chat-message p { margin: 0; }
         .chat-message .meta { font-size: 0.75em; color: #6c757d; margin-top: 5px; }
         .message-sent { background-color: var(--company-orange); color: white; border-bottom-right-radius: 4px; align-self: flex-end; text-align: right; }
         .message-received { background-color: #e9ecef; color: #333; border-bottom-left-radius: 4px; align-self: flex-start; }
+        .delete-message-button { position: absolute; top: -8px; padding: 0; width: 20px; height: 20px; line-height: 20px; font-size: 12px; border-radius: 50%; opacity: 0; transition: opacity 0.2s; }
+        .message-sent .delete-message-button { left: -8px; }
+        .message-received .delete-message-button { right: -8px; }
         .chat-form { display: flex; gap: 10px; margin-top: 15px; }
         .chat-form textarea { flex-grow: 1; margin: 0; }
         .chat-form button { margin-top: 0; align-self: flex-end; height: fit-content; }
@@ -153,9 +159,9 @@
     <script type="module">
         // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -174,7 +180,7 @@
             const auth = getAuth(app);
             const db = getFirestore(app);
             const storage = getStorage(app);
-            const functions = getFunctions(app); // Initialiser Functions
+            const functions = getFunctions(app);
 
             initializeAppCheck(app, {
               provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
@@ -240,13 +246,18 @@
                 
                 let photosHTML = '';
                 if (chantierData.photos && chantierData.photos.length > 0) {
-                    photosHTML = chantierData.photos.map(url => `<img src="${url}" alt="Photo du chantier" class="chantier-photo">`).join('');
+                    photosHTML = chantierData.photos.map(url => `
+                        <div class="photo-wrapper">
+                            <img src="${url}" alt="Photo du chantier" class="chantier-photo">
+                            ${isAdmin ? `<button class="delete-button delete-photo-button" data-photo-url="${url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer la photo">X</button>` : ''}
+                        </div>
+                    `).join('');
                 } else {
                     photosHTML = '<p style="color: #888;">Aucune photo pour ce chantier.</p>';
                 }
                 
                 const photoUploadFormHTML = isAdmin ? `
-                    <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                    <form class="photo-upload-form" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">
                         <label>Ajouter une photo au chantier :</label>
                         <input type="file" name="chantierPhoto" accept="image/png, image/jpeg" required>
                         <button type="submit">Envoyer la photo</button>
@@ -255,35 +266,33 @@
                 ` : '';
 
                 chantierItem.innerHTML = `
-                    <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
-                        <div class="title-content">${title}</div>
+                    <div class="chantier-header" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}" data-target="body-<span class="math-inline">\{chantierId\}"\>
+<div class\="title\-content"\></span>{title}</div>
                         <span class="indicator">▼</span>
                     </div>
-                    <div class="chantier-body" id="body-${chantierId}">
-                        <div id="details-display-${chantierId}">
+                    <div class="chantier-body" id="body-<span class="math-inline">\{chantierId\}"\>
+<div id\="details\-display\-</span>{chantierId}">
                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
                            <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
                            ${isAdmin ? `<button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>` : ''}
                         </div>
-                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
-                            <label>Jours d'intervention (séparés par une virgule):</label>
-                            <input type="text" class="jours-intervention-input" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
+                        <form id="edit-form-<span class="math-inline">\{chantierId\}" style\="display\:none;" class\="chantier\-edit\-form"\>
+<label\>Jours d'intervention \(séparés par une virgule\)\:</label\>
+<input type\="text" class\="jours\-intervention\-input" value\="</span>{chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
                             <label>Avancement (%):</label>
-                            <input type="number" min="0" max="100" class="avancement-input" value="${chantierData.pourcentageAvancement || 0}">
-                            <button type="submit" class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
-                            <button type="button" class="cancel-edit-button">Annuler</button>
-                        </form>
-
-                        <div class="photos-section">
-                            <h4>Photos du chantier</h4>
-                            <div class="photos-container">${photosHTML}</div>
-                            ${photoUploadFormHTML}
-                        </div>
-
-                        <div class="chat-section">
-                            <h4>Questions & Réponses</h4>
-                            <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
-                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                            <input type="number" min="0" max="100" class="avancement-input" value="<span class="math-inline">\{chantierData\.pourcentageAvancement \|\| 0\}"\>
+<button type\="submit" class\="save\-chantier\-button" data\-chantier\-id\="</span>{chantierId}" data-client-id="<span class="math-inline">\{clientId\}"\>Sauvegarder</button\>
+<button type\="button" class\="cancel\-edit\-button"\>Annuler</button\>
+</form\>
+<div class\="photos\-section"\>
+<h4\>Photos du chantier</h4\>
+<div class\="photos\-container"\></span>{photosHTML}</div>
+                            <span class="math-inline">\{photoUploadFormHTML\}
+</div\>
+<div class\="chat\-section"\>
+<h4\>Questions & Réponses</h4\>
+<div class\="chat\-box" id\="chat\-box\-</span>{chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
+                            <form class="chat-form" data-chantier-id="<span class="math-inline">\{chantierId\}" data\-client\-id\="</span>{clientId}">
                                 <textarea name="messageText" required placeholder="Votre message..."></textarea>
                                 <button type="submit">Envoyer</button>
                             </form>
@@ -293,124 +302,172 @@
                 return chantierItem;
             }
             
-            function renderMessages(snapshot, chatBox, currentUserId) {
+            function renderMessages(snapshot, chatBox, currentUserId, isAdmin) {
                 chatBox.innerHTML = '';
                 if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
                 snapshot.forEach(doc => {
-                    const message = doc.data(); const messageEl = document.createElement('div'); messageEl.classList.add('chat-message');
-                    const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received'; messageEl.classList.add(senderClass);
+                    const message = doc.data();
+                    const messageId = doc.id;
+                    const messageEl = document.createElement('div');
+                    messageEl.classList.add('chat-message');
+                    const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received';
+                    messageEl.classList.add(senderClass);
+                    
+                    const deleteButtonHTML = isAdmin ? `<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : '';
+
                     const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
-                    messageEl.innerHTML = `<p>${message.text}</p><div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>`;
+                    messageEl.innerHTML = `
+                        <span class="math-inline">\{deleteButtonHTML\}
+<p\></span>{message.text}</p>
+                        <div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>
+                    `;
                     chatBox.appendChild(messageEl);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
-            function setupChatListener(chantierId, clientId) {
+
+            function setupChatListener(chantierId, clientId, isAdmin) {
                 const chatBox = document.getElementById(`chat-box-${chantierId}`);
                 if (chatBox.dataset.chatLoaded === 'true') return;
                 const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
                 const q = query(messagesRef, orderBy('timestamp'));
-                onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid), (error) => {
+                onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid, isAdmin), (error) => {
                     console.error("Erreur d'écoute du chat:", error); chatBox.innerHTML = '<p class="error">Impossible de charger les messages.</p>';
                 });
                 chatBox.dataset.chatLoaded = 'true';
             }
             
             async function loadAdminDashboard() {
-                appTitle.textContent = "Administration des Chantiers"; adminSection.style.display = 'block'; chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
+                appTitle.textContent = "Administration des Chantiers"; adminSection.style.display = 'block';
                 try {
-                    const clientsSnapshot = await getDocs(collection(db, 'clients'));
-                    if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
-                    
-                    chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>'; // Réinitialiser avant de remplir
-                    clientsSnapshot.forEach(clientDoc => {
-                        const clientData = clientDoc.data(); 
-                        const isThisUserAdmin = clientData.role === 'admin';
-                        const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
+                    const clientsQuery = query(collection(db, 'clients'));
+                    onSnapshot(clientsQuery, (clientsSnapshot) => {
+                        chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
+                        if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
                         
-                        const accountWrapper = document.createElement('div'); 
-                        accountWrapper.classList.add('client-accordion');
-                        accountWrapper.id = `client-wrapper-${clientDoc.id}`; // ID pour suppression facile
-                        
-                        const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
-                        const deleteButtonHTML = !isThisUserAdmin ? 
-                            `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer</button>` : 
-                            '';
+                        clientsSnapshot.forEach(clientDoc => {
+                            const clientData = clientDoc.data(); 
+                            const isThisUserAdmin = clientData.role === 'admin';
+                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
+                            
+                            const accountWrapper = document.createElement('div'); 
+                            accountWrapper.classList.add('client-accordion');
+                            accountWrapper.id = `client-wrapper-${clientDoc.id}`;
+                            
+                            const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
+                            const deleteButtonHTML = !isThisUserAdmin ? 
+                                `<button class="delete-client-button" data-client-id="<span class="math-inline">\{clientDoc\.id\}" data\-client\-name\="</span>{clientInfo.nom}">Supprimer Client</button>` : '';
 
-                        accountWrapper.innerHTML = `
-                            <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
-                                <div class="client-header-content">
-                                    <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                            accountWrapper.innerHTML = `
+                                <div class="<span class="math-inline">\{isThisUserAdmin ? 'client\-header is\-admin' \: 'client\-header'\}" data\-target\="client\-body\-</span>{clientDoc.id}">
+                                    <div class="client-header-content">
+                                        <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                                    </div>
+                                    <div class="client-header-actions">
+                                        <span class="math-inline">\{deleteButtonHTML\}
+</div\>
+<span class\="indicator"\></span>{!isThisUserAdmin ? '▼' : ''}</span>
                                 </div>
-                                <div class="client-header-actions">
-                                    ${deleteButtonHTML}
-                                </div>
-                                ${!isThisUserAdmin ? '<span class="indicator">▼</span>' : ''}
-                            </div>
-                            <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
-                        chantiersList.appendChild(accountWrapper);
-                        
-                        if (!isThisUserAdmin) {
-                            const chantiersContainer = accountWrapper.querySelector('.client-body');
-                            const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
-                            onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                                 chantiersContainer.innerHTML = '';
-                                 if(chantiersSnapshot.empty) { chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; } 
-                                 else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));}
-                            });
-                        }
+                                <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                            chantiersList.appendChild(accountWrapper);
+                            
+                            if (!isThisUserAdmin) {
+                                const chantiersContainer = accountWrapper.querySelector('.client-body');
+                                const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                                onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                                     chantiersContainer.innerHTML = '';
+                                     if(chantiersSnapshot.empty) { chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; } 
+                                     else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));}
+                                });
+                            }
+                        });
                     });
                     loadClientListForAdminForms();
                 } catch(error) { console.error("Erreur admin:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
             async function loadClientDashboard(user) {
-                appTitle.textContent = "Suivi de vos chantiers"; adminSection.style.display = 'none'; chantiersList.innerHTML = '';
+                appTitle.textContent = "Suivi de vos chantiers"; adminSection.style.display = 'none';
                 try {
-                    const clientDocRef = doc(db, 'clients', user.uid); const clientDocSnap = await firebaseGetDoc(clientDocRef);
-                    const clientInfo = clientDocSnap.exists() ? { id: user.uid, nom: clientDocSnap.data().nom } : { id: user.uid, nom: 'Client' };
-                    const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
-                    onSnapshot(chantiersRef, (chantiersSnapshot) => {
-                         chantiersList.innerHTML = '';
-                         if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
-                         else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
+                    const clientDocRef = doc(db, 'clients', user.uid);
+                    onSnapshot(clientDocRef, async (clientDocSnap) => {
+                        const clientInfo = clientDocSnap.exists() ? { id: user.uid, nom: clientDocSnap.data().nom } : { id: user.uid, nom: 'Client' };
+                        const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
+                        const chantiersSnapshot = await getDocs(chantiersRef);
+                        chantiersList.innerHTML = '';
+                        if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
+                        else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
                     });
                 } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
             
             // --- GESTION DES ÉVÉNEMENTS ---
             chantiersList.addEventListener('click', async (e) => {
-                 if (e.target.matches('.delete-client-button')) {
-                    e.stopPropagation(); // Empêche l'accordéon de s'ouvrir/fermer
+                 const target = e.target;
+
+                if (target.matches('.delete-client-button')) {
+                    e.stopPropagation();
                     const button = e.target;
                     const clientId = button.dataset.clientId;
                     const clientName = button.dataset.clientName;
 
-                    const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action supprimera son compte, tous ses chantiers, messages et photos. L'action est irréversible.`);
-                    
+                    const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action est irréversible.`);
                     if (confirmation1) {
                         const confirmation2 = prompt(`Pour confirmer, veuillez taper le nom du client à supprimer : "${clientName}"`);
-                        
                         if (confirmation2 === clientName) {
                             try {
-                                button.disabled = true;
-                                button.textContent = 'Suppression...';
+                                button.disabled = true; button.textContent = 'Suppression...';
                                 const deleteClient = httpsCallable(functions, 'deleteClient');
                                 await deleteClient({ clientId: clientId });
-                                
-                                document.getElementById(`client-wrapper-${clientId}`).remove();
                                 alert(`Le client "${clientName}" a été supprimé avec succès.`);
-
                             } catch (error) {
                                 console.error("Erreur lors de la suppression du client:", error);
                                 alert(`Une erreur est survenue : ${error.message}`);
-                                button.disabled = false;
-                                button.textContent = 'Supprimer';
+                                button.disabled = false; button.textContent = 'Supprimer Client';
                             }
-                        } else if (confirmation2 !== null) { // Gérer le cas où l'utilisateur clique sur "Annuler"
+                        } else if (confirmation2 !== null) {
                             alert("La confirmation a échoué. Suppression annulée.");
                         }
                     }
                     return; 
+                }
+                
+                if (target.matches('.delete-photo-button')) {
+                    e.stopPropagation();
+                    if (!confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
+
+                    const photoUrl = target.dataset.photoUrl;
+                    const clientId = target.dataset.clientId;
+                    const chantierId = target.dataset.chantierId;
+
+                    try {
+                        target.disabled = true; target.textContent = '...';
+                        const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
+                        await updateDoc(chantierRef, { photos: arrayRemove(photoUrl) });
+                        const photoRef = ref(storage, photoUrl);
+                        await deleteObject(photoRef);
+                    } catch (error) {
+                        console.error("Erreur lors de la suppression de la photo:", error);
+                        alert("Une erreur est survenue.");
+                        target.disabled = false; target.textContent = 'X';
+                    }
+                }
+
+                if (target.matches('.delete-message-button')) {
+                    e.stopPropagation();
+                    if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return;
+                    
+                    const messageId = target.dataset.messageId;
+                    const chantierHeader = target.closest('.chantier-body').previousElementSibling;
+                    const clientId = chantierHeader.dataset.clientId;
+                    const chantierId = chantierHeader.dataset.chantierId;
+                    
+                    try {
+                        const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
+                        await deleteDoc(messageRef);
+                    } catch (error) {
+                        console.error("Erreur suppression message:", error);
+                        alert("Une erreur est survenue.");
+                    }
                 }
 
                 const header = e.target.closest('.client-header, .chantier-header');
@@ -418,10 +475,13 @@
                     const body = document.getElementById(header.dataset.target);
                     if (body) {
                         const isOpen = body.style.display === 'block'; body.style.display = isOpen ? 'none' : 'block'; header.classList.toggle('is-open', !isOpen);
-                        if (!isOpen && header.classList.contains('chantier-header')) { setupChatListener(header.dataset.chantierId, header.dataset.clientId); }
+                        if (!isOpen) {
+                             const idTokenResult = await auth.currentUser.getIdTokenResult();
+                             const isAdmin = idTokenResult.claims.admin === true;
+                             setupChatListener(header.dataset.chantierId, header.dataset.clientId, isAdmin);
+                        }
                     }
                 }
-                const target = e.target;
                 if (target.matches('.chantier-photo')) { lightboxImage.src = target.src; lightbox.style.display = 'flex'; }
                 if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId; document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; }
                 if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
@@ -444,8 +504,8 @@
                     const { chantierId, clientId } = form.dataset;
                     statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
                     try {
-                        const uniqueFileName = `${Date.now()}-${file.name}`;
-                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
+                        const uniqueFileName = `<span class="math-inline">\{Date\.now\(\)\}\-</span>{file.name}`;
+                        const storageRef = ref(storage, `chantier-photos/<span class="math-inline">\{chantierId\}/</span>{uniqueFileName}`);
                         await uploadBytes(storageRef, file);
                         const downloadURL = await getDownloadURL(storageRef);
                         const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
@@ -491,6 +551,14 @@
                     statusEl.textContent = "Chantier ajouté !"; statusEl.className = 'message-feedback success'; e.target.reset();
                 } catch(error) { statusEl.textContent = "Erreur : " + error.message; statusEl.className = 'message-feedback error'; }
                 finally { statusEl.style.display = 'block'; setTimeout(() => statusEl.style.display = 'none', 4000); }
+            });
+
+            // Logique pour les boutons de la danger zone (non implémentée dans la demande initiale)
+            document.getElementById('test-set-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
+            document.getElementById('test-remove-admin-button').addEventListener('click', () => alert("Fonctionnalité non implémentée dans ce script."));
+            document.getElementById('create-client-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert("Fonctionnalité de création de client non reliée à une Cloud Function dans ce script.");
             });
         });
     </script>
