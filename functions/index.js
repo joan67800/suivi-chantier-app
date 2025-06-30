@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const sgMail = require("@sendgrid/mail"); // NOUVEAU: Import de SendGrid
+const sgMail = require("@sendgrid/mail");
 
 // IMPORTS pour les fonctions v2
 const { onCall } = require("firebase-functions/v2/https");
@@ -9,13 +9,18 @@ const { setGlobalOptions } = require("firebase-functions/v2");
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1" });
 
-// NOUVEAU: Initialisation de SendGrid
+// Initialisation de SendGrid
 const SENDGRID_API_KEY = functions.config().sendgrid.key;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-// NOUVEAU: Définissez l'email de l'expéditeur et de l'admin
-const APP_SENDER_EMAIL = "joanw.2hr@gmail.com"; // REMPLACEZ par votre email vérifié
-const ADMIN_EMAIL = "joanw.2hr@gmail.com";          // REMPLACEZ par votre propre email d'admin
+// ==========================================================
+// CONFIGURATION DES E-MAILS
+// ==========================================================
+// MODIFIÉ : Utilisation de votre adresse de domaine authentifiée comme expéditeur
+const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr"; 
+const ADMIN_EMAIL = "joanw.2hr@gmail.com"; // Votre adresse de réception
+// ==========================================================
+
 
 // ==========================================================
 // FONCTIONS DE NOTIFICATION
@@ -32,7 +37,6 @@ exports.notifyOnNewMessage = functions.firestore
         const { clientId, chantierId } = context.params;
 
         try {
-            // Récupérer les informations du chantier et du client
             const chantierDoc = await admin.firestore().doc(`clients/${clientId}/chantier/${chantierId}`).get();
             const clientDoc = await admin.firestore().doc(`clients/${clientId}`).get();
             
@@ -43,7 +47,7 @@ exports.notifyOnNewMessage = functions.firestore
             
             const chantierInfo = chantierDoc.data();
             const clientInfo = clientDoc.data();
-            const appUrl = "https://suividechantier2hr.netlify.app/"; // Mettez l'URL de votre app
+            const appUrl = "https://suividechantier2hr.netlify.app/";
 
             let mailOptions;
 
@@ -53,14 +57,7 @@ exports.notifyOnNewMessage = functions.firestore
                     to: clientInfo.email,
                     from: APP_SENDER_EMAIL,
                     subject: `Nouvelle réponse sur votre chantier : ${chantierInfo.adresse}`,
-                    html: `
-                        <p>Bonjour ${clientInfo.nom},</p>
-                        <p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p>
-                        <p><strong>Message :</strong> "${messageData.text}"</p>
-                        <p>Pour consulter le suivi complet, connectez-vous à votre espace :</p>
-                        <a href="${appUrl}">Accéder à mon espace client</a>
-                        <p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>
-                    `
+                    html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${appUrl}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
                 };
             } 
             // Si le message vient du client, on notifie l'admin
@@ -69,12 +66,7 @@ exports.notifyOnNewMessage = functions.firestore
                     to: ADMIN_EMAIL,
                     from: APP_SENDER_EMAIL,
                     subject: `Nouvelle question client : ${clientInfo.nom}`,
-                    html: `
-                        <p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p>
-                        <p><strong>Chantier :</strong> ${chantierInfo.adresse}</p>
-                        <p><strong>Question :</strong> "${messageData.text}"</p>
-                        <a href="${appUrl}">Accéder à l'espace Admin</a>
-                    `
+                    html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${appUrl}">Accéder à l'espace Admin</a>`
                 };
             }
             
@@ -106,20 +98,14 @@ exports.notifyOnNewPhoto = functions.firestore
                 if (!clientDoc.exists) return null;
 
                 const clientInfo = clientDoc.data();
-                const chantierInfo = dataAfter; // les infos sont dans dataAfter
+                const chantierInfo = dataAfter; 
                 const appUrl = "https://suividechantier2hr.netlify.app/";
 
                 const mailOptions = {
                     to: clientInfo.email,
                     from: APP_SENDER_EMAIL,
                     subject: `Nouvelles photos de votre chantier : ${chantierInfo.adresse}`,
-                    html: `
-                        <p>Bonjour ${clientInfo.nom},</p>
-                        <p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p>
-                        <p>Connectez-vous à votre espace pour les découvrir :</p>
-                        <a href="${appUrl}">Voir les nouvelles photos</a>
-                        <p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>
-                    `
+                    html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${appUrl}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
                 };
 
                 await sgMail.send(mailOptions);
@@ -133,7 +119,7 @@ exports.notifyOnNewPhoto = functions.firestore
     });
 
 // ==========================================================
-// VOS FONCTIONS EXISTANTES
+// AUTRES FONCTIONS DE GESTION
 // ==========================================================
 
 exports.setUserAsAdmin = onCall(async (request) => {
