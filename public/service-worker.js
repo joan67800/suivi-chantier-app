@@ -1,44 +1,78 @@
-// Nom du cache. Changez la version si vous mettez à jour les fichiers.
-const CACHE_NAME = 'suivi-chantier-cache-v1';
-
-// Les fichiers de base de votre application à mettre en cache.
+const CACHE_NAME = 'suivi-chantier-cache-v2'; // version mise à jour
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
   '/script.js',
-  // Ajoutez ici les chemins vers vos icônes et logo si vous le souhaitez
   '/images/icons/icon-192x192.png',
   '/images/icons/icon-512x512.png'
 ];
 
-// Événement d'installation : on met les fichiers en cache.
+// Installation : mise en cache des fichiers de base
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache ouvert');
+        console.log('Cache ouvert et fichiers ajoutés');
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting(); // force le service worker à devenir actif immédiatement
 });
 
-// Événement fetch : on intercepte les requêtes.
+// Activation : nettoyage des anciens caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log('Suppression ancien cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      )
+    )
+  );
+  self.clients.claim(); // prend le contrôle immédiatement
+});
+
+// Interception des requêtes
 self.addEventListener('fetch', event => {
-  // On ne met pas en cache les requêtes vers l'API Firebase !
+  // Ignore les requêtes Firestore (tu peux ajouter d'autres API si besoin)
   if (event.request.url.includes('firestore.googleapis.com')) {
-    return; // On laisse la requête se faire normalement sur le réseau.
+    return;
   }
 
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Si la ressource est dans le cache, on la retourne.
         if (response) {
+          // Retourne la ressource du cache
           return response;
         }
-        // Sinon, on fait la requête réseau.
-        return fetch(event.request);
+
+        // Sinon, va chercher sur le réseau
+        return fetch(event.request)
+          .then(networkResponse => {
+            // Optionnel : mettre en cache la nouvelle ressource récupérée
+            // Attention à ne pas mettre en cache les requêtes POST ou autres non GET
+            if (event.request.method === 'GET') {
+              return caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, networkResponse.clone());
+                return networkResponse;
+              });
+            } else {
+              return networkResponse;
+            }
+          })
+          .catch(() => {
+            // Fallback en cas d'erreur réseau (ex: offline)
+            if (event.request.destination === 'document') {
+              // Si c’est une navigation vers une page HTML, retourne la page offline
+              return caches.match('/offline.html');
+            }
+          });
       })
   );
 });
