@@ -46,6 +46,7 @@
       <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
     </div>
     <p id="load">Firebase SDK Loading&hellip;</p>
+    <link rel="manifest" href="/manifest.json">
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -84,6 +85,15 @@
           loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
         }
       });
+      if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }, err => {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
     </script>
   </body>
 </html>
