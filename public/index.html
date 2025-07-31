@@ -1,99 +1,915 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
-
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/11.7.3/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/11.7.3/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/11.7.3/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
-    <link rel="manifest" href="/manifest.json">
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi de Chantier - 2HR Habitat Rénovation</title>
+    
+    <style>
+        :root {
+            --company-orange: #E57300;
+            --company-light-green: #E2EFDA;
+            --company-dark-green-action: #3E8E41;
+            --text-dark: #333333;
+            --text-light: #FFFFFF;
+            --border-color: #cccccc;
+            --error-red: #dc3545;
+            --button-danger: #d9534f;
+            --button-danger-hover: #c9302c;
+            --button-info: #5bc0de;
+            --button-info-hover: #31b0d5;
+            --status-orange: #f0ad4e;
+            --status-green: #5cb85c;
         }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .company-logo { display: block; margin: 0 auto 20px auto; max-height: 120px; width: auto; }
+        .app-header { background-color: #ffffff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--company-orange); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .app-header .company-logo { margin: 0; max-height: 50px; }
+        .app-header h1 { margin: 0 20px; flex-grow: 1; font-size: 1.5em; color: var(--company-orange); }
+        #login-container, #app-container { background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 900px; }
+        #login-container { max-width: 400px; text-align: center; }
+
+        h2, h3, h4 { color: var(--company-orange); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 25px; }
+        h2:first-child, h3:first-child, h4:first-child { margin-top: 0; }
+        h4 { font-size: 1.1em; border-bottom: none; }
+
+        input, textarea, select, button { font-family: inherit; font-size: 1em; }
+        input[type="email"], input[type="password"], input[type="text"], input[type="tel"], input[type="date"], input[type="file"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
+        input[type="file"] { padding: 5px; }
+        textarea { min-height: 80px; resize: vertical; }
+
+        button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease; }
+        button:hover { background-color: #D46900; }
+        #logout-button { background-color: #6c757d; }
+        #logout-button:hover { background-color: #5a6268; }
+        .delete-client-button, .delete-button { background-color: var(--button-danger); }
+        .delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); }
+        .delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; }
+        .edit-chantier-button { background-color: var(--button-info); }
+        .edit-chantier-button:hover { background-color: var(--button-info-hover); }
+
+
+        .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
+        .message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
+        .message-feedback.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; }
+        
+        .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
+        .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
+        .client-header-content { flex-grow: 1; }
+        .client-details-preview { font-size: 0.85em; color: #555; }
+        .client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0; }
+        .client-header:hover { background-color: #d4e7c7; }
+        .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; }
+        .client-header.is-admin:hover { background-color: #f1f1f1; }
+        .client-header h3 { margin: 0; padding: 0; border: none; color: var(--text-dark); font-size: 1.3em; }
+        .indicator { transition: transform 0.3s ease; font-size: 1.5em; color: var(--company-dark-green-action) }
+        .client-header.is-open > .indicator, .chantier-header.is-open > .indicator { transform: rotate(180deg); }
+        .client-body, .chantier-body { display: none; padding: 15px; }
+        .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
+        .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+        .chantier-description { background-color: #f9f9f9; border-left: 3px solid var(--company-orange); padding: 10px; margin: 10px 0; border-radius: 4px; }
+        
+        .documents-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
+        .document-list { list-style: none; padding: 0; }
+        .document-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .document-item:last-child { border-bottom: none; }
+        .document-item a { text-decoration: none; color: var(--company-orange); font-weight: bold; }
+        .document-info { flex-grow: 1; }
+        .document-status { font-style: italic; font-size: 0.9em; margin-left: 15px; }
+        .document-status.status-attente { color: var(--status-orange); }
+        .document-status.status-valide { color: var(--status-green); }
+        .document-actions { display: flex; align-items: center; gap: 10px; }
+        .document-actions .delete-button { padding: 5px 8px; font-size: 0.8em; margin: 0; }
+        .document-actions .validate-payment-button { background-color: var(--status-green); padding: 5px 8px; font-size: 0.8em; margin: 0; }
+        .document-actions .validate-payment-button:hover { background-color: #4cae4c; }
+
+        .photos-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px;}
+        .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; }
+        .photo-wrapper { position: relative; }
+        .photo-wrapper img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+        .photo-wrapper img:hover { transform: scale(1.05); }
+        .delete-photo-button { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; padding: 0; margin: 0; line-height: 24px; text-align: center; border-radius: 50%; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+        #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
+        .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
+        .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+        .admin-danger-zone { border: 1px solid red !important; padding: 15px; margin-top: 20px; }
+
+        .chat-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
+        .chat-box { max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
+        .chat-message { max-width: 70%; padding: 10px 15px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; position: relative; }
+        .chat-message:hover .delete-message-button { opacity: 1; }
+        .chat-message p { margin: 0; }
+        .chat-message .meta { font-size: 0.75em; color: #6c757d; margin-top: 5px; }
+        .message-sent { background-color: var(--company-orange); color: white; border-bottom-right-radius: 4px; align-self: flex-end; text-align: right; }
+        .message-received { background-color: #e9ecef; color: #333; border-bottom-left-radius: 4px; align-self: flex-start; }
+        .delete-message-button { position: absolute; top: -8px; padding: 0; width: 20px; height: 20px; line-height: 20px; font-size: 12px; border-radius: 50%; opacity: 0; transition: opacity 0.2s; }
+        .message-sent .delete-message-button { left: -8px; }
+        .message-received .delete-message-button { right: -8px; }
+        .chat-form { display: flex; gap: 10px; margin-top: 15px; }
+        .chat-form textarea { flex-grow: 1; margin: 0; }
+        .chat-form button { margin-top: 0; align-self: flex-end; height: fit-content; }
+        
+        .chantier-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+        .chantier-actions button { margin-top: 0; font-size: 0.9em; padding: 8px 12px; }
+
+        .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; }
+        .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
+        .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
+        .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+    <div id="login-container">
+        <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="login-logo" class="company-logo">
+        <h2>Connexion</h2>
+        <form id="login-form">
+            <div><label for="email">E-mail :</label><input type="email" id="email" name="email" required></div>
+            <div><label for="password">Mot de passe :</label><input type="password" id="password" name="password" required></div>
+            <button type="submit">Se connecter</button>
+            <p id="login-error" class="error" style="display: none;"></p>
+        </form>
+    </div>
+    <div id="app-container" style="display: none;">
+        <header class="app-header">
+            <img src="images/logo.png/Nouveau logo sans Fond PNG.png" alt="Logo 2HR Habitat Rénovation" id="app-logo" class="company-logo">
+            <h1 id="app-title">Suivi de vos chantiers</h1>
+            <button id="logout-button">Se déconnecter</button>
+        </header>
+        <div id="chantiers-list"></div>
+        <div id="admin-section" style="display: none;">
+            <h2>Outils d'Administration</h2>
+            <div class="admin-subsection">
+                <h3>Créer un Nouveau Client</h3>
+                <form id="create-client-form">
+                    <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
+                    <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
+                    <div><label for="new-client-phone">N° de téléphone :</label><input type="tel" id="new-client-phone" placeholder="Ex: 0612345678"></div>
+                    <div><label for="new-client-address">Adresse Postale :</label><input type="text" id="new-client-address"></div>
+                    <div><label for="new-client-password">Mot de passe initial (6 caractères min.) :</label><input type="text" id="new-client-password" required minlength="6"></div>
+                    <button type="submit">Créer le Client</button>
+                    <p id="create-client-status" class="message-feedback" style="display: none;"></p>
+                </form>
+            </div>
+            <div class="admin-subsection">
+                <h3>Ajouter un Nouveau Chantier</h3>
+                 <form id="add-chantier-form">
+                    <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
+                    <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
+                    <div><label for="new-chantier-description">Description du chantier :</label><textarea id="new-chantier-description"></textarea></div>
+                    <div><label for="new-chantier-start-date">Date de début :</label><input type="date" id="new-chantier-start-date"></div>
+                    <div><label for="new-chantier-end-date">Date de fin estimée :</label><input type="date" id="new-chantier-end-date"></div>
+                    <button type="submit">Ajouter le Chantier</button>
+                    <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
+                </form>
+            </div>
+            <div class="admin-danger-zone">
+                <h3>Gérer les Rôles Admin</h3>
+                <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" />
+                <button id="test-set-admin-button">Rendre Admin</button>
+                <button id="test-remove-admin-button">Enlever Admin</button>
+                <p id="test-admin-status" class="message-feedback" style="display: none;"></p>
+            </div>
+        </div>
+    </div>
+    <div id="image-lightbox" class="lightbox" style="display: none;">
+      <span class="lightbox-close">&times;</span>
+      <img class="lightbox-content" id="lightbox-image">
+    </div>
+
+    <script type="module">
+        // --- IMPORTS FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
+        
+        if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').then(registration => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, err => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
       });
-      if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').then(registration => {
-      console.log('ServiceWorker registration successful with scope: ', registration.scope);
-    }, err => {
-      console.log('ServiceWorker registration failed: ', err);
-    });
-  });
-}
+    }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION FIREBASE ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
+                authDomain: "suivi-chantier-societe.firebaseapp.com",
+                projectId: "suivi-chantier-societe",
+                storageBucket: "suivi-chantier-societe.firebasestorage.app",
+                messagingSenderId: "888449140099",
+                appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
+            };
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const storage = getStorage(app);
+            const functions = getFunctions(app);
+
+            initializeAppCheck(app, {
+              provider: new ReCaptchaV3Provider('6LfDVkYrAAAAACsz-wqYEudXc32pkr38Oy6fPwFU'),
+              isTokenAutoRefreshEnabled: true
+            });
+
+            // --- SÉLECTEURS D'ÉLÉMENTS ---
+            const loginContainer = document.getElementById('login-container');
+            const appContainer = document.getElementById('app-container');
+            const chantiersList = document.getElementById('chantiers-list');
+            const adminSection = document.getElementById('admin-section');
+            const appTitle = document.getElementById('app-title');
+            const lightbox = document.getElementById('image-lightbox');
+            const lightboxImage = document.getElementById('lightbox-image');
+            const lightboxClose = document.querySelector('.lightbox-close');
+
+            // --- GESTION DE L'AUTHENTIFICATION ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    loginContainer.style.display = 'none';
+                    appContainer.style.display = 'block';
+                    const idTokenResult = await user.getIdTokenResult(true);
+                    const isAdmin = idTokenResult.claims.admin === true;
+                    
+                    if (isAdmin) {
+                        loadAdminDashboard();
+                    } else {
+                        loadClientDashboard(user);
+                    }
+                } else {
+                    loginContainer.style.display = 'block';
+                    appContainer.style.display = 'none';
+                    chantiersList.innerHTML = '';
+                    adminSection.style.display = 'none';
+                }
+            });
+
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const errorEl = document.getElementById('login-error');
+                errorEl.style.display = 'none';
+                errorEl.textContent = '';
+                try {
+                    await signInWithEmailAndPassword(auth, email.value, password.value);
+                } catch (error) {
+                    errorEl.textContent = 'Erreur : Identifiants incorrects ou problème de connexion.';
+                    errorEl.style.display = 'block';
+                }
+            });
+
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+            
+            // --- FONCTION DE RENDU PRINCIPALE ---
+            function renderChantier(chantierDoc, isAdmin, clientInfo) {
+                const chantierData = chantierDoc.data();
+                const chantierId = chantierDoc.id;
+                const clientId = clientInfo.id;
+                
+                const chantierItem = document.createElement('div');
+                chantierItem.classList.add('chantier-item');
+                chantierItem.id = `chantier-item-${chantierId}`;
+                
+                const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
+                
+                const descriptionHTML = chantierData.description ? `<p class="chantier-description">${chantierData.description}</p>` : '';
+                const datesHTML = chantierData.dateDebut 
+                    ? `<p><strong>Début :</strong> ${new Date(chantierData.dateDebut).toLocaleDateString('fr-FR')} | <strong>Fin estimée :</strong> ${chantierData.dateFin ? new Date(chantierData.dateFin).toLocaleDateString('fr-FR') : 'N/A'}</p>`
+                    : '';
+
+                let photosHTML = '';
+                if (chantierData.photos && chantierData.photos.length > 0) {
+                    photosHTML = chantierData.photos.map(url => `
+                        <div class="photo-wrapper">
+                            <img src="${url}" alt="Photo du chantier" class="chantier-photo">
+                            ${isAdmin ? `<button class="delete-button delete-photo-button" data-photo-url="${url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer la photo">X</button>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    photosHTML = '<p style="color: #888;">Aucune photo pour ce chantier.</p>';
+                }
+                
+                const photoUploadFormHTML = isAdmin ? `
+                    <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                        <label>Ajouter une photo au chantier :</label>
+                        <input type="file" name="chantierPhoto" accept="image/png, image/jpeg" required>
+                        <button type="submit">Envoyer la photo</button>
+                        <p class="message-feedback photo-upload-status" style="display: none;"></p>
+                    </form>
+                ` : '';
+
+                const documentUploadFormHTML = isAdmin ? `
+                    <form class="document-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                        <h4>Ajouter un document</h4>
+                        <select name="documentType" required>
+                            <option value="devis">Devis</option>
+                            <option value="facture">Facture</option>
+                        </select>
+                        <input type="file" name="documentFile" accept=".pdf" required>
+                        <button type="submit">Envoyer le document</button>
+                        <p class="message-feedback document-upload-status" style="display: none;"></p>
+                    </form>
+                ` : '';
+
+                const adminChantierActions = isAdmin ? `
+                    <div class="chantier-actions">
+                        <button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>
+                        <button class="delete-button delete-chantier-button" data-client-id="${clientId}" data-chantier-id="${chantierId}" data-chantier-adresse="${chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
+                    </div>
+                ` : '';
+
+                chantierItem.innerHTML = `
+                    <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
+                        <div class="title-content">${title}</div>
+                        <span class="indicator">▼</span>
+                    </div>
+                    <div class="chantier-body" id="body-${chantierId}">
+                        <div id="details-display-${chantierId}">
+                           ${descriptionHTML}
+                           ${datesHTML}
+                           <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
+                           <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
+                           ${adminChantierActions}
+                        </div>
+                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
+                            <label>Jours d'intervention (séparés par une virgule):</label>
+                            <input type="text" class="jours-intervention-input" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
+                            <label>Avancement (%):</label>
+                            <input type="number" min="0" max="100" class="avancement-input" value="${chantierData.pourcentageAvancement || 0}">
+                            <button type="submit" class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
+                            <button type="button" class="cancel-edit-button">Annuler</button>
+                        </form>
+
+                        <div class="documents-section">
+                            <h4>Documents du chantier</h4>
+                            <ul class="document-list" id="document-list-${chantierId}"></ul>
+                            ${documentUploadFormHTML}
+                        </div>
+
+                        <div class="photos-section">
+                            <h4>Photos du chantier</h4>
+                            <div class="photos-container" id="photos-container-${chantierId}">${photosHTML}</div>
+                            ${photoUploadFormHTML}
+                        </div>
+
+                        <div class="chat-section">
+                            <h4>Questions & Réponses</h4>
+                            <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
+                            <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                                <textarea name="messageText" required placeholder="Votre message..."></textarea>
+                                <button type="submit">Envoyer</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => renderDocuments(chantierId, clientId, isAdmin), 0);
+                return chantierItem;
+            }
+            
+            function renderDocuments(chantierId, clientId, isAdmin) {
+                const listEl = document.getElementById(`document-list-${chantierId}`);
+                if (!listEl) return;
+
+                const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
+                const q = query(documentsRef, orderBy('dateUpload', 'desc'));
+
+                onSnapshot(q, (snapshot) => {
+                    listEl.innerHTML = '';
+                    if (snapshot.empty) {
+                        listEl.innerHTML = '<p style="color: #888; padding: 10px;">Aucun document.</p>';
+                        return;
+                    }
+                    snapshot.forEach(doc => {
+                        const docData = doc.data();
+                        const docId = doc.id;
+                        const li = document.createElement('li');
+                        li.classList.add('document-item');
+
+                        let statusHTML = '';
+                        if (docData.type === 'facture') {
+                            switch(docData.statutPaiement) {
+                                case 'non_payee':
+                                    statusHTML = isAdmin 
+                                        ? '<span class="document-status">En attente de paiement</span>'
+                                        : `<label><input type="checkbox" class="payment-checkbox" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}"> J'ai payé cette facture</label>`;
+                                    break;
+                                case 'attente_validation':
+                                    statusHTML = '<span class="document-status status-attente">Payée, en attente de réception</span>';
+                                    if (isAdmin) {
+                                        statusHTML += `<button class="validate-payment-button" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}">Valider le paiement</button>`;
+                                    }
+                                    break;
+                                case 'valide':
+                                    statusHTML = '<span class="document-status status-valide">Paiement validé</span>';
+                                    break;
+                            }
+                        }
+
+                        li.innerHTML = `
+                            <div class="document-info">
+                                <a href="${docData.url}" target="_blank">${docData.nom}</a>
+                                <div style="font-size: 0.8em; color: #777;">Ajouté le: ${docData.dateUpload.toDate().toLocaleDateString('fr-FR')}</div>
+                            </div>
+                            <div class="document-actions">
+                                ${statusHTML}
+                                ${isAdmin ? `<button class="delete-button delete-document-button" data-doc-id="${docId}" data-doc-url="${docData.url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer le document">X</button>` : ''}
+                            </div>
+                        `;
+                        listEl.appendChild(li);
+                    });
+                });
+            }
+
+            function renderMessages(snapshot, chatBox, currentUserId, isAdmin) {
+                chatBox.innerHTML = '';
+                if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
+                snapshot.forEach(doc => {
+                    const message = doc.data();
+                    const messageId = doc.id;
+                    const messageEl = document.createElement('div');
+                    messageEl.classList.add('chat-message');
+                    const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received';
+                    messageEl.classList.add(senderClass);
+                    
+                    const deleteButtonHTML = isAdmin ? `<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : '';
+
+                    const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
+                    messageEl.innerHTML = `
+                        ${deleteButtonHTML}
+                        <p>${message.text}</p>
+                        <div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>
+                    `;
+                    chatBox.appendChild(messageEl);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            function setupChatListener(chantierId, clientId, isAdmin) {
+                const chatBox = document.getElementById(`chat-box-${chantierId}`);
+                if (!chatBox) return;
+                if (chatBox.dataset.chatLoaded === 'true') return;
+                const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
+                const q = query(messagesRef, orderBy('timestamp'));
+                onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid, isAdmin), (error) => {
+                    console.error("Erreur d'écoute du chat:", error); chatBox.innerHTML = '<p class="error">Impossible de charger les messages.</p>';
+                });
+                chatBox.dataset.chatLoaded = 'true';
+            }
+            
+            async function loadAdminDashboard() {
+                appTitle.textContent = "Administration des Chantiers"; adminSection.style.display = 'block';
+                try {
+                    const clientsQuery = query(collection(db, 'clients'));
+                    onSnapshot(clientsQuery, (clientsSnapshot) => {
+                        chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
+                        if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
+                        
+                        clientsSnapshot.forEach(clientDoc => {
+                            const clientData = clientDoc.data(); 
+                            const isThisUserAdmin = clientData.role === 'admin';
+                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
+                            
+                            const accountWrapper = document.createElement('div'); 
+                            accountWrapper.classList.add('client-accordion');
+                            accountWrapper.id = `client-wrapper-${clientDoc.id}`;
+                            
+                            const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
+                            const deleteButtonHTML = !isThisUserAdmin ? 
+                                `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer Client</button>` : '';
+
+                            const clientDetailsPreview = `
+                                <div class="client-details-preview">
+                                    ${clientData.email || ''} 
+                                    ${clientData.telephone ? ` | ${clientData.telephone}` : ''}
+                                    ${clientData.adresse ? `<br>${clientData.adresse}` : ''}
+                                </div>
+                            `;
+
+                            accountWrapper.innerHTML = `
+                                <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
+                                    <div class="client-header-content">
+                                        <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                                        ${clientDetailsPreview}
+                                    </div>
+                                    <div class="client-header-actions">
+                                        ${deleteButtonHTML}
+                                    </div>
+                                    <span class="indicator">${!isThisUserAdmin ? '▼' : ''}</span>
+                                </div>
+                                <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
+                            chantiersList.appendChild(accountWrapper);
+                            
+                            if (!isThisUserAdmin) {
+                                const chantiersContainer = accountWrapper.querySelector('.client-body');
+                                const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                                onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                                     chantiersContainer.innerHTML = '';
+                                     if(chantiersSnapshot.empty) { chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; } 
+                                     else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));}
+                                });
+                            }
+                        });
+                    });
+                    loadClientListForAdminForms();
+                } catch(error) { console.error("Erreur admin:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
+            }
+            async function loadClientDashboard(user) {
+                appTitle.textContent = "Suivi de vos chantiers"; adminSection.style.display = 'none';
+                try {
+                    const clientDocRef = doc(db, 'clients', user.uid);
+                    onSnapshot(clientDocRef, async (clientDocSnap) => {
+                        chantiersList.innerHTML = '';
+                        if (!clientDocSnap.exists()) {
+                            chantiersList.innerHTML = '<p>Votre compte est en cours de configuration.</p>';
+                            return;
+                        }
+                        const clientInfo = { id: user.uid, nom: clientDocSnap.data().nom };
+                        const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
+                        onSnapshot(chantiersRef, (chantiersSnapshot) => {
+                            chantiersList.innerHTML = ''; // Vider avant de reconstruire
+                            if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
+                            else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
+                        });
+                    });
+                } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
+            }
+            
+            // --- GESTION DES ÉVÉNEMENTS ---
+            chantiersList.addEventListener('click', async (e) => {
+                 const target = e.target;
+                
+                if (target.matches('.payment-checkbox')) {
+                    const { docId, clientId, chantierId } = target.dataset;
+                    const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                    await updateDoc(docRef, { statutPaiement: 'attente_validation' });
+                    target.disabled = true;
+                }
+                if (target.matches('.validate-payment-button')) {
+                    const { docId, clientId, chantierId } = target.dataset;
+                    const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                    await updateDoc(docRef, { statutPaiement: 'valide' });
+                }
+                if (target.matches('.delete-document-button')) {
+                    if (!confirm("Voulez-vous vraiment supprimer ce document ?")) return;
+                    const { docId, docUrl, clientId, chantierId } = target.dataset;
+                    try {
+                        const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                        await deleteDoc(docRef);
+                        const fileRef = ref(storage, docUrl);
+                        await deleteObject(fileRef);
+                    } catch (err) {
+                        console.error("Erreur suppression document:", err);
+                        alert("Impossible de supprimer le document.");
+                    }
+                }
+
+                if (target.matches('.delete-client-button')) {
+                    e.stopPropagation();
+                    const button = e.target;
+                    const clientId = button.dataset.clientId;
+                    const clientName = button.dataset.clientName;
+
+                    const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action est irréversible.`);
+                    if (confirmation1) {
+                        const confirmation2 = prompt(`Pour confirmer, veuillez taper le nom du client à supprimer : "${clientName}"`);
+                        if (confirmation2 === clientName) {
+                            try {
+                                button.disabled = true; button.textContent = 'Suppression...';
+                                const deleteClient = httpsCallable(functions, 'deleteClient');
+                                await deleteClient({ clientId: clientId });
+                                alert(`Le client "${clientName}" a été supprimé avec succès.`);
+                            } catch (error) {
+                                console.error("Erreur lors de la suppression du client:", error);
+                                alert(`Une erreur est survenue : ${error.message}`);
+                                button.disabled = false; button.textContent = 'Supprimer Client';
+                            }
+                        } else if (confirmation2 !== null) {
+                            alert("La confirmation a échoué. Suppression annulée.");
+                        }
+                    }
+                    return; 
+                }
+                
+                if (target.matches('.delete-photo-button')) {
+                    e.stopPropagation();
+                    if (!confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
+
+                    const photoUrl = target.dataset.photoUrl;
+                    const clientId = target.dataset.clientId;
+                    const chantierId = target.dataset.chantierId;
+
+                    try {
+                        target.disabled = true; target.textContent = '...';
+                        const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
+                        await updateDoc(chantierRef, { photos: arrayRemove(photoUrl) });
+                        const photoRef = ref(storage, photoUrl);
+                        await deleteObject(photoRef);
+                    } catch (error) {
+                        console.error("Erreur lors de la suppression de la photo:", error);
+                        alert("Une erreur est survenue.");
+                        target.disabled = false; target.textContent = 'X';
+                    }
+                    return;
+                }
+
+                if (target.matches('.delete-message-button')) {
+                    e.stopPropagation();
+                    if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return;
+                    
+                    const messageId = target.dataset.messageId;
+                    const chantierHeader = target.closest('.chantier-body').previousElementSibling;
+                    const clientId = chantierHeader.dataset.clientId;
+                    const chantierId = chantierHeader.dataset.chantierId;
+                    
+                    try {
+                        const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
+                        await deleteDoc(messageRef);
+                    } catch (error) {
+                        console.error("Erreur suppression message:", error);
+                        alert("Une erreur est survenue.");
+                    }
+                    return;
+                }
+                
+                if (target.matches('.delete-chantier-button')) {
+                    e.stopPropagation();
+                    const button = target;
+                    const { clientId, chantierId, chantierAdresse } = button.dataset;
+
+                    if (confirm(`Êtes-vous sûr de vouloir supprimer le chantier "${chantierAdresse}" ?\n\nCette action est définitive et supprimera aussi toutes les photos et tous les messages associés.`)) {
+                        try {
+                            button.disabled = true;
+                            button.textContent = "Suppression...";
+                            const deleteChantier = httpsCallable(functions, 'deleteChantier');
+                            await deleteChantier({ clientId: clientId, chantierId: chantierId });
+                            alert(`Le chantier "${chantierAdresse}" a été supprimé.`);
+                        } catch (error) {
+                            console.error("Erreur lors de la suppression du chantier:", error);
+                            alert("Une erreur est survenue: " + error.message);
+                            button.disabled = false;
+                            button.textContent = "Supprimer le chantier";
+                        }
+                    }
+                    return;
+                }
+
+                const header = e.target.closest('.client-header, .chantier-header');
+                if (header && !header.classList.contains('is-admin')) {
+                    const body = document.getElementById(header.dataset.target);
+                    if (body) {
+                        const isOpen = body.style.display === 'block'; body.style.display = isOpen ? 'none' : 'block'; header.classList.toggle('is-open', !isOpen);
+                        if (!isOpen) {
+                             const idTokenResult = await auth.currentUser.getIdTokenResult();
+                             const isAdmin = idTokenResult.claims.admin === true;
+                             setupChatListener(header.dataset.chantierId, header.dataset.clientId, isAdmin);
+                        }
+                    }
+                }
+                if (target.matches('.chantier-photo')) { lightboxImage.src = target.src; lightbox.style.display = 'flex'; }
+                if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId; document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; }
+                if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
+                if (target.matches('.save-chantier-button')) {
+                    e.preventDefault(); const form = target.closest('.chantier-edit-form'); const chantierId = target.dataset.chantierId; const clientId = target.dataset.clientId;
+                    const joursInput = form.querySelector('.jours-intervention-input').value; const avancement = form.querySelector('.avancement-input').value;
+                    const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean);
+                    const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
+                    await updateDoc(chantierRef, { joursIntervention: jours, pourcentageAvancement: Number(avancement) });
+                    form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';
+                }
+            });
+
+            chantiersList.addEventListener('submit', async (e) => {
+                if (e.target.matches('.document-upload-form')) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const fileInput = form.querySelector('input[type="file"]');
+                    const typeSelect = form.querySelector('select[name="documentType"]');
+                    const statusEl = form.querySelector('.document-upload-status');
+                    const file = fileInput.files[0];
+                    if (!file) return;
+
+                    const { chantierId, clientId } = form.dataset;
+                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
+                    
+                    try {
+                        const uniqueFileName = `${Date.now()}-${file.name}`;
+                        const storageRef = ref(storage, `chantier-documents/${chantierId}/${uniqueFileName}`);
+                        await uploadBytes(storageRef, file);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        
+                        const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
+                        await addDoc(documentsRef, {
+                            nom: file.name,
+                            url: downloadURL,
+                            type: typeSelect.value,
+                            statutPaiement: typeSelect.value === 'facture' ? 'non_payee' : 'non_applicable',
+                            dateUpload: serverTimestamp()
+                        });
+
+                        statusEl.textContent = "Document envoyé !"; statusEl.className = 'message-feedback success';
+                        form.reset();
+                    } catch (error) {
+                        console.error("Erreur d'envoi du document:", error);
+                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
+                    } finally {
+                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+                    }
+                }
+
+                if (e.target.matches('.photo-upload-form')) {
+                    e.preventDefault();
+                    const form = e.target; const fileInput = form.querySelector('input[type="file"]');
+                    const file = fileInput.files[0]; const statusEl = form.querySelector('.photo-upload-status');
+                    if (!file) { return; }
+                    const { chantierId, clientId } = form.dataset;
+                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
+                    try {
+                        const uniqueFileName = `${Date.now()}-${file.name}`;
+                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
+                        await uploadBytes(storageRef, file);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
+                        await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
+                        statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success';
+                        form.reset();
+                    } catch (error) {
+                        console.error("Erreur d'envoi de la photo:", error);
+                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
+                    } finally {
+                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+                    }
+                }
+
+                if (e.target.matches('.chat-form')) {
+                    e.preventDefault();
+                    const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return;
+                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous pour envoyer un message."); return; }
+                    const idTokenResult = await user.getIdTokenResult(); const clientDoc = await firebaseGetDoc(doc(db, 'clients', user.uid));
+                    const senderName = idTokenResult.claims.admin ? 'Admin' : (clientDoc.exists() ? clientDoc.data().nom : 'Client');
+                    const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
+                    try {
+                        await addDoc(messagesRef, { text: text, timestamp: serverTimestamp(), senderId: user.uid, senderName: senderName || 'Utilisateur' });
+                        form.reset();
+                    } catch (error) { console.error("Erreur d'envoi du message:", error); alert("Le message n'a pas pu être envoyé."); }
+                }
+            });
+            
+            lightboxClose.addEventListener('click', () => lightbox.style.display = 'none');
+            
+            async function loadClientListForAdminForms() {
+                try {
+                    const clientsQuery = query(collection(db, 'clients'));
+                    const clientsSnapshot = await getDocs(clientsQuery);
+                    const select = document.getElementById('add-chantier-client-select');
+                    select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
+                    clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
+                } catch(error) { console.error("Impossible de charger la liste des clients:", error); }
+            }
+            
+            document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const statusEl = document.getElementById('add-chantier-status');
+                const clientId = document.getElementById('add-chantier-client-select').value;
+                const address = document.getElementById('new-chantier-address').value;
+                const description = document.getElementById('new-chantier-description').value;
+                const dateDebut = document.getElementById('new-chantier-start-date').value;
+                const dateFin = document.getElementById('new-chantier-end-date').value;
+
+                if (!clientId || !address) {
+                    statusEl.textContent = "Veuillez sélectionner un client et une adresse.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+                
+                try {
+                    await addDoc(collection(db, 'clients', clientId, 'chantier'), {
+                        adresse: address,
+                        description: description || '',
+                        dateDebut: dateDebut || '',
+                        dateFin: dateFin || '',
+                        pourcentageAvancement: 0,
+                        joursIntervention: [],
+                        photos: []
+                    });
+                    statusEl.textContent = "Chantier ajouté !";
+                    statusEl.className = 'message-feedback success';
+                    form.reset();
+                } catch(error) {
+                    statusEl.textContent = "Erreur : " + error.message;
+                    statusEl.className = 'message-feedback error';
+                } finally {
+                    statusEl.style.display = 'block';
+                    setTimeout(() => statusEl.style.display = 'none', 4000);
+                }
+            });
+
+            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const statusEl = document.getElementById('create-client-status');
+                const nom = document.getElementById('new-client-name').value;
+                const email = document.getElementById('new-client-email').value;
+                const password = document.getElementById('new-client-password').value;
+                const telephone = document.getElementById('new-client-phone').value;
+                const adresse = document.getElementById('new-client-address').value;
+
+                if (!nom || !email || !password) {
+                    statusEl.textContent = "Veuillez remplir tous les champs obligatoires.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+                if (password.length < 6) {
+                    statusEl.textContent = "Le mot de passe doit faire au moins 6 caractères.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    statusEl.textContent = "Création en cours...";
+                    statusEl.className = 'message-feedback';
+                    statusEl.style.display = 'block';
+
+                    const createClientUser = httpsCallable(functions, 'createClientUser');
+                    const result = await createClientUser({ 
+                        nom: nom, 
+                        email: email, 
+                        password: password,
+                        telephone: telephone || '',
+                        adresse: adresse || ''
+                    });
+                    
+                    statusEl.textContent = result.data.message;
+                    statusEl.className = 'message-feedback success';
+                    form.reset();
+                    loadClientListForAdminForms();
+
+                } catch (error) {
+                    console.error("Erreur lors de la création du client:", error);
+                    statusEl.textContent = "Erreur : " + error.message;
+                    statusEl.className = 'message-feedback error';
+                } finally {
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+                }
+            });
+
+            // MODIFIÉ: Logique pour les boutons de la danger zone
+            const adminUidInput = document.getElementById('test-admin-uid');
+            const setAdminButton = document.getElementById('test-set-admin-button');
+            const removeAdminButton = document.getElementById('test-remove-admin-button');
+            const adminStatusEl = document.getElementById('test-admin-status');
+
+            const setAdminRole = async (makeAdmin) => {
+                const targetUid = adminUidInput.value.trim();
+                if (!targetUid) {
+                    adminStatusEl.textContent = "Veuillez entrer un UID.";
+                    adminStatusEl.className = 'message-feedback error';
+                    adminStatusEl.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    adminStatusEl.textContent = "Mise à jour en cours...";
+                    adminStatusEl.className = 'message-feedback';
+                    adminStatusEl.style.display = 'block';
+
+                    const setUserAsAdmin = httpsCallable(functions, 'setUserAsAdmin');
+                    const result = await setUserAsAdmin({ targetUid: targetUid, isAdmin: makeAdmin });
+                    
+                    adminStatusEl.textContent = result.data.message;
+                    adminStatusEl.className = 'message-feedback success';
+                    adminUidInput.value = ''; // Vider le champ après succès
+
+                } catch (error) {
+                    console.error("Erreur lors de la mise à jour du rôle:", error);
+                    adminStatusEl.textContent = "Erreur : " + error.message;
+                    adminStatusEl.className = 'message-feedback error';
+                } finally {
+                     setTimeout(() => { adminStatusEl.style.display = 'none'; }, 5000);
+                }
+            };
+
+            setAdminButton.addEventListener('click', () => setAdminRole(true));
+            removeAdminButton.addEventListener('click', () => setAdminRole(false));
+        });
+        
     </script>
-  </body>
+</body>
 </html>
