@@ -210,6 +210,12 @@
         const storage = getStorage(app);
         const functions = getFunctions(app);
 
+        // --- INITIALISATION APP CHECK ---
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(6LfkLJorAAAAAHpodcvxuOxt4m_dESVRpUjvDD0L),
+          isTokenAutoRefreshEnabled: true
+        });
+
         // --- CODE QUI MANIPULE LA PAGE ---
         document.addEventListener('DOMContentLoaded', () => {
             // --- SÉLECTEURS D'ÉLÉMENTS ---
