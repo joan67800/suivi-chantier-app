@@ -180,6 +180,7 @@
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
         
         // --- SERVICE WORKER REGISTRATION ---
@@ -193,7 +194,7 @@
             });
         }
 
-        // --- CONFIGURATION ET INITIALISATION FIREBASE (HORS de DOMContentLoaded) ---
+        // --- CONFIGURATION ET INITIALISATION FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
             authDomain: "suivi-chantier-societe.firebaseapp.com",
@@ -209,7 +210,13 @@
         const storage = getStorage(app);
         const functions = getFunctions(app);
 
-        // --- CODE QUI MANIPULE LA PAGE (DANS DOMContentLoaded) ---
+        // --- INITIALISATION APP CHECK ---
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider('6LfkLJorAAAAAHpodcvxuOxt4m_dESVRpUjvDD0L'),
+          isTokenAutoRefreshEnabled: true
+        });
+
+        // --- CODE QUI MANIPULE LA PAGE ---
         document.addEventListener('DOMContentLoaded', () => {
             // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
@@ -250,6 +257,7 @@
                 try {
                     await signInWithEmailAndPassword(auth, email.value, password.value);
                 } catch (error) {
+                    console.error("Erreur de connexion détaillée:", error);
                     errorEl.textContent = 'Erreur : Identifiants incorrects ou problème de connexion.';
                     errorEl.style.display = 'block';
                 }
