@@ -7,111 +7,206 @@
     
     <style>
         :root {
-            --company-orange: #E57300;
-            --company-light-green: #E2EFDA;
-            --company-dark-green-action: #3E8E41;
-            --text-dark: #333333;
-            --text-light: #FFFFFF;
-            --border-color: #cccccc;
-            --error-red: #dc3545;
-            --button-danger: #d9534f;
-            --button-danger-hover: #c9302c;
-            --button-info: #5bc0de;
-            --button-info-hover: #31b0d5;
-            --status-orange: #f0ad4e;
-            --status-green: #5cb85c;
+            [cite_start]--company-orange: #E57300; [cite: 1, 3]
+            [cite_start]--company-light-green: #E2EFDA; [cite: 2, 4, 327]
+            [cite_start]--company-dark-green-action: #3E8E41; [cite: 2, 4, 327]
+            [cite_start]--text-dark: #333333; [cite: 2, 4, 327]
+            [cite_start]--text-light: #FFFFFF; [cite: 2, 4, 327]
+            [cite_start]--border-color: #cccccc; [cite: 2, 4, 327]
+            [cite_start]--error-red: #dc3545; [cite: 2, 4, 327]
+            [cite_start]--button-danger: #d9534f; [cite: 2, 4, 327]
+            [cite_start]--button-danger-hover: #c9302c; [cite: 2, 4, 327]
+            [cite_start]--button-info: #5bc0de; [cite: 3, 4, 327]
+            [cite_start]--button-info-hover: #31b0d5; [cite: 4, 327]
+            [cite_start]--status-orange: #f0ad4e; [cite: 5, 328, 650]
+            [cite_start]--status-green: #5cb85c; [cite: 5, 328, 650]
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            background-color: #f4f7f6;
-            color: var(--text-dark);
-            line-height: 1.6;
+            [cite_start]font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; [cite: 5, 328, 650]
+            [cite_start]margin: 0; [cite: 6, 329, 651]
+            [cite_start]background-color: #f4f7f6; [cite: 6, 329, 651]
+            [cite_start]color: var(--text-dark); [cite: 6, 329, 651]
+            [cite_start]line-height: 1.6; [cite: 6, 329, 651]
         }
-        .company-logo { display: block; margin: 0 auto 20px auto; max-height: 120px; width: auto; }
-        .app-header { background-color: #ffffff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--company-orange); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .app-header .company-logo { margin: 0; max-height: 50px; }
-        .app-header h1 { margin: 0 20px; flex-grow: 1; font-size: 1.5em; color: var(--company-orange); }
-        #login-container, #app-container { background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 900px; }
-        #login-container { max-width: 400px; text-align: center; }
-        h2, h3, h4 { color: var(--company-orange); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 25px; }
-        h2:first-child, h3:first-child, h4:first-child { margin-top: 0; }
-        h4 { font-size: 1.1em; border-bottom: none; }
-        input, textarea, select, button { font-family: inherit; font-size: 1em; }
-        input[type="email"], input[type="password"], input[type="text"], input[type="tel"], input[type="date"], input[type="file"], textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; }
-        input[type="file"] { padding: 5px; }
-        textarea { min-height: 80px; resize: vertical; }
-        button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease; }
-        button:hover { background-color: #D46900; }
-        #logout-button { background-color: #6c757d; }
-        #logout-button:hover { background-color: #5a6268; }
-        .delete-client-button, .delete-button { background-color: var(--button-danger); }
-        .delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); }
-        .delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; }
-        .edit-chantier-button { background-color: var(--button-info); }
-        .edit-chantier-button:hover { background-color: var(--button-info-hover); }
-        .error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-top: 15px; }
-        .message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; border: 1px solid transparent; }
-        .message-feedback.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-        .message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; }
-        .client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
-        .client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); }
-        .client-header-content { flex-grow: 1; }
-        .client-details-preview { font-size: 0.85em; color: #555; }
-        .client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0; }
-        .client-header:hover { background-color: #d4e7c7; }
-        .client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; }
-        .client-header.is-admin:hover { background-color: #f1f1f1; }
-        .client-header h3 { margin: 0; padding: 0; border: none; color: var(--text-dark); font-size: 1.3em; }
-        .indicator { transition: transform 0.3s ease; font-size: 1.5em; color: var(--company-dark-green-action) }
-        .client-header.is-open > .indicator, .chantier-header.is-open > .indicator { transform: rotate(180deg); }
-        .client-body, .chantier-body { display: none; padding: 15px; }
-        .chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
-        .chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; }
-        .chantier-description { background-color: #f9f9f9; border-left: 3px solid var(--company-orange); padding: 10px; margin: 10px 0; border-radius: 4px; }
-        .documents-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
-        .document-list { list-style: none; padding: 0; }
-        .document-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
-        .document-item:last-child { border-bottom: none; }
-        .document-item a { text-decoration: none; color: var(--company-orange); font-weight: bold; }
-        .document-info { flex-grow: 1; }
-        .document-status { font-style: italic; font-size: 0.9em; margin-left: 15px; }
-        .document-status.status-attente { color: var(--status-orange); }
-        .document-status.status-valide { color: var(--status-green); }
-        .document-actions { display: flex; align-items: center; gap: 10px; }
-        .document-actions .delete-button { padding: 5px 8px; font-size: 0.8em; margin: 0; }
-        .document-actions .validate-payment-button { background-color: var(--status-green); padding: 5px 8px; font-size: 0.8em; margin: 0; }
-        .document-actions .validate-payment-button:hover { background-color: #4cae4c; }
-        .photos-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px;}
-        .photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; }
-        .photo-wrapper { position: relative; }
-        .photo-wrapper img { height: 100px; width: 100px; object-fit: cover; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
-        .photo-wrapper img:hover { transform: scale(1.05); }
-        .delete-photo-button { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; padding: 0; margin: 0; line-height: 24px; text-align: center; border-radius: 50%; font-size: 14px; font-weight: bold; cursor: pointer; }
-        #admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; }
-        .admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; }
-        .admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-        .admin-danger-zone { border: 1px solid red !important; padding: 15px; margin-top: 20px; }
-        .chat-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; }
-        .chat-box { max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
-        .chat-message { max-width: 70%; padding: 10px 15px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; position: relative; }
-        .chat-message:hover .delete-message-button { opacity: 1; }
-        .chat-message p { margin: 0; }
-        .chat-message .meta { font-size: 0.75em; color: #6c757d; margin-top: 5px; }
-        .message-sent { background-color: var(--company-orange); color: white; border-bottom-right-radius: 4px; align-self: flex-end; text-align: right; }
-        .message-received { background-color: #e9ecef; color: #333; border-bottom-left-radius: 4px; align-self: flex-start; }
-        .delete-message-button { position: absolute; top: -8px; padding: 0; width: 20px; height: 20px; line-height: 20px; font-size: 12px; border-radius: 50%; opacity: 0; transition: opacity 0.2s; }
-        .message-sent .delete-message-button { left: -8px; }
-        .message-received .delete-message-button { right: -8px; }
-        .chat-form { display: flex; gap: 10px; margin-top: 15px; }
-        .chat-form textarea { flex-grow: 1; margin: 0; }
-        .chat-form button { margin-top: 0; align-self: flex-end; height: fit-content; }
-        .chantier-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-        .chantier-actions button { margin-top: 0; font-size: 0.9em; padding: 8px 12px; }
-        .admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; }
-        .lightbox { position: fixed; z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
-        .lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; }
-        .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+        [cite_start].company-logo { display: block; [cite: 6, 329, 651]
+            margin: 0 auto 20px auto; max-height: 120px; width: auto; [cite_start]} [cite: 7, 330, 652]
+        [cite_start].app-header { background-color: #ffffff; [cite: 7, 330, 652]
+            [cite_start]padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--company-orange); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); [cite: 8, 331, 653]
+        }
+        [cite_start].app-header .company-logo { margin: 0; max-height: 50px; [cite: 9, 332, 654]
+        }
+        [cite_start].app-header h1 { margin: 0 20px; flex-grow: 1; font-size: 1.5em; color: var(--company-orange); [cite: 10, 333, 655]
+        }
+        [cite_start]#login-container, #app-container { background-color: #ffffff; padding: 20px; border-radius: 8px; [cite: 11, 334, 656]
+            [cite_start]box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 900px; [cite: 12, 335, 657]
+        }
+        [cite_start]#login-container { max-width: 400px; text-align: center; [cite: 13, 336, 658]
+        }
+        [cite_start]h2, h3, h4 { color: var(--company-orange); border-bottom: 1px solid #eee; padding-bottom: 10px; [cite: 14, 337, 659]
+            margin-top: 25px; [cite_start]} [cite: 15, 338, 660]
+        [cite_start]h2:first-child, h3:first-child, h4:first-child { margin-top: 0; [cite: 15, 338, 660]
+        }
+        [cite_start]h4 { font-size: 1.1em; border-bottom: none; [cite: 16, 339, 661]
+        }
+        [cite_start]input, textarea, select, button { font-family: inherit; font-size: 1em; [cite: 17, 340, 662]
+        }
+        [cite_start]input[type="email"], input[type="password"], input[type="text"], input[type="tel"], input[type="date"], input[type="file"], textarea, select { width: 100%; [cite: 18, 341, 663]
+            [cite_start]padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; background-color: #fff; [cite: 19, 342, 664]
+        }
+        [cite_start]input[type="file"] { padding: 5px; [cite: 20, 343, 665]
+        }
+        [cite_start]textarea { min-height: 80px; resize: vertical; [cite: 21, 344, 666]
+        }
+        [cite_start]button { background-color: var(--company-orange); color: var(--text-light); padding: 12px 20px; border: none; [cite: 22, 345, 667]
+            [cite_start]border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: background-color 0.2s ease; [cite: 23, 346, 668]
+        }
+        [cite_start]button:hover { background-color: #D46900; [cite: 24, 347, 669]
+        }
+        [cite_start]#logout-button { background-color: #6c757d; [cite: 25, 348, 670]
+        }
+        [cite_start]#logout-button:hover { background-color: #5a6268; [cite: 26, 349, 671]
+        }
+        [cite_start].delete-client-button, .delete-button { background-color: var(--button-danger); [cite: 27, 350, 672]
+        }
+        [cite_start].delete-client-button:hover, .delete-button:hover { background-color: var(--button-danger-hover); [cite: 28, 351, 673]
+        }
+        [cite_start].delete-client-button:disabled, .delete-button:disabled { background-color: #aaa; [cite: 29, 352, 674]
+        }
+        [cite_start].edit-chantier-button { background-color: var(--button-info); [cite: 30, 353, 675]
+        }
+        [cite_start].edit-chantier-button:hover { background-color: var(--button-info-hover); [cite: 31, 354, 676]
+        }
+        [cite_start].error { color: var(--error-red); background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; [cite: 32, 355, 677]
+            border-radius: 4px; margin-top: 15px; [cite_start]} [cite: 33, 356, 678]
+        [cite_start].message-feedback { padding: 10px; border-radius: 4px; margin-top: 15px; [cite: 33, 356, 678]
+            border: 1px solid transparent; [cite_start]} [cite: 34, 357, 679]
+        [cite_start].message-feedback.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; [cite: 34, 357, 679]
+        }
+        [cite_start].message-feedback.error { color: var(--error-red); background-color: #f8d7da; border-color: #f5c6cb; [cite: 35, 358, 680]
+        }
+        [cite_start].client-accordion { border: 1px solid #d0d0d0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; [cite: 36, 359, 681]
+        }
+        [cite_start].client-header { cursor: pointer; padding: 15px 20px; background-color: #e2efda; [cite: 37, 360, 682]
+            [cite_start]transition: background-color 0.2s ease; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--company-dark-green-action); [cite: 38, 361, 683]
+        }
+        [cite_start].client-header-content { flex-grow: 1; [cite: 39, 362, 684]
+        }
+        [cite_start].client-details-preview { font-size: 0.85em; color: #555; [cite: 40, 363, 685]
+        }
+        [cite_start].client-header-actions button { padding: 5px 10px; font-size: 0.8em; margin: 0; [cite: 41, 364, 686]
+        }
+        [cite_start].client-header:hover { background-color: #d4e7c7; [cite: 42, 365, 687]
+        }
+        [cite_start].client-header.is-admin { cursor: default; background-color: #f1f1f1; border-bottom-color: #ccc; [cite: 43, 366, 688]
+        }
+        [cite_start].client-header.is-admin:hover { background-color: #f1f1f1; [cite: 44, 367, 689]
+        }
+        [cite_start].client-header h3 { margin: 0; padding: 0; border: none; color: var(--text-dark); [cite: 45, 368, 690]
+            font-size: 1.3em; [cite_start]} [cite: 46, 369, 691]
+        [cite_start].indicator { transition: transform 0.3s ease; font-size: 1.5em; [cite: 46, 369, 691]
+            [cite_start]color: var(--company-dark-green-action) } [cite: 47, 370, 692]
+        [cite_start].client-header.is-open > .indicator, .chantier-header.is-open > .indicator { transform: rotate(180deg); [cite: 47, 370, 692]
+        }
+        [cite_start].client-body, .chantier-body { display: none; padding: 15px; [cite: 48, 371, 693]
+        }
+        [cite_start].chantier-item { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; [cite: 49, 372, 694]
+        }
+        [cite_start].chantier-item:first-child { border-top: none; padding-top: 0; margin-top: 0; [cite: 50, 373, 695]
+        }
+        [cite_start].chantier-description { background-color: #f9f9f9; border-left: 3px solid var(--company-orange); padding: 10px; [cite: 51, 374, 696]
+            margin: 10px 0; border-radius: 4px; [cite_start]} [cite: 52, 375, 697]
+        [cite_start].documents-section { margin-top: 20px; [cite: 52, 375, 697]
+            border-top: 1px dashed #ddd; padding-top: 20px; [cite_start]} [cite: 53, 376, 698]
+        [cite_start].document-list { list-style: none; padding: 0; [cite: 53, 376, 698]
+        }
+        [cite_start].document-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; [cite: 54, 377, 699]
+            border-bottom: 1px solid #eee; [cite_start]} [cite: 55, 378, 700]
+        [cite_start].document-item:last-child { border-bottom: none; [cite: 56, 379, 701]
+        }
+        [cite_start].document-item a { text-decoration: none; color: var(--company-orange); font-weight: bold; [cite: 56, 379, 701]
+        }
+        [cite_start].document-info { flex-grow: 1; [cite: 57, 380, 702]
+        }
+        [cite_start].document-status { font-style: italic; font-size: 0.9em; margin-left: 15px; [cite: 58, 381, 703]
+        }
+        [cite_start].document-status.status-attente { color: var(--status-orange); [cite: 59, 382, 704]
+        }
+        [cite_start].document-status.status-valide { color: var(--status-green); [cite: 60, 383, 705]
+        }
+        [cite_start].document-actions { display: flex; align-items: center; gap: 10px; [cite: 61, 384, 706]
+        }
+        [cite_start].document-actions .delete-button { padding: 5px 8px; font-size: 0.8em; margin: 0; [cite: 62, 385, 707]
+        }
+        [cite_start].document-actions .validate-payment-button { background-color: var(--status-green); padding: 5px 8px; font-size: 0.8em; margin: 0; [cite: 63, 386, 708]
+        }
+        [cite_start].document-actions .validate-payment-button:hover { background-color: #4cae4c; [cite: 64, 387, 709]
+        }
+        [cite_start].photos-section { margin-top: 20px; border-top: 1px dashed #ddd; [cite: 65, 388, 710]
+            [cite_start]padding-top: 20px;} [cite: 66, 389, 711]
+        [cite_start].photos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; [cite: 66, 389, 711]
+            padding: 10px; background-color: #f4f7f6; border-radius: 5px; min-height: 50px; [cite_start]} [cite: 67, 390, 712]
+        [cite_start].photo-wrapper { position: relative; [cite: 67, 390, 712]
+        }
+        [cite_start].photo-wrapper img { height: 100px; width: 100px; object-fit: cover; [cite: 68, 391, 713]
+            [cite_start]border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; transition: transform 0.2s; [cite: 69, 392, 714]
+        }
+        [cite_start].photo-wrapper img:hover { transform: scale(1.05); [cite: 70, 393, 715]
+        }
+        [cite_start].delete-photo-button { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; [cite: 71, 394, 716]
+            [cite_start]padding: 0; margin: 0; line-height: 24px; text-align: center; border-radius: 50%; font-size: 14px; font-weight: bold; cursor: pointer; [cite: 72, 395, 717]
+        }
+        [cite_start]#admin-section { background-color: #fffaf5; padding: 20px; border-radius: 8px; border: 1px solid #ffe8cc; [cite: 73, 396, 718]
+        }
+        [cite_start].admin-subsection { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #ddd; [cite: 74, 397, 719]
+        }
+        [cite_start].admin-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; [cite: 75, 398, 720]
+        }
+        [cite_start].admin-danger-zone { border: 1px solid red !important; padding: 15px; margin-top: 20px; [cite: 76, 399, 721]
+        }
+        [cite_start].chat-section { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 20px; [cite: 77, 400, 722]
+        }
+        [cite_start].chat-box { max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; [cite: 78, 401, 723]
+            [cite_start]border-radius: 8px; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 12px; [cite: 79, 402, 724]
+        }
+        [cite_start].chat-message { max-width: 70%; padding: 10px 15px; border-radius: 18px; line-height: 1.4; [cite: 80, 403, 725]
+            word-wrap: break-word; position: relative; [cite_start]} [cite: 81, 404, 726]
+        [cite_start].chat-message:hover .delete-message-button { opacity: 1; [cite: 81, 404, 726]
+        }
+        [cite_start].chat-message p { margin: 0; [cite: 82, 405, 727]
+        }
+        [cite_start].chat-message .meta { font-size: 0.75em; color: #6c757d; margin-top: 5px; [cite: 83, 406, 728]
+        }
+        [cite_start].message-sent { background-color: var(--company-orange); color: white; border-bottom-right-radius: 4px; align-self: flex-end; text-align: right; [cite: 84, 407, 729]
+        }
+        [cite_start].message-received { background-color: #e9ecef; color: #333; border-bottom-left-radius: 4px; align-self: flex-start; [cite: 85, 408, 730]
+        }
+        [cite_start].delete-message-button { position: absolute; top: -8px; padding: 0; width: 20px; height: 20px; [cite: 86, 409, 731]
+            [cite_start]line-height: 20px; font-size: 12px; border-radius: 50%; opacity: 0; transition: opacity 0.2s; [cite: 87, 410, 732]
+        }
+        [cite_start].message-sent .delete-message-button { left: -8px; [cite: 88, 411, 733]
+        }
+        [cite_start].message-received .delete-message-button { right: -8px; [cite: 89, 412, 734]
+        }
+        [cite_start].chat-form { display: flex; gap: 10px; margin-top: 15px; [cite: 90, 413, 735]
+        }
+        [cite_start].chat-form textarea { flex-grow: 1; margin: 0; [cite: 91, 414, 736]
+        }
+        [cite_start].chat-form button { margin-top: 0; align-self: flex-end; height: fit-content; [cite: 92, 415, 737]
+        }
+        [cite_start].chantier-actions { display: flex; gap: 10px; margin-bottom: 15px; [cite: 93, 416, 738]
+        }
+        [cite_start].chantier-actions button { margin-top: 0; font-size: 0.9em; padding: 8px 12px; [cite: 94, 417, 739]
+        }
+        [cite_start].admin-badge { background-color: var(--company-orange); color: white; font-size: 0.7em; padding: 2px 6px; [cite: 95, 418, 740]
+            border-radius: 10px; margin-left: 10px; font-weight: bold; vertical-align: middle; [cite_start]} [cite: 96, 419, 741]
+        [cite_start].lightbox { position: fixed; [cite: 96, 419, 741]
+            [cite_start]z-index: 1000; padding: 20px; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box; overflow: auto; [cite: 97, 420, 742]
+            [cite_start]background-color: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; [cite: 98, 421, 743]
+        }
+        [cite_start].lightbox-content { margin: auto; display: block; max-width: 100%; max-height: 100%; border-radius: 8px; [cite: 99, 422, 744]
+        }
+        [cite_start].lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; [cite: 100, 423, 745]
+            font-weight: bold; cursor: pointer; [cite_start]} [cite: 101, 424, 746]
     </style>
     <link rel="manifest" href="/manifest.json">
 </head>
@@ -122,7 +217,7 @@
         <form id="login-form">
             <div><label for="email">E-mail :</label><input type="email" id="email" name="email" required></div>
             <div><label for="password">Mot de passe :</label><input type="password" id="password" name="password" required></div>
-            <button type="submit">Se connecter</button>
+            [cite_start]<button type="submit">Se connecter</button> [cite: 102, 425, 747]
             <p id="login-error" class="error" style="display: none;"></p>
         </form>
     </div>
@@ -131,37 +226,37 @@
             <img src="./images/logo.png" alt="Logo 2HR Habitat Rénovation" id="app-logo" class="company-logo">
             <h1 id="app-title">Suivi de vos chantiers</h1>
             <button id="logout-button">Se déconnecter</button>
-        </header>
+        [cite_start]</header> [cite: 103, 426, 748]
         <div id="chantiers-list"></div>
         <div id="admin-section" style="display: none;">
             <h2>Outils d'Administration</h2>
             <div class="admin-subsection">
                 <h3>Créer un Nouveau Client</h3>
                 <form id="create-client-form">
-                    <div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div>
+                    [cite_start]<div><label for="new-client-name">Nom du client :</label><input type="text" id="new-client-name" required></div> [cite: 104, 427, 749]
                     <div><label for="new-client-email">Email du client :</label><input type="email" id="new-client-email" required></div>
                     <div><label for="new-client-phone">N° de téléphone :</label><input type="tel" id="new-client-phone" placeholder="Ex: 0612345678"></div>
                     <div><label for="new-client-address">Adresse Postale :</label><input type="text" id="new-client-address"></div>
-                    <div><label for="new-client-password">Mot de passe initial (6 caractères min.) :</label><input type="text" id="new-client-password" required minlength="6"></div>
+                    [cite_start]<div><label for="new-client-password">Mot de passe initial (6 caractères min.) :</label><input type="text" id="new-client-password" required minlength="6"></div> [cite: 105, 428, 750]
                     <button type="submit">Créer le Client</button>
                     <p id="create-client-status" class="message-feedback" style="display: none;"></p>
                 </form>
-            </div>
+            [cite_start]</div> [cite: 106, 429, 751]
             <div class="admin-subsection">
                 <h3>Ajouter un Nouveau Chantier</h3>
                  <form id="add-chantier-form">
                     <div><label for="add-chantier-client-select">Pour le client :</label><select id="add-chantier-client-select" required></select></div>
-                    <div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div>
+                    [cite_start]<div><label for="new-chantier-address">Adresse du chantier :</label><input type="text" id="new-chantier-address" required></div> [cite: 107, 430, 752]
                     <div><label for="new-chantier-description">Description du chantier :</label><textarea id="new-chantier-description"></textarea></div>
                     <div><label for="new-chantier-start-date">Date de début :</label><input type="date" id="new-chantier-start-date"></div>
                     <div><label for="new-chantier-end-date">Date de fin estimée :</label><input type="date" id="new-chantier-end-date"></div>
-                    <button type="submit">Ajouter le Chantier</button>
+                    [cite_start]<button type="submit">Ajouter le Chantier</button> [cite: 108, 431, 753]
                     <p id="add-chantier-status" class="message-feedback" style="display: none;"></p>
                 </form>
             </div>
             <div class="admin-danger-zone">
                 <h3>Gérer les Rôles Admin</h3>
-                <input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" />
+                [cite_start]<input type="text" id="test-admin-uid" placeholder="UID de l'utilisateur" /> [cite: 109, 432, 754]
                 <button id="test-set-admin-button">Rendre Admin</button>
                 <button id="test-remove-admin-button">Enlever Admin</button>
                 <p id="test-admin-status" class="message-feedback" style="display: none;"></p>
@@ -169,29 +264,31 @@
         </div>
     </div>
     <div id="image-lightbox" class="lightbox" style="display: none;">
-        <span class="lightbox-close">&times;</span>
+        [cite_start]<span class="lightbox-close">&times;</span> [cite: 110, 433, 755]
       <img class="lightbox-content" id="lightbox-image">
     </div>
 
     <script type="module">
         // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-        import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
-        
+        // --- NOUVEL IMPORT POUR APP CHECK ---
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        [cite_start]import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; [cite: 111, 434, 756]
+        [cite_start]import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; [cite: 112, 435, 757]
+        [cite_start]import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"; [cite: 112, 435, 757]
+        [cite_start]import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js"; [cite: 113, 436, 758]
+        [cite_start]import { getDoc as firebaseGetDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; [cite: 113, 436, 758]
+
         // --- SERVICE WORKER REGISTRATION ---
-        if ('serviceWorker' in navigator) {
+        [cite_start]if ('serviceWorker' in navigator) { [cite: 114, 437, 759]
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js').then(registration => {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                 }, err => {
-                    console.log('ServiceWorker registration failed: ', err);
+                    [cite_start]console.log('ServiceWorker registration failed: ', err); [cite: 115, 438, 760]
                 });
             });
-        }
+        [cite_start]} [cite: 116, 439, 761]
 
         // --- CONFIGURATION ET INITIALISATION FIREBASE ---
         const firebaseConfig = {
@@ -200,339 +297,353 @@
             projectId: "suivi-chantier-societe",
             storageBucket: "suivi-chantier-societe.firebasestorage.app",
             messagingSenderId: "888449140099",
-            appId: "1:888449140099:web:a11dd777d9aa2a839662b6"
+            [cite_start]appId: "1:888449140099:web:a11dd777d9aa2a839662b6" [cite: 117, 440, 762]
         };
 
         const app = initializeApp(firebaseConfig);
+        
+        // --- INITIALISATION D'APP CHECK ---
+        const appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider('6LfkLJorAAAAAHpodcvxuOxt4m_dESVRpUjvDD0L'),
+          isTokenAutoRefreshEnabled: true
+        });
+        // --- FIN DE L'INITIALISATION D'APP CHECK ---
+
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        [cite_start]const db = getFirestore(app); [cite: 118, 441, 763]
         const storage = getStorage(app);
         const functions = getFunctions(app);
 
         // --- CODE QUI MANIPULE LA PAGE (DANS DOMContentLoaded) ---
-        document.addEventListener('DOMContentLoaded', () => {
+        [cite_start]document.addEventListener('DOMContentLoaded', () => { [cite: 119, 442, 764]
             // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
             const chantiersList = document.getElementById('chantiers-list');
             const adminSection = document.getElementById('admin-section');
-            const appTitle = document.getElementById('app-title');
+            [cite_start]const appTitle = document.getElementById('app-title'); [cite: 120, 443, 765]
             const lightbox = document.getElementById('image-lightbox');
             const lightboxImage = document.getElementById('lightbox-image');
             const lightboxClose = document.querySelector('.lightbox-close');
 
             // --- GESTION DE L'AUTHENTIFICATION ---
             onAuthStateChanged(auth, async (user) => {
-                if (user) {
+                [cite_start]if (user) { [cite: 121, 444, 766]
                     loginContainer.style.display = 'none';
                     appContainer.style.display = 'block';
-                    const idTokenResult = await user.getIdTokenResult(true);
+                    [cite_start]const idTokenResult = await user.getIdTokenResult(true); [cite: 122, 445, 767]
                     const isAdmin = idTokenResult.claims.admin === true;
-                    
-                    if (isAdmin) {
+                    [cite_start]if (isAdmin) { [cite: 123, 446, 768]
                         loadAdminDashboard();
-                    } else {
+                    [cite_start]} else { [cite: 124, 447, 769]
                         loadClientDashboard(user);
-                    }
+                    [cite_start]} [cite: 125, 448, 770]
                 } else {
-                    loginContainer.style.display = 'block';
-                    appContainer.style.display = 'none';
+                    [cite_start]loginContainer.style.display = 'block'; [cite: 125, 448, 770]
+                    [cite_start]appContainer.style.display = 'none'; [cite: 126, 449, 771]
                     chantiersList.innerHTML = '';
                     adminSection.style.display = 'none';
                 }
             });
 
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
+            [cite_start]document.getElementById('login-form').addEventListener('submit', async (e) => { [cite: 127, 450, 772]
                 e.preventDefault();
                 const errorEl = document.getElementById('login-error');
                 errorEl.style.display = 'none';
                 errorEl.textContent = '';
                 try {
-                    await signInWithEmailAndPassword(auth, email.value, password.value);
+                    [cite_start]await signInWithEmailAndPassword(auth, email.value, password.value); [cite: 128, 451, 773]
                 } catch (error) {
                     console.error("Erreur de connexion détaillée:", error);
                     errorEl.textContent = 'Erreur : Identifiants incorrects ou problème de connexion.';
-                    errorEl.style.display = 'block';
+                    [cite_start]errorEl.style.display = 'block'; [cite: 129, 452, 774]
                 }
             });
 
-            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+            [cite_start]document.getElementById('logout-button').addEventListener('click', () => signOut(auth)); [cite: 130, 453, 775]
             
             // --- FONCTION DE RENDU PRINCIPALE ---
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
                 const chantierData = chantierDoc.data();
-                const chantierId = chantierDoc.id;
+                [cite_start]const chantierId = chantierDoc.id; [cite: 131, 454, 776]
                 const clientId = clientInfo.id;
                 
                 const chantierItem = document.createElement('div');
                 chantierItem.classList.add('chantier-item');
                 chantierItem.id = `chantier-item-${chantierId}`;
-                
-                const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || 'Adresse non spécifiée'}</h3>`;
-                
-                const descriptionHTML = chantierData.description ? `<p class="chantier-description">${chantierData.description}</p>` : '';
+                const title = isAdmin ? `<h4>Chantier : ${chantierData.adresse || 'N/A'}</h4>` : `<h3>Chantier à : ${chantierData.adresse || [cite_start]'Adresse non spécifiée'}</h3>`; [cite: 132, 455, 777]
+                const descriptionHTML = chantierData.description ? [cite_start]`<p class="chantier-description">${chantierData.description}</p>` : ''; [cite: 133, 456, 778]
                 const datesHTML = chantierData.dateDebut 
-                    ? `<p><strong>Début :</strong> ${new Date(chantierData.dateDebut).toLocaleDateString('fr-FR')} | <strong>Fin estimée :</strong> ${chantierData.dateFin ? new Date(chantierData.dateFin).toLocaleDateString('fr-FR') : 'N/A'}</p>`
+                    [cite_start]? [cite: 133, 456, 778]
+                    `<p><strong>Début :</strong> ${new Date(chantierData.dateDebut).toLocaleDateString('fr-FR')} | [cite_start]<strong>Fin estimée :</strong> ${chantierData.dateFin ? [cite: 134, 457, 779]
+                    [cite_start]new Date(chantierData.dateFin).toLocaleDateString('fr-FR') : 'N/A'}</p>` [cite: 135, 458, 780]
                     : '';
-
-                let photosHTML = '';
+                [cite_start]let photosHTML = ''; [cite: 136, 459, 781]
                 if (chantierData.photos && chantierData.photos.length > 0) {
                     photosHTML = chantierData.photos.map(url => `
                         <div class="photo-wrapper">
                             <img src="${url}" alt="Photo du chantier" class="chantier-photo">
-                            ${isAdmin ? `<button class="delete-button delete-photo-button" data-photo-url="${url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer la photo">X</button>` : ''}
+                            [cite_start]${isAdmin ? `<button class="delete-button delete-photo-button" data-photo-url="${url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer la photo">X</button>` : ''} [cite: 137, 460, 782]
                         </div>
                     `).join('');
-                } else {
+                [cite_start]} else { [cite: 138, 461, 783]
                     photosHTML = '<p style="color: #888;">Aucune photo pour ce chantier.</p>';
-                }
+                [cite_start]} [cite: 139, 462, 784]
                 
-                const photoUploadFormHTML = isAdmin ? `
-                    <form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                const photoUploadFormHTML = isAdmin ?
+                `
+                    [cite_start]<form class="photo-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"> [cite: 140, 463, 785]
                         <label>Ajouter une photo au chantier :</label>
                         <input type="file" name="chantierPhoto" accept="image/png, image/jpeg" required>
-                        <button type="submit">Envoyer la photo</button>
+                        [cite_start]<button type="submit">Envoyer la photo</button> [cite: 141, 464, 786]
                         <p class="message-feedback photo-upload-status" style="display: none;"></p>
                     </form>
                 ` : '';
-
                 const documentUploadFormHTML = isAdmin ? `
-                    <form class="document-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
+                    [cite_start]<form class="document-upload-form" data-chantier-id="${chantierId}" data-client-id="${clientId}"> [cite: 142, 465, 787]
                         <h4>Ajouter un document</h4>
                         <select name="documentType" required>
-                            <option value="devis">Devis</option>
+                            [cite_start]<option value="devis">Devis</option> [cite: 143, 466, 788]
                             <option value="facture">Facture</option>
                         </select>
                         <input type="file" name="documentFile" accept=".pdf" required>
-                        <button type="submit">Envoyer le document</button>
+                        [cite_start]<button type="submit">Envoyer le document</button> [cite: 144, 467, 789]
                         <p class="message-feedback document-upload-status" style="display: none;"></p>
                     </form>
                 ` : '';
-
                 const adminChantierActions = isAdmin ? `
-                    <div class="chantier-actions">
+                    [cite_start]<div class="chantier-actions"> [cite: 145, 468, 790]
                         <button class="edit-chantier-button" data-chantier-id="${chantierId}">Modifier</button>
                         <button class="delete-button delete-chantier-button" data-client-id="${clientId}" data-chantier-id="${chantierId}" data-chantier-adresse="${chantierData.adresse || 'N/A'}">Supprimer le chantier</button>
-                    </div>
+                    [cite_start]</div> [cite: 146, 469, 791]
                 ` : '';
-
                 chantierItem.innerHTML = `
-                    <div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}">
+                    [cite_start]<div class="chantier-header" data-chantier-id="${chantierId}" data-client-id="${clientId}" data-target="body-${chantierId}"> [cite: 147, 470, 792]
                         <div class="title-content">${title}</div>
                         <span class="indicator">▼</span>
                     </div>
-                    <div class="chantier-body" id="body-${chantierId}">
+                    [cite_start]<div class="chantier-body" id="body-${chantierId}"> [cite: 148, 471, 793]
                         <div id="details-display-${chantierId}">
                            ${descriptionHTML}
                            ${datesHTML}
-                            <p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : 'Non définis'}</p>
-                           <p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || 0}%</p>
+                           [cite_start]<p><strong>Jours d'intervention :</strong> ${chantierData.joursIntervention ? [cite: 149, 472, 794]
+                           [cite_start]chantierData.joursIntervention.join(', ') : 'Non définis'}</p> [cite: 150, 473, 795]
+                           [cite_start]<p><strong>Avancement :</strong> ${chantierData.pourcentageAvancement || [cite: 150, 473, 795]
+                           [cite_start]0}%</p> [cite: 151, 474, 796]
                            ${adminChantierActions}
                         </div>
-                        <form id="edit-form-${chantierId}" style="display:none;" class="chantier-edit-form">
+                        [cite_start]<form id="edit-form-${chantierId}" style="display:none;" [cite: 151, 474, 796]
+                            [cite_start]class="chantier-edit-form"> [cite: 152, 475, 797]
                             <label>Jours d'intervention (séparés par une virgule):</label>
                             <input type="text" class="jours-intervention-input" value="${chantierData.joursIntervention ? chantierData.joursIntervention.join(', ') : ''}">
                             <label>Avancement (%):</label>
-                            <input type="number" min="0" max="100" class="avancement-input" value="${chantierData.pourcentageAvancement || 0}">
+                            [cite_start]<input type="number" min="0" max="100" class="avancement-input" value="${chantierData.pourcentageAvancement || 0}"> [cite: 153, 476, 798]
                             <button type="submit" class="save-chantier-button" data-chantier-id="${chantierId}" data-client-id="${clientId}">Sauvegarder</button>
                             <button type="button" class="cancel-edit-button">Annuler</button>
-                        </form>
+                        [cite_start]</form> [cite: 154, 477, 799]
 
                         <div class="documents-section">
                             <h4>Documents du chantier</h4>
-                            <ul class="document-list" id="document-list-${chantierId}"></ul>
+                            [cite_start]<ul class="document-list" id="document-list-${chantierId}"></ul> [cite: 155, 478, 800]
                             ${documentUploadFormHTML}
                         </div>
 
                         <div class="photos-section">
-                            <h4>Photos du chantier</h4>
+                            [cite_start]<h4>Photos du chantier</h4> [cite: 156, 479, 801]
                             <div class="photos-container" id="photos-container-${chantierId}">${photosHTML}</div>
                             ${photoUploadFormHTML}
                         </div>
 
-                        <div class="chat-section">
+                        [cite_start]<div class="chat-section"> [cite: 157, 480, 802]
                             <h4>Questions & Réponses</h4>
-                            <div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; color: #888;">Cliquez pour déplier et charger les messages.</p></div>
+                            [cite_start]<div class="chat-box" id="chat-box-${chantierId}"><p style="text-align: center; [cite: 157, 480, 802]
+                                [cite_start]color: #888;">Cliquez pour déplier et charger les messages.</p></div> [cite: 158, 481, 803]
                             <form class="chat-form" data-chantier-id="${chantierId}" data-client-id="${clientId}">
                                 <textarea name="messageText" required placeholder="Votre message..."></textarea>
-                                <button type="submit">Envoyer</button>
+                                [cite_start]<button type="submit">Envoyer</button> [cite: 159, 482, 804]
                             </form>
                         </div>
                     </div>
                 `;
-                setTimeout(() => renderDocuments(chantierId, clientId, isAdmin), 0);
+                [cite_start]setTimeout(() => renderDocuments(chantierId, clientId, isAdmin), 0); [cite: 160, 483, 805]
                 return chantierItem;
             }
             
             function renderDocuments(chantierId, clientId, isAdmin) {
                 const listEl = document.getElementById(`document-list-${chantierId}`);
-                if (!listEl) return;
+                [cite_start]if (!listEl) return; [cite: 161, 484, 806]
 
                 const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
                 const q = query(documentsRef, orderBy('dateUpload', 'desc'));
-
-                onSnapshot(q, (snapshot) => {
+                [cite_start]onSnapshot(q, (snapshot) => { [cite: 162, 485, 807]
                     listEl.innerHTML = '';
                     if (snapshot.empty) {
                         listEl.innerHTML = '<p style="color: #888; padding: 10px;">Aucun document.</p>';
-                        return;
+                        [cite_start]return; [cite: 163, 486, 808]
                     }
                     snapshot.forEach(doc => {
                         const docData = doc.data();
                         const docId = doc.id;
-                        const li = document.createElement('li');
+                        [cite_start]const li = document.createElement('li'); [cite: 164, 487, 809]
                         li.classList.add('document-item');
 
                         let statusHTML = '';
-                        if (docData.type === 'facture') {
+                        [cite_start]if (docData.type === 'facture') { [cite: 165, 488, 810]
                             switch(docData.statutPaiement) {
                                 case 'non_payee':
                                     statusHTML = isAdmin 
-                                        ? '<span class="document-status">En attente de paiement</span>'
-                                        : `<label><input type="checkbox" class="payment-checkbox" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}"> J'ai payé cette facture</label>`;
+                                        ? [cite_start]'<span class="document-status">En attente de paiement</span>' [cite: 166, 489, 811]
+                                        : `<label><input type="checkbox" class="payment-checkbox" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}"> J'ai payé cette 
+                                        [cite_start]facture</label>`; [cite: 167, 490, 812]
                                     break;
                                 case 'attente_validation':
                                     statusHTML = '<span class="document-status status-attente">Payée, en attente de réception</span>';
-                                    if (isAdmin) {
+                                    [cite_start]if (isAdmin) { [cite: 168, 491, 813]
                                         statusHTML += `<button class="validate-payment-button" data-doc-id="${docId}" data-client-id="${clientId}" data-chantier-id="${chantierId}">Valider le paiement</button>`;
-                                    }
+                                    [cite_start]} [cite: 169, 492, 814]
                                     break;
-                                case 'valide':
+                                [cite_start]case 'valide': [cite: 170, 493, 815]
                                     statusHTML = '<span class="document-status status-valide">Paiement validé</span>';
-                                    break;
+                                    [cite_start]break; [cite: 171, 494, 816]
                             }
                         }
 
                         li.innerHTML = `
                             <div class="document-info">
-                                <a href="${docData.url}" target="_blank">${docData.nom}</a>
+                                [cite_start]<a href="${docData.url}" target="_blank">${docData.nom}</a> [cite: 172, 495, 817]
                                 <div style="font-size: 0.8em; color: #777;">Ajouté le: ${docData.dateUpload.toDate().toLocaleDateString('fr-FR')}</div>
                             </div>
-                            <div class="document-actions">
+                            [cite_start]<div class="document-actions"> [cite: 173, 496, 818]
                                 ${statusHTML}
-                                ${isAdmin ? `<button class="delete-button delete-document-button" data-doc-id="${docId}" data-doc-url="${docData.url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer le document">X</button>` : ''}
+                                ${isAdmin ?
+                                [cite_start]`<button class="delete-button delete-document-button" data-doc-id="${docId}" data-doc-url="${docData.url}" data-client-id="${clientId}" data-chantier-id="${chantierId}" title="Supprimer le document">X</button>` : ''} [cite: 174, 497, 819]
                             </div>
                         `;
-                        listEl.appendChild(li);
+                        [cite_start]listEl.appendChild(li); [cite: 175, 498, 820]
                     });
                 });
             }
 
             function renderMessages(snapshot, chatBox, currentUserId, isAdmin) {
                 chatBox.innerHTML = '';
-                if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
-                snapshot.forEach(doc => {
+                if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; [cite_start]} [cite: 176, 499, 821]
+                [cite_start]snapshot.forEach(doc => { [cite: 177, 500, 822]
                     const message = doc.data();
                     const messageId = doc.id;
                     const messageEl = document.createElement('div');
-                    messageEl.classList.add('chat-message');
+                    [cite_start]messageEl.classList.add('chat-message'); [cite: 178, 501, 823]
                     const senderClass = message.senderId === currentUserId ? 'message-sent' : 'message-received';
                     messageEl.classList.add(senderClass);
                     
-                    const deleteButtonHTML = isAdmin ? `<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : '';
+                    const deleteButtonHTML = isAdmin 
+                        ? [cite_start]`<button class="delete-button delete-message-button" data-message-id="${messageId}" title="Supprimer ce message">X</button>` : ''; [cite: 179, 502, 824]
 
                     const date = message.timestamp?.toDate ? message.timestamp.toDate().toLocaleString('fr-FR') : 'Envoi...';
                     messageEl.innerHTML = `
                         ${deleteButtonHTML}
-                        <p>${message.text}</p>
+                        [cite_start]<p>${message.text}</p> [cite: 180, 503, 825]
                         <div class="meta"><strong>${message.senderName||'Anonyme'}</strong> - ${date}</div>
                     `;
-                    chatBox.appendChild(messageEl);
+                    [cite_start]chatBox.appendChild(messageEl); [cite: 181, 504, 826]
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
 
             function setupChatListener(chantierId, clientId, isAdmin) {
                 const chatBox = document.getElementById(`chat-box-${chantierId}`);
-                if (!chatBox) return;
+                [cite_start]if (!chatBox) return; [cite: 182, 505, 827]
                 if (chatBox.dataset.chatLoaded === 'true') return;
                 const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
-                const q = query(messagesRef, orderBy('timestamp'));
+                [cite_start]const q = query(messagesRef, orderBy('timestamp')); [cite: 183, 506, 828]
                 onSnapshot(q, (snapshot) => renderMessages(snapshot, chatBox, auth.currentUser.uid, isAdmin), (error) => {
                     console.error("Erreur d'écoute du chat:", error); chatBox.innerHTML = '<p class="error">Impossible de charger les messages.</p>';
                 });
-                chatBox.dataset.chatLoaded = 'true';
+                [cite_start]chatBox.dataset.chatLoaded = 'true'; [cite: 184, 507, 829]
             }
             
             async function loadAdminDashboard() {
                 appTitle.textContent = "Administration des Chantiers";
-                adminSection.style.display = 'block';
+                [cite_start]adminSection.style.display = 'block'; [cite: 185, 508, 830]
                 try {
                     const clientsQuery = query(collection(db, 'clients'));
-                    onSnapshot(clientsQuery, (clientsSnapshot) => {
+                    [cite_start]onSnapshot(clientsQuery, (clientsSnapshot) => { [cite: 186, 509, 831]
                         chantiersList.innerHTML = '<h2>Tous les Comptes Clients</h2>';
                         if (clientsSnapshot.empty) { chantiersList.innerHTML += '<p>Aucun compte client trouvé.</p>'; return; }
                         
-                        clientsSnapshot.forEach(clientDoc => {
+                        [cite_start]clientsSnapshot.forEach(clientDoc => { [cite: 187, 510, 832]
                             const clientData = clientDoc.data(); 
                             const isThisUserAdmin = clientData.role === 'admin';
-                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || `Compte ${clientDoc.id.substring(0,5)}` };
+                            const clientInfo = { id: clientDoc.id, nom: clientData.nom || [cite_start]`Compte ${clientDoc.id.substring(0,5)}` }; [cite: 188, 511, 833]
                             
                             const accountWrapper = document.createElement('div'); 
-                            accountWrapper.classList.add('client-accordion');
+                            [cite_start]accountWrapper.classList.add('client-accordion'); [cite: 189, 512, 834]
                             accountWrapper.id = `client-wrapper-${clientDoc.id}`;
                             
-                            const adminBadgeHTML = isThisUserAdmin ? `<span class="admin-badge">Admin</span>` : '';
+                            const adminBadgeHTML = isThisUserAdmin ?
+                                [cite_start]`<span class="admin-badge">Admin</span>` : ''; [cite: 190, 513, 835]
                             const deleteButtonHTML = !isThisUserAdmin ? 
                                 `<button class="delete-client-button" data-client-id="${clientDoc.id}" data-client-name="${clientInfo.nom}">Supprimer Client</button>` : '';
-
                             const clientDetailsPreview = `
-                                <div class="client-details-preview">
-                                    ${clientData.email || ''} 
-                                    ${clientData.telephone ? ` | ${clientData.telephone}` : ''}
-                                    ${clientData.adresse ? `<br>${clientData.adresse}` : ''}
+                                [cite_start]<div class="client-details-preview"> [cite: 191, 514, 836]
+                                    ${clientData.email ||
+                                    [cite_start]''} [cite: 192, 515, 837]
+                                    ${clientData.telephone ?
+                                    ` | [cite_start]${clientData.telephone}` : ''} [cite: 193, 516, 838]
+                                    ${clientData.adresse ?
+                                    [cite_start]`<br>${clientData.adresse}` : ''} [cite: 194, 517, 839]
                                 </div>
                             `;
-                            
                             accountWrapper.innerHTML = `
-                                <div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}">
+                                [cite_start]<div class="${isThisUserAdmin ? 'client-header is-admin' : 'client-header'}" data-target="client-body-${clientDoc.id}"> [cite: 195, 518, 840]
                                     <div class="client-header-content">
-                                        <h3>${clientInfo.nom} ${adminBadgeHTML}</h3>
+                                        [cite_start]<h3>${clientInfo.nom} ${adminBadgeHTML}</h3> [cite: 196, 519, 841]
                                         ${clientDetailsPreview}
                                     </div>
-                                    <div class="client-header-actions">
+                                    [cite_start]<div class="client-header-actions"> [cite: 197, 520, 842]
                                         ${deleteButtonHTML}
-                                    </div>
-                                    <span class="indicator">${!isThisUserAdmin ? '▼' : ''}</span>
+                                    [cite_start]</div> [cite: 198, 521, 843]
+                                    <span class="indicator">${!isThisUserAdmin ?
+                                    [cite_start]'▼' : ''}</span> [cite: 199, 522, 844]
                                 </div>
                                 <div class="client-body" id="client-body-${clientDoc.id}"></div>`;
-                            chantiersList.appendChild(accountWrapper);
+                            [cite_start]chantiersList.appendChild(accountWrapper); [cite: 200, 523, 845]
                             
                             if (!isThisUserAdmin) {
                                 const chantiersContainer = accountWrapper.querySelector('.client-body');
-                                const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier');
+                                [cite_start]const chantiersRef = collection(db, 'clients', clientDoc.id, 'chantier'); [cite: 201, 524, 846]
                                 onSnapshot(chantiersRef, (chantiersSnapshot) => {
                                      chantiersContainer.innerHTML = '';
                                      if(chantiersSnapshot.empty) { chantiersContainer.innerHTML = '<p>Ce client n\'a aucun chantier.</p>'; } 
-                                     else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));}
+                                     [cite_start]else { chantiersSnapshot.forEach(chantierDoc => chantiersContainer.appendChild(renderChantier(chantierDoc, true, clientInfo)));} [cite: 202, 525, 847]
                                 });
-                            }
+                            [cite_start]} [cite: 203, 526, 848]
                         });
-                    });
+                    [cite_start]}); [cite: 204, 527, 849]
                     loadClientListForAdminForms();
                 } catch(error) { console.error("Erreur admin:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
 
             async function loadClientDashboard(user) {
                 appTitle.textContent = "Suivi de vos chantiers";
-                adminSection.style.display = 'none';
+                [cite_start]adminSection.style.display = 'none'; [cite: 205, 528, 850]
                 try {
                     const clientDocRef = doc(db, 'clients', user.uid);
-                    onSnapshot(clientDocRef, async (clientDocSnap) => {
+                    [cite_start]onSnapshot(clientDocRef, async (clientDocSnap) => { [cite: 206, 529, 851]
                         chantiersList.innerHTML = '';
                         if (!clientDocSnap.exists()) {
                             chantiersList.innerHTML = '<p>Votre compte est en cours de configuration.</p>';
-                            return;
+                            [cite_start]return; [cite: 207, 530, 852]
                         }
                         const clientInfo = { id: user.uid, nom: clientDocSnap.data().nom };
                         
-                        const chantiersRef = collection(db, 'clients', user.uid, 'chantier');
+                        [cite_start]const chantiersRef = collection(db, 'clients', user.uid, 'chantier'); [cite: 208, 531, 853]
                         onSnapshot(chantiersRef, (chantiersSnapshot) => {
                             chantiersList.innerHTML = ''; // Vider avant de reconstruire
-                            if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } 
-                            else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo))); }
+                            [cite_start]if(chantiersSnapshot.empty) { chantiersList.innerHTML = '<p>Vous n\'avez aucun chantier en cours.</p>'; } [cite: 209, 532, 854]
+                            else { chantiersSnapshot.forEach(chantierDoc => chantiersList.appendChild(renderChantier(chantierDoc, false, clientInfo)));
+                            [cite_start]} [cite: 210, 533, 855]
                         });
-                    });
+                    [cite_start]}); [cite: 211, 534, 856]
                 } catch(error) { console.error("Erreur client:", error); chantiersList.innerHTML = `<p class="error">Erreur de chargement: ${error.message}</p>`;}
             }
             
@@ -540,364 +651,366 @@
             chantiersList.addEventListener('click', async (e) => {
                  const target = e.target;
                 
-                if (target.matches('.payment-checkbox')) {
+                [cite_start]if (target.matches('.payment-checkbox')) { [cite: 212, 535, 857]
                     const { docId, clientId, chantierId } = target.dataset;
                     const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
-                    await updateDoc(docRef, { statutPaiement: 'attente_validation' });
+                    [cite_start]await updateDoc(docRef, { statutPaiement: 'attente_validation' }); [cite: 213, 536, 858]
                     target.disabled = true;
                 }
                 if (target.matches('.validate-payment-button')) {
                     const { docId, clientId, chantierId } = target.dataset;
-                    const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
+                    [cite_start]const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId); [cite: 214, 537, 859]
                     await updateDoc(docRef, { statutPaiement: 'valide' });
-                }
+                [cite_start]} [cite: 215, 538, 860]
                 if (target.matches('.delete-document-button')) {
                     if (!confirm("Voulez-vous vraiment supprimer ce document ?")) return;
-                    const { docId, docUrl, clientId, chantierId } = target.dataset;
+                    [cite_start]const { docId, docUrl, clientId, chantierId } = target.dataset; [cite: 216, 539, 861]
                     try {
                         const docRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'documents', docId);
-                        await deleteDoc(docRef);
+                        [cite_start]await deleteDoc(docRef); [cite: 217, 540, 862]
                         const fileRef = ref(storage, docUrl);
                         await deleteObject(fileRef);
                     } catch (err) {
                         console.error("Erreur suppression document:", err);
-                        alert("Impossible de supprimer le document.");
+                        [cite_start]alert("Impossible de supprimer le document."); [cite: 218, 541, 863]
                     }
                 }
 
                 if (target.matches('.delete-client-button')) {
                     e.stopPropagation();
-                    const button = e.target;
+                    [cite_start]const button = e.target; [cite: 219, 542, 864]
                     const clientId = button.dataset.clientId;
                     const clientName = button.dataset.clientName;
-                    const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action est irréversible.`);
-                    if (confirmation1) {
+                    [cite_start]const confirmation1 = confirm(`Êtes-vous sûr de vouloir supprimer définitivement le client "${clientName}" ?\n\nATTENTION : Cette action est irréversible.`); [cite: 220, 543, 865]
+                    [cite_start]if (confirmation1) { [cite: 221, 544, 866]
                         const confirmation2 = prompt(`Pour confirmer, veuillez taper le nom du client à supprimer : "${clientName}"`);
-                        if (confirmation2 === clientName) {
+                        [cite_start]if (confirmation2 === clientName) { [cite: 222, 545, 867]
                             try {
                                 button.disabled = true;
-                                button.textContent = 'Suppression...';
+                                [cite_start]button.textContent = 'Suppression...'; [cite: 223, 546, 868]
                                 const deleteClient = httpsCallable(functions, 'deleteClient');
                                 await deleteClient({ clientId: clientId });
-                                alert(`Le client "${clientName}" a été supprimé avec succès.`);
+                                [cite_start]alert(`Le client "${clientName}" a été supprimé avec succès.`); [cite: 224, 547, 869]
                             } catch (error) {
                                 console.error("Erreur lors de la suppression du client:", error);
-                                alert(`Une erreur est survenue : ${error.message}`);
+                                [cite_start]alert(`Une erreur est survenue : ${error.message}`); [cite: 225, 548, 870]
                                 button.disabled = false; button.textContent = 'Supprimer Client';
-                            }
+                            [cite_start]} [cite: 226, 549, 871]
                         } else if (confirmation2 !== null) {
                             alert("La confirmation a échoué. Suppression annulée.");
-                        }
+                        [cite_start]} [cite: 227, 550, 872]
                     }
                     return;
-                }
+                [cite_start]} [cite: 228, 551, 873]
                 
                 if (target.matches('.delete-photo-button')) {
                     e.stopPropagation();
-                    if (!confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
+                    [cite_start]if (!confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return; [cite: 229, 552, 874]
 
                     const photoUrl = target.dataset.photoUrl;
                     const clientId = target.dataset.clientId;
-                    const chantierId = target.dataset.chantierId;
+                    [cite_start]const chantierId = target.dataset.chantierId; [cite: 230, 553, 875]
 
                     try {
                         target.disabled = true;
-                        target.textContent = '...';
+                        [cite_start]target.textContent = '...'; [cite: 231, 554, 876]
                         const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
                         await updateDoc(chantierRef, { photos: arrayRemove(photoUrl) });
-                        const photoRef = ref(storage, photoUrl);
+                        [cite_start]const photoRef = ref(storage, photoUrl); [cite: 232, 555, 877]
                         await deleteObject(photoRef);
                     } catch (error) {
                         console.error("Erreur lors de la suppression de la photo:", error);
-                        alert("Une erreur est survenue.");
+                        [cite_start]alert("Une erreur est survenue."); [cite: 233, 556, 878]
                         target.disabled = false; target.textContent = 'X';
-                    }
+                    [cite_start]} [cite: 234, 557, 879]
                     return;
-                }
+                [cite_start]} [cite: 235, 558, 880]
 
                 if (target.matches('.delete-message-button')) {
                     e.stopPropagation();
-                    if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return;
+                    [cite_start]if (!confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) return; [cite: 236, 559, 881]
                     
                     const messageId = target.dataset.messageId;
                     const chantierHeader = target.closest('.chantier-body').previousElementSibling;
-                    const clientId = chantierHeader.dataset.clientId;
+                    [cite_start]const clientId = chantierHeader.dataset.clientId; [cite: 237, 560, 882]
                     const chantierId = chantierHeader.dataset.chantierId;
                     
                     try {
                         const messageRef = doc(db, 'clients', clientId, 'chantier', chantierId, 'messages', messageId);
-                        await deleteDoc(messageRef);
+                        [cite_start]await deleteDoc(messageRef); [cite: 238, 561, 883]
                     } catch (error) {
                         console.error("Erreur suppression message:", error);
-                        alert("Une erreur est survenue.");
+                        [cite_start]alert("Une erreur est survenue."); [cite: 239, 562, 884]
                     }
                     return;
-                }
+                [cite_start]} [cite: 240, 563, 885]
                 
                 if (target.matches('.delete-chantier-button')) {
                     e.stopPropagation();
-                    const button = target;
+                    [cite_start]const button = target; [cite: 241, 564, 886]
                     const { clientId, chantierId, chantierAdresse } = button.dataset;
-                    if (confirm(`Êtes-vous sûr de vouloir supprimer le chantier "${chantierAdresse}" ?\n\nCette action est définitive et supprimera aussi toutes les photos et tous les messages associés.`)) {
+                    [cite_start]if (confirm(`Êtes-vous sûr de vouloir supprimer le chantier "${chantierAdresse}" ?\n\nCette action est définitive et supprimera aussi toutes les photos et tous les messages associés.`)) { [cite: 242, 565, 887]
                         try {
                             button.disabled = true;
-                            button.textContent = "Suppression...";
+                            [cite_start]button.textContent = "Suppression..."; [cite: 243, 566, 888]
                             const deleteChantier = httpsCallable(functions, 'deleteChantier');
                             await deleteChantier({ clientId: clientId, chantierId: chantierId });
-                            alert(`Le chantier "${chantierAdresse}" a été supprimé.`);
+                            [cite_start]alert(`Le chantier "${chantierAdresse}" a été supprimé.`); [cite: 244, 567, 889]
                         } catch (error) {
                             console.error("Erreur lors de la suppression du chantier:", error);
-                            alert("Une erreur est survenue: " + error.message);
+                            [cite_start]alert("Une erreur est survenue: " + error.message); [cite: 245, 568, 890]
                             button.disabled = false;
                             button.textContent = "Supprimer le chantier";
-                        }
+                        [cite_start]} [cite: 246, 569, 891]
                     }
                     return;
-                }
+                [cite_start]} [cite: 247, 570, 892]
 
                 const header = e.target.closest('.client-header, .chantier-header');
-                if (header && !header.classList.contains('is-admin')) {
+                [cite_start]if (header && !header.classList.contains('is-admin')) { [cite: 248, 571, 893]
                     const body = document.getElementById(header.dataset.target);
-                    if (body) {
+                    [cite_start]if (body) { [cite: 249, 572, 894]
                         const isOpen = body.style.display === 'block';
-                        body.style.display = isOpen ? 'none' : 'block'; header.classList.toggle('is-open', !isOpen);
+                        body.style.display = isOpen ? [cite_start]'none' : 'block'; header.classList.toggle('is-open', !isOpen); [cite: 250, 573, 895]
                         if (!isOpen) {
                              const idTokenResult = await auth.currentUser.getIdTokenResult();
-                             const isAdmin = idTokenResult.claims.admin === true;
+                             [cite_start]const isAdmin = idTokenResult.claims.admin === true; [cite: 251, 574, 896]
                              setupChatListener(header.dataset.chantierId, header.dataset.clientId, isAdmin);
                         }
                     }
                 }
-                if (target.matches('.chantier-photo')) { lightboxImage.src = target.src; lightbox.style.display = 'flex'; }
-                if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId; document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; }
-                if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form'); const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';}
+                if (target.matches('.chantier-photo')) { lightboxImage.src = target.src;
+                    lightbox.style.display = 'flex'; [cite_start]} [cite: 252, 575, 897]
+                if(target.matches('.edit-chantier-button')) { const chantierId = target.dataset.chantierId;
+                    document.getElementById(`details-display-${chantierId}`).style.display = 'none'; document.getElementById(`edit-form-${chantierId}`).style.display = 'block'; [cite_start]} [cite: 253, 576, 898]
+                if(target.matches('.cancel-edit-button')) { const form = target.closest('.chantier-edit-form');
+                    [cite_start]const chantierId = form.id.replace('edit-form-',''); form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';} [cite: 254, 577, 899]
                 if (target.matches('.save-chantier-button')) {
                     e.preventDefault();
-                    const form = target.closest('.chantier-edit-form'); const chantierId = target.dataset.chantierId; const clientId = target.dataset.clientId;
+                    [cite_start]const form = target.closest('.chantier-edit-form'); const chantierId = target.dataset.chantierId; const clientId = target.dataset.clientId; [cite: 255, 578, 900]
                     const joursInput = form.querySelector('.jours-intervention-input').value; const avancement = form.querySelector('.avancement-input').value;
-                    const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean);
+                    [cite_start]const jours = joursInput.split(',').map(s => s.trim()).filter(Boolean); [cite: 256, 579, 901]
                     const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
-                    await updateDoc(chantierRef, { joursIntervention: jours, pourcentageAvancement: Number(avancement) });
+                    [cite_start]await updateDoc(chantierRef, { joursIntervention: jours, pourcentageAvancement: Number(avancement) }); [cite: 257, 580, 902]
                     form.style.display = 'none'; document.getElementById(`details-display-${chantierId}`).style.display = 'block';
-                }
+                [cite_start]} [cite: 258, 581, 903]
             });
-
-            chantiersList.addEventListener('submit', async (e) => {
+            [cite_start]chantiersList.addEventListener('submit', async (e) => { [cite: 259, 582, 904]
                 if (e.target.matches('.document-upload-form')) {
                     e.preventDefault();
                     const form = e.target;
                     const fileInput = form.querySelector('input[type="file"]');
-                    const typeSelect = form.querySelector('select[name="documentType"]');
+                    [cite_start]const typeSelect = form.querySelector('select[name="documentType"]'); [cite: 260, 583, 905]
                     const statusEl = form.querySelector('.document-upload-status');
                     const file = fileInput.files[0];
                     if (!file) return;
 
-                    const { chantierId, clientId } = form.dataset;
+                    const 
+                    [cite_start]{ chantierId, clientId } = form.dataset; [cite: 261, 584, 906]
                     statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
                     
                     try {
-                        const uniqueFileName = `${Date.now()}-${file.name}`;
+                        [cite_start]const uniqueFileName = `${Date.now()}-${file.name}`; [cite: 262, 585, 907]
                         const storageRef = ref(storage, `chantier-documents/${chantierId}/${uniqueFileName}`);
-                        await uploadBytes(storageRef, file);
+                        [cite_start]await uploadBytes(storageRef, file); [cite: 263, 586, 908]
                         const downloadURL = await getDownloadURL(storageRef);
                         
                         const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
-                        await addDoc(documentsRef, {
+                        [cite_start]await addDoc(documentsRef, { [cite: 264, 587, 909]
                             nom: file.name,
                             url: downloadURL,
                             type: typeSelect.value,
-                            statutPaiement: typeSelect.value === 'facture' ? 'non_payee' : 'non_applicable',
+                            statutPaiement: typeSelect.value === 'facture' ? [cite_start]'non_payee' : 'non_applicable', [cite: 265, 588, 910]
                             dateUpload: serverTimestamp()
                         });
-                        statusEl.textContent = "Document envoyé !"; statusEl.className = 'message-feedback success';
+                        [cite_start]statusEl.textContent = "Document envoyé !"; statusEl.className = 'message-feedback success'; [cite: 266, 589, 911]
                         form.reset();
-                    } catch (error) {
+                    [cite_start]} catch (error) { [cite: 267, 590, 912]
                         console.error("Erreur d'envoi du document:", error);
-                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
+                        [cite_start]statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error'; [cite: 268, 591, 913]
                     } finally {
-                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
-                    }
+                        [cite_start]setTimeout(() => { statusEl.style.display = 'none'; }, 4000); [cite: 269, 592, 914]
+                    [cite_start]} [cite: 270, 593, 915]
                 }
 
                 if (e.target.matches('.photo-upload-form')) {
                     e.preventDefault();
-                    const form = e.target; const fileInput = form.querySelector('input[type="file"]');
+                    [cite_start]const form = e.target; const fileInput = form.querySelector('input[type="file"]'); [cite: 271, 594, 916]
                     const file = fileInput.files[0]; const statusEl = form.querySelector('.photo-upload-status');
-                    if (!file) { return; }
+                    if (!file) { return;
+                    [cite_start]} [cite: 272, 595, 917]
                     const { chantierId, clientId } = form.dataset;
-                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
-                    try {
+                    [cite_start]statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block'; [cite: 273, 596, 918]
+                    [cite_start]try { [cite: 274, 597, 919]
                         const uniqueFileName = `${Date.now()}-${file.name}`;
-                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
+                        [cite_start]const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`); [cite: 275, 598, 920]
                         await uploadBytes(storageRef, file);
                         const downloadURL = await getDownloadURL(storageRef);
-                        const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
+                        [cite_start]const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId); [cite: 276, 599, 921]
                         await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
-                        statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success';
+                        [cite_start]statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success'; [cite: 277, 600, 922]
                         form.reset();
-                    } catch (error) {
+                    [cite_start]} catch (error) { [cite: 278, 601, 923]
                         console.error("Erreur d'envoi de la photo:", error);
-                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
+                        [cite_start]statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error'; [cite: 279, 602, 924]
                     } finally {
-                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
-                    }
+                        [cite_start]setTimeout(() => { statusEl.style.display = 'none'; }, 4000); [cite: 280, 603, 925]
+                    [cite_start]} [cite: 281, 604, 926]
                 }
 
                 if (e.target.matches('.chat-form')) {
                     e.preventDefault();
-                    const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return;
-                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous pour envoyer un message."); return; }
+                    [cite_start]const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return; [cite: 282, 605, 927]
+                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous pour envoyer un message."); return;
+                    [cite_start]} [cite: 283, 606, 928]
                     const idTokenResult = await user.getIdTokenResult();
-                    const clientDoc = await firebaseGetDoc(doc(db, 'clients', user.uid));
+                    [cite_start]const clientDoc = await firebaseGetDoc(doc(db, 'clients', user.uid)); [cite: 285, 608, 930]
                     const senderName = idTokenResult.claims.admin ? 'Admin' : (clientDoc.exists() ? clientDoc.data().nom : 'Client');
-                    const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
+                    [cite_start]const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages'); [cite: 286, 609, 931]
                     try {
                         await addDoc(messagesRef, { text: text, timestamp: serverTimestamp(), senderId: user.uid, senderName: senderName || 'Utilisateur' });
-                        form.reset();
-                    } catch (error) { console.error("Erreur d'envoi du message:", error); alert("Le message n'a pas pu être envoyé."); }
+                        [cite_start]form.reset(); [cite: 287, 610, 932]
+                    } catch (error) { console.error("Erreur d'envoi du message:", error); alert("Le message n'a pas pu être envoyé.");
+                    [cite_start]} [cite: 288, 611, 933]
                 }
             });
-
-            lightboxClose.addEventListener('click', () => lightbox.style.display = 'none');
+            [cite_start]lightboxClose.addEventListener('click', () => lightbox.style.display = 'none'); [cite: 289, 612, 934]
             
             async function loadClientListForAdminForms() {
                 try {
                     const clientsQuery = query(collection(db, 'clients'));
-                    const clientsSnapshot = await getDocs(clientsQuery);
+                    [cite_start]const clientsSnapshot = await getDocs(clientsQuery); [cite: 290, 613, 935]
                     const select = document.getElementById('add-chantier-client-select');
                     select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
-                    clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
+                    [cite_start]clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } }); [cite: 291, 614, 936]
                 } catch(error) { console.error("Impossible de charger la liste des clients:", error);
-                }
+                [cite_start]} [cite: 292, 615, 937]
             }
             
             document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = e.target;
                 const statusEl = document.getElementById('add-chantier-status');
-                const clientId = document.getElementById('add-chantier-client-select').value;
+                [cite_start]const clientId = document.getElementById('add-chantier-client-select').value; [cite: 294, 617, 939]
                 const address = document.getElementById('new-chantier-address').value;
                 const description = document.getElementById('new-chantier-description').value;
                 const dateDebut = document.getElementById('new-chantier-start-date').value;
                 const dateFin = document.getElementById('new-chantier-end-date').value;
 
-                if (!clientId || !address) {
+                [cite_start]if (!clientId || !address) { [cite: 295, 618, 940]
                     statusEl.textContent = "Veuillez sélectionner un client et une adresse.";
                     statusEl.className = 'message-feedback error';
                     statusEl.style.display = 'block';
-                    return;
+                    [cite_start]return; [cite: 296, 619, 941]
                 }
                 
                 try {
                     await addDoc(collection(db, 'clients', clientId, 'chantier'), {
                         adresse: address,
-                        description: description || '',
+                        [cite_start]description: description || '', [cite: 297, 620, 942]
                         dateDebut: dateDebut || '',
                         dateFin: dateFin || '',
                         pourcentageAvancement: 0,
-                        joursIntervention: [],
+                        [cite_start]joursIntervention: [], [cite: 298, 621, 943]
                         photos: []
                     });
-                    statusEl.textContent = "Chantier ajouté !";
+                    [cite_start]statusEl.textContent = "Chantier ajouté !"; [cite: 299, 622, 944]
                     statusEl.className = 'message-feedback success';
                     form.reset();
-                } catch(error) {
+                [cite_start]} catch(error) { [cite: 300, 623, 945]
                     statusEl.textContent = "Erreur : " + error.message;
-                    statusEl.className = 'message-feedback error';
+                    [cite_start]statusEl.className = 'message-feedback error'; [cite: 301, 624, 946]
                 } finally {
                     statusEl.style.display = 'block';
-                    setTimeout(() => statusEl.style.display = 'none', 4000);
+                    [cite_start]setTimeout(() => statusEl.style.display = 'none', 4000); [cite: 302, 625, 947]
                 }
             });
-
-            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
+            [cite_start]document.getElementById('create-client-form').addEventListener('submit', async (e) => { [cite: 303, 626, 948]
                 e.preventDefault();
                 const form = e.target;
                 const statusEl = document.getElementById('create-client-status');
                 const nom = document.getElementById('new-client-name').value;
                 const email = document.getElementById('new-client-email').value;
-                const password = document.getElementById('new-client-password').value;
+                [cite_start]const password = document.getElementById('new-client-password').value; [cite: 304, 627, 949]
                 const telephone = document.getElementById('new-client-phone').value;
                 const adresse = document.getElementById('new-client-address').value;
 
                 if (!nom || !email || !password) {
-                    statusEl.textContent = "Veuillez remplir tous les champs obligatoires.";
+                    [cite_start]statusEl.textContent = "Veuillez remplir tous les champs obligatoires."; [cite: 305, 628, 950]
                     statusEl.className = 'message-feedback error';
                     statusEl.style.display = 'block';
                     return;
                 }
-                if (password.length < 6) {
+                [cite_start]if (password.length < 6) { [cite: 306, 629, 951]
                     statusEl.textContent = "Le mot de passe doit faire au moins 6 caractères.";
-                    statusEl.className = 'message-feedback error';
+                    [cite_start]statusEl.className = 'message-feedback error'; [cite: 307, 630, 952]
                     statusEl.style.display = 'block';
                     return;
                 }
 
                 try {
                     statusEl.textContent = "Création en cours...";
-                    statusEl.className = 'message-feedback';
+                    [cite_start]statusEl.className = 'message-feedback'; [cite: 308, 631, 953]
                     statusEl.style.display = 'block';
 
                     const createClientUser = httpsCallable(functions, 'createClientUser');
-                    const result = await createClientUser({ 
+                    [cite_start]const result = await createClientUser({ [cite: 309, 632, 954]
                         nom: nom, 
                         email: email, 
                         password: password,
-                        telephone: telephone || '',
+                        telephone: telephone || [cite_start]'', [cite: 310, 633, 955]
                         adresse: adresse || ''
                     });
-                    statusEl.textContent = result.data.message;
+                    [cite_start]statusEl.textContent = result.data.message; [cite: 311, 634, 956]
                     statusEl.className = 'message-feedback success';
                     form.reset();
                     loadClientListForAdminForms();
 
                 } catch (error) {
                     console.error("Erreur lors de la création du client:", error);
-                    statusEl.textContent = "Erreur : " + error.message;
+                    [cite_start]statusEl.textContent = "Erreur : " + error.message; [cite: 312, 635, 957]
                     statusEl.className = 'message-feedback error';
-                } finally {
+                [cite_start]} finally { [cite: 313, 636, 958]
                     setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
-                }
+                [cite_start]} [cite: 314, 637, 959]
             });
-
             // MODIFIÉ: Logique pour les boutons de la danger zone
-            const adminUidInput = document.getElementById('test-admin-uid');
-            const setAdminButton = document.getElementById('test-set-admin-button');
+            [cite_start]const adminUidInput = document.getElementById('test-admin-uid'); [cite: 315, 638, 960]
+            [cite_start]const setAdminButton = document.getElementById('test-set-admin-button'); [cite: 316, 639, 961]
             const removeAdminButton = document.getElementById('test-remove-admin-button');
             const adminStatusEl = document.getElementById('test-admin-status');
-
-            const setAdminRole = async (makeAdmin) => {
+            [cite_start]const setAdminRole = async (makeAdmin) => { [cite: 317, 640, 962]
                 const targetUid = adminUidInput.value.trim();
-                if (!targetUid) {
+                [cite_start]if (!targetUid) { [cite: 318, 641, 963]
                     adminStatusEl.textContent = "Veuillez entrer un UID.";
-                    adminStatusEl.className = 'message-feedback error';
+                    [cite_start]adminStatusEl.className = 'message-feedback error'; [cite: 319, 642, 964]
                     adminStatusEl.style.display = 'block';
                     return;
                 }
 
                 try {
                     adminStatusEl.textContent = "Mise à jour en cours...";
-                    adminStatusEl.className = 'message-feedback';
+                    [cite_start]adminStatusEl.className = 'message-feedback'; [cite: 320, 643, 965]
                     adminStatusEl.style.display = 'block';
 
                     const setUserAsAdmin = httpsCallable(functions, 'setUserAsAdmin');
-                    const result = await setUserAsAdmin({ targetUid: targetUid, isAdmin: makeAdmin });
+                    [cite_start]const result = await setUserAsAdmin({ targetUid: targetUid, isAdmin: makeAdmin }); [cite: 321, 644, 966]
                     
                     adminStatusEl.textContent = result.data.message;
                     adminStatusEl.className = 'message-feedback success';
-                    adminUidInput.value = ''; // Vider le champ après succès
+                    adminUidInput.value = ''; [cite_start]// Vider le champ après succès [cite: 322, 645, 967]
 
                 } catch (error) {
                     console.error("Erreur lors de la mise à jour du rôle:", error);
-                    adminStatusEl.textContent = "Erreur : " + error.message;
+                    [cite_start]adminStatusEl.textContent = "Erreur : " + error.message; [cite: 323, 646, 968]
                     adminStatusEl.className = 'message-feedback error';
-                } finally {
+                [cite_start]} finally { [cite: 324, 647, 969]
                      setTimeout(() => { adminStatusEl.style.display = 'none'; }, 5000);
-                }
+                [cite_start]} [cite: 325, 648, 970]
             };
 
             setAdminButton.addEventListener('click', () => setAdminRole(true));
-            removeAdminButton.addEventListener('click', () => setAdminRole(false));
+            [cite_start]removeAdminButton.addEventListener('click', () => setAdminRole(false)); [cite: 326, 649, 971]
         });
         
     </script>
