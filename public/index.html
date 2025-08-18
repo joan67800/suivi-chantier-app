@@ -274,8 +274,8 @@
     <script type="module">
         // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // --- MODIFIÉ POUR RECAPTCHA V2 ---
-        import { initializeAppCheck, ReCaptchaV2Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        // --- CORRIGÉ POUR RECAPTCHA ENTERPRISE CHECKBOX ---
+        import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -306,9 +306,9 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // --- MODIFIÉ POUR RECAPTCHA V2 ---
+        // --- CORRIGÉ POUR RECAPTCHA ENTERPRISE CHECKBOX ---
         const appCheck = initializeAppCheck(app, {
-          provider: new ReCaptchaV2Provider('6LfJI6orAAAAAFIyZze3oEjEQ3do9G7IBElU6WAU'),
+          provider: new ReCaptchaEnterpriseProvider('6LfJI6orAAAAAFIyZze3oEjEQ3do9G7IBElU6WAU'),
           isTokenAutoRefreshEnabled: true
         });
 
@@ -319,18 +319,9 @@
 
         // --- CODE QUI MANIPULE LA PAGE (DANS DOMContentLoaded) ---
         document.addEventListener('DOMContentLoaded', () => {
-
-            // --- NOUVEAU BLOC POUR AFFICHER RECAPTCHA ---
-            // Ce code va automatiquement afficher la case à cocher dans la div 'recaptcha-container'
-            // au moment où l'utilisateur se connecte.
-            auth.onAuthStateChanged((user) => {
-                if (!user) {
-                    const recaptchaContainer = document.getElementById('recaptcha-container');
-                    if (recaptchaContainer) {
-                        // Le SDK Firebase gère le rendu automatiquement
-                    }
-                }
-            });
+            
+            // Le SDK Firebase gère automatiquement le rendu du widget reCAPTCHA 
+            // dans la div avec l'id 'recaptcha-container' au moment de la connexion.
 
             // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
