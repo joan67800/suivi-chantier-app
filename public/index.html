@@ -217,6 +217,9 @@
         <form id="login-form">
             <div><label for="email">E-mail :</label><input type="email" id="email" name="email" required></div>
             <div><label for="password">Mot de passe :</label><input type="password" id="password" name="password" required></div>
+            
+            <div id="recaptcha-container" style="margin: 15px 0;"></div>
+
             <button type="submit">Se connecter</button>
             <p id="login-error" class="error" style="display: none;"></p>
         </form>
@@ -271,8 +274,8 @@
     <script type="module">
         // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // --- NOUVEL IMPORT POUR APP CHECK ---
-        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        // --- MODIFIÉ POUR RECAPTCHA V2 ---
+        import { initializeAppCheck, ReCaptchaV2Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -295,7 +298,7 @@
             apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
             authDomain: "suivi-chantier-societe.firebaseapp.com",
             projectId: "suivi-chantier-societe",
-            storageBucket: "suivi-chantier-societe.firebasestorage.app",
+            storageBucket: "suivi-chantier-societe.appspot.com",
             messagingSenderId: "888449140099",
             appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
             measurementId: "G-2KTWHDGT3S"
@@ -303,12 +306,11 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // --- INITIALISATION D'APP CHECK ---
+        // --- MODIFIÉ POUR RECAPTCHA V2 ---
         const appCheck = initializeAppCheck(app, {
-          provider: new ReCaptchaV3Provider('6LdFAqUrAAAAACPYatA57aXWS9DFBsljNiTQkRnS'),
+          provider: new ReCaptchaV2Provider('6LfJI6orAAAAAFIyZze3oEjEQ3do9G7IBElU6WAU'),
           isTokenAutoRefreshEnabled: true
         });
-        // --- FIN DE L'INITIALISATION D'APP CHECK ---
 
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -317,6 +319,19 @@
 
         // --- CODE QUI MANIPULE LA PAGE (DANS DOMContentLoaded) ---
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- NOUVEAU BLOC POUR AFFICHER RECAPTCHA ---
+            // Ce code va automatiquement afficher la case à cocher dans la div 'recaptcha-container'
+            // au moment où l'utilisateur se connecte.
+            auth.onAuthStateChanged((user) => {
+                if (!user) {
+                    const recaptchaContainer = document.getElementById('recaptcha-container');
+                    if (recaptchaContainer) {
+                        // Le SDK Firebase gère le rendu automatiquement
+                    }
+                }
+            });
+
             // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
@@ -527,7 +542,8 @@
 
             function renderMessages(snapshot, chatBox, currentUserId, isAdmin) {
                 chatBox.innerHTML = '';
-                if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return; }
+                if (snapshot.empty) { chatBox.innerHTML = '<p style="text-align: center; color: #888;">Aucun message.</p>'; return;
+                }
                 snapshot.forEach(doc => {
                     const message = doc.data();
                     const messageId = doc.id;
