@@ -217,9 +217,6 @@
         <form id="login-form">
             <div><label for="email">E-mail :</label><input type="email" id="email" name="email" required></div>
             <div><label for="password">Mot de passe :</label><input type="password" id="password" name="password" required></div>
-            
-            <div id="recaptcha-container" style="margin: 15px 0;"></div>
-
             <button type="submit">Se connecter</button>
             <p id="login-error" class="error" style="display: none;"></p>
         </form>
@@ -274,8 +271,7 @@
     <script type="module">
         // --- IMPORTS FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // --- CORRIGÉ POUR RECAPTCHA ENTERPRISE CHECKBOX ---
-        import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getFirestore, collection, query, onSnapshot, doc, addDoc, serverTimestamp, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -306,9 +302,9 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // --- CORRIGÉ POUR RECAPTCHA ENTERPRISE CHECKBOX ---
+        // --- INITIALISATION D'APP CHECK ---
         const appCheck = initializeAppCheck(app, {
-          provider: new ReCaptchaEnterpriseProvider('6LfJI6orAAAAAFIyZze3oEjEQ3do9G7IBElU6WAU'),
+          provider: new ReCaptchaV3Provider('6LdFAqUrAAAAACPYatA57aXWS9DFBsljNiTQkRnS'),
           isTokenAutoRefreshEnabled: true
         });
 
@@ -319,10 +315,6 @@
 
         // --- CODE QUI MANIPULE LA PAGE (DANS DOMContentLoaded) ---
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // Le SDK Firebase gère automatiquement le rendu du widget reCAPTCHA 
-            // dans la div avec l'id 'recaptcha-container' au moment de la connexion.
-
             // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
@@ -812,215 +804,3 @@
                     const statusEl = form.querySelector('.document-upload-status');
                     const file = fileInput.files[0];
                     if (!file) return;
-
-                    const 
-                    { chantierId, clientId } = form.dataset;
-                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
-                    
-                    try {
-                        const uniqueFileName = `${Date.now()}-${file.name}`;
-                        const storageRef = ref(storage, `chantier-documents/${chantierId}/${uniqueFileName}`);
-                        await uploadBytes(storageRef, file);
-                        const downloadURL = await getDownloadURL(storageRef);
-                        
-                        const documentsRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'documents');
-                        await addDoc(documentsRef, {
-                            nom: file.name,
-                            url: downloadURL,
-                            type: typeSelect.value,
-                            statutPaiement: typeSelect.value === 'facture' ? 'non_payee' : 'non_applicable',
-                            dateUpload: serverTimestamp()
-                        });
-                        statusEl.textContent = "Document envoyé !"; statusEl.className = 'message-feedback success';
-                        form.reset();
-                    } catch (error) {
-                        console.error("Erreur d'envoi du document:", error);
-                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
-                    } finally {
-                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
-                    }
-                }
-
-                if (e.target.matches('.photo-upload-form')) {
-                    e.preventDefault();
-                    const form = e.target; const fileInput = form.querySelector('input[type="file"]');
-                    const file = fileInput.files[0]; const statusEl = form.querySelector('.photo-upload-status');
-                    if (!file) { return;
-                    }
-                    const { chantierId, clientId } = form.dataset;
-                    statusEl.textContent = "Envoi en cours..."; statusEl.className = 'message-feedback'; statusEl.style.display = 'block';
-                    try {
-                        const uniqueFileName = `${Date.now()}-${file.name}`;
-                        const storageRef = ref(storage, `chantier-photos/${chantierId}/${uniqueFileName}`);
-                        await uploadBytes(storageRef, file);
-                        const downloadURL = await getDownloadURL(storageRef);
-                        const chantierRef = doc(db, 'clients', clientId, 'chantier', chantierId);
-                        await updateDoc(chantierRef, { photos: arrayUnion(downloadURL) });
-                        statusEl.textContent = "Photo envoyée avec succès !"; statusEl.className = 'message-feedback success';
-                        form.reset();
-                    } catch (error) {
-                        console.error("Erreur d'envoi de la photo:", error);
-                        statusEl.textContent = "Erreur: " + error.message; statusEl.className = 'message-feedback error';
-                    } finally {
-                        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
-                    }
-                }
-
-                if (e.target.matches('.chat-form')) {
-                    e.preventDefault();
-                    const form = e.target; const textarea = form.querySelector('textarea'); const text = textarea.value.trim(); if (!text) return;
-                    const { chantierId, clientId } = form.dataset; const user = auth.currentUser; if (!user) { alert("Connectez-vous pour envoyer un message."); return;
-                    }
-                    const idTokenResult = await user.getIdTokenResult();
-                    const clientDoc = await firebaseGetDoc(doc(db, 'clients', user.uid));
-                    const senderName = idTokenResult.claims.admin ? 'Admin' : (clientDoc.exists() ? clientDoc.data().nom : 'Client');
-                    const messagesRef = collection(db, 'clients', clientId, 'chantier', chantierId, 'messages');
-                    try {
-                        await addDoc(messagesRef, { text: text, timestamp: serverTimestamp(), senderId: user.uid, senderName: senderName || 'Utilisateur' });
-                        form.reset();
-                    } catch (error) { console.error("Erreur d'envoi du message:", error); alert("Le message n'a pas pu être envoyé.");
-                    }
-                }
-            });
-            lightboxClose.addEventListener('click', () => lightbox.style.display = 'none');
-            
-            async function loadClientListForAdminForms() {
-                try {
-                    const clientsQuery = query(collection(db, 'clients'));
-                    const clientsSnapshot = await getDocs(clientsQuery);
-                    const select = document.getElementById('add-chantier-client-select');
-                    select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
-                    clientsSnapshot.forEach(doc => { if (!doc.data().role) { select.add(new Option(doc.data().nom || doc.id, doc.id)); } });
-                } catch(error) { console.error("Impossible de charger la liste des clients:", error);
-                }
-            }
-            
-            document.getElementById('add-chantier-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const form = e.target;
-                const statusEl = document.getElementById('add-chantier-status');
-                const clientId = document.getElementById('add-chantier-client-select').value;
-                const address = document.getElementById('new-chantier-address').value;
-                const description = document.getElementById('new-chantier-description').value;
-                const dateDebut = document.getElementById('new-chantier-start-date').value;
-                const dateFin = document.getElementById('new-chantier-end-date').value;
-
-                if (!clientId || !address) {
-                    statusEl.textContent = "Veuillez sélectionner un client et une adresse.";
-                    statusEl.className = 'message-feedback error';
-                    statusEl.style.display = 'block';
-                    return;
-                }
-                
-                try {
-                    await addDoc(collection(db, 'clients', clientId, 'chantier'), {
-                        adresse: address,
-                        description: description || '',
-                        dateDebut: dateDebut || '',
-                        dateFin: dateFin || '',
-                        pourcentageAvancement: 0,
-                        joursIntervention: [],
-                        photos: []
-                    });
-                    statusEl.textContent = "Chantier ajouté !";
-                    statusEl.className = 'message-feedback success';
-                    form.reset();
-                } catch(error) {
-                    statusEl.textContent = "Erreur : " + error.message;
-                    statusEl.className = 'message-feedback error';
-                } finally {
-                    statusEl.style.display = 'block';
-                    setTimeout(() => statusEl.style.display = 'none', 4000);
-                }
-            });
-            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const form = e.target;
-                const statusEl = document.getElementById('create-client-status');
-                const nom = document.getElementById('new-client-name').value;
-                const email = document.getElementById('new-client-email').value;
-                const password = document.getElementById('new-client-password').value;
-                const telephone = document.getElementById('new-client-phone').value;
-                const adresse = document.getElementById('new-client-address').value;
-
-                if (!nom || !email || !password) {
-                    statusEl.textContent = "Veuillez remplir tous les champs obligatoires.";
-                    statusEl.className = 'message-feedback error';
-                    statusEl.style.display = 'block';
-                    return;
-                }
-                if (password.length < 6) {
-                    statusEl.textContent = "Le mot de passe doit faire au moins 6 caractères.";
-                    statusEl.className = 'message-feedback error';
-                    statusEl.style.display = 'block';
-                    return;
-                }
-
-                try {
-                    statusEl.textContent = "Création en cours...";
-                    statusEl.className = 'message-feedback';
-                    statusEl.style.display = 'block';
-
-                    const createClientUser = httpsCallable(functions, 'createClientUser');
-                    const result = await createClientUser({
-                        nom: nom, 
-                        email: email, 
-                        password: password,
-                        telephone: telephone || '',
-                        adresse: adresse || ''
-                    });
-                    statusEl.textContent = result.data.message;
-                    statusEl.className = 'message-feedback success';
-                    form.reset();
-                    loadClientListForAdminForms();
-
-                } catch (error) {
-                    console.error("Erreur lors de la création du client:", error);
-                    statusEl.textContent = "Erreur : " + error.message;
-                    statusEl.className = 'message-feedback error';
-                } finally {
-                    setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
-                }
-            });
-            // MODIFIÉ: Logique pour les boutons de la danger zone
-            const adminUidInput = document.getElementById('test-admin-uid');
-            const setAdminButton = document.getElementById('test-set-admin-button');
-            const removeAdminButton = document.getElementById('test-remove-admin-button');
-            const adminStatusEl = document.getElementById('test-admin-status');
-            const setAdminRole = async (makeAdmin) => {
-                const targetUid = adminUidInput.value.trim();
-                if (!targetUid) {
-                    adminStatusEl.textContent = "Veuillez entrer un UID.";
-                    adminStatusEl.className = 'message-feedback error';
-                    adminStatusEl.style.display = 'block';
-                    return;
-                }
-
-                try {
-                    adminStatusEl.textContent = "Mise à jour en cours...";
-                    adminStatusEl.className = 'message-feedback';
-                    adminStatusEl.style.display = 'block';
-
-                    const setUserAsAdmin = httpsCallable(functions, 'setUserAsAdmin');
-                    const result = await setUserAsAdmin({ targetUid: targetUid, isAdmin: makeAdmin });
-                    
-                    adminStatusEl.textContent = result.data.message;
-                    adminStatusEl.className = 'message-feedback success';
-                    adminUidInput.value = ''; // Vider le champ après succès
-
-                } catch (error) {
-                    console.error("Erreur lors de la mise à jour du rôle:", error);
-                    adminStatusEl.textContent = "Erreur : " + error.message;
-                    adminStatusEl.className = 'message-feedback error';
-                } finally {
-                     setTimeout(() => { adminStatusEl.style.display = 'none'; }, 5000);
-                }
-            };
-
-            setAdminButton.addEventListener('click', () => setAdminRole(true));
-            removeAdminButton.addEventListener('click', () => setAdminRole(false));
-        });
-        
-    </script>
-</body>
-</html>
