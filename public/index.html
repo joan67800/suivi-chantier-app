@@ -308,7 +308,6 @@
 
         // --- CODE QUI MANIPULE LA PAGE (DANS DOMContentLoaded) ---
         document.addEventListener('DOMContentLoaded', () => {
-            // --- SÉLECTEURS D'ÉLÉMENTS ---
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
             const chantiersList = document.getElementById('chantiers-list');
@@ -318,7 +317,6 @@
             const lightboxImage = document.getElementById('lightbox-image');
             const lightboxClose = document.querySelector('.lightbox-close');
 
-            // --- GESTION DE L'AUTHENTIFICATION ---
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     loginContainer.style.display = 'none';
@@ -340,11 +338,18 @@
 
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                
+                // --- CORRECTION APPLIQUÉE ICI ---
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
                 const errorEl = document.getElementById('login-error');
+
                 errorEl.style.display = 'none';
                 errorEl.textContent = '';
+                
                 try {
-                    await signInWithEmailAndPassword(auth, email.value, password.value);
+                    // On utilise les variables qu'on vient de définir
+                    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
                 } catch (error) {
                     console.error("Erreur de connexion détaillée:", error);
                     errorEl.textContent = 'Erreur : Identifiants incorrects ou problème de connexion.';
@@ -354,7 +359,8 @@
 
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             
-            // --- FONCTION DE RENDU PRINCIPALE ---
+            // --- TOUT LE RESTE DU CODE (FONCTIONS, GESTION DES ÉVÉNEMENTS, ETC.) RESTE IDENTIQUE ---
+
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
@@ -883,4 +889,128 @@
                 e.preventDefault();
                 const form = e.target;
                 const statusEl = document.getElementById('add-chantier-status');
-                const clientId = document.getElementById('add
+                const clientId = document.getElementById('add-chantier-client-select').value;
+                const address = document.getElementById('new-chantier-address').value;
+                const description = document.getElementById('new-chantier-description').value;
+                const dateDebut = document.getElementById('new-chantier-start-date').value;
+                const dateFin = document.getElementById('new-chantier-end-date').value;
+
+                if (!clientId || !address) {
+                    statusEl.textContent = "Veuillez sélectionner un client et une adresse.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+                
+                try {
+                    await addDoc(collection(db, 'clients', clientId, 'chantier'), {
+                        adresse: address,
+                        description: description || '',
+                        dateDebut: dateDebut || '',
+                        dateFin: dateFin || '',
+                        pourcentageAvancement: 0,
+                        joursIntervention: [],
+                        photos: []
+                    });
+                    statusEl.textContent = "Chantier ajouté !";
+                    statusEl.className = 'message-feedback success';
+                    form.reset();
+                } catch(error) {
+                    statusEl.textContent = "Erreur : " + error.message;
+                    statusEl.className = 'message-feedback error';
+                } finally {
+                    statusEl.style.display = 'block';
+                    setTimeout(() => statusEl.style.display = 'none', 4000);
+                }
+            });
+            document.getElementById('create-client-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const statusEl = document.getElementById('create-client-status');
+                const nom = document.getElementById('new-client-name').value;
+                const email = document.getElementById('new-client-email').value;
+                const password = document.getElementById('new-client-password').value;
+                const telephone = document.getElementById('new-client-phone').value;
+                const adresse = document.getElementById('new-client-address').value;
+
+                if (!nom || !email || !password) {
+                    statusEl.textContent = "Veuillez remplir tous les champs obligatoires.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+                if (password.length < 6) {
+                    statusEl.textContent = "Le mot de passe doit faire au moins 6 caractères.";
+                    statusEl.className = 'message-feedback error';
+                    statusEl.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    statusEl.textContent = "Création en cours...";
+                    statusEl.className = 'message-feedback';
+                    statusEl.style.display = 'block';
+
+                    const createClientUser = httpsCallable(functions, 'createClientUser');
+                    const result = await createClientUser({
+                        nom: nom, 
+                        email: email, 
+                        password: password,
+                        telephone: telephone || '',
+                        adresse: adresse || ''
+                    });
+                    statusEl.textContent = result.data.message;
+                    statusEl.className = 'message-feedback success';
+                    form.reset();
+                    loadClientListForAdminForms();
+
+                } catch (error) {
+                    console.error("Erreur lors de la création du client:", error);
+                    statusEl.textContent = "Erreur : " + error.message;
+                    statusEl.className = 'message-feedback error';
+                } finally {
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+                }
+            });
+            // MODIFIÉ: Logique pour les boutons de la danger zone
+            const adminUidInput = document.getElementById('test-admin-uid');
+            const setAdminButton = document.getElementById('test-set-admin-button');
+            const removeAdminButton = document.getElementById('test-remove-admin-button');
+            const adminStatusEl = document.getElementById('test-admin-status');
+            const setAdminRole = async (makeAdmin) => {
+                const targetUid = adminUidInput.value.trim();
+                if (!targetUid) {
+                    adminStatusEl.textContent = "Veuillez entrer un UID.";
+                    adminStatusEl.className = 'message-feedback error';
+                    adminStatusEl.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    adminStatusEl.textContent = "Mise à jour en cours...";
+                    adminStatusEl.className = 'message-feedback';
+                    adminStatusEl.style.display = 'block';
+
+                    const setUserAsAdmin = httpsCallable(functions, 'setUserAsAdmin');
+                    const result = await setUserAsAdmin({ targetUid: targetUid, isAdmin: makeAdmin });
+                    
+                    adminStatusEl.textContent = result.data.message;
+                    adminStatusEl.className = 'message-feedback success';
+                    adminUidInput.value = ''; // Vider le champ après succès
+
+                } catch (error) {
+                    console.error("Erreur lors de la mise à jour du rôle:", error);
+                    adminStatusEl.textContent = "Erreur : " + error.message;
+                    adminStatusEl.className = 'message-feedback error';
+                } finally {
+                     setTimeout(() => { adminStatusEl.style.display = 'none'; }, 5000);
+                }
+            };
+
+            setAdminButton.addEventListener('click', () => setAdminRole(true));
+            removeAdminButton.addEventListener('click', () => setAdminRole(false));
+        });
+        
+    </script>
+</body>
+</html>
