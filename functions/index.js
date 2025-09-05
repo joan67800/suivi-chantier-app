@@ -2,40 +2,27 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
 
-// --- MODIFICATION : Imports pour les fonctions v2 ---
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 
 admin.initializeApp();
-// On définit la région pour toutes les fonctions
-setGlobalOptions({ region: "europe-west1" });
 
-// --- MODIFICATION : Initialisation de SendGrid plus sécurisée ---
+// --- MODIFICATION APPLIQUÉE ICI ---
+// On change la région pour forcer une nouvelle création et éviter le bug de cache
+setGlobalOptions({ region: "us-central1" });
+
 const SENDGRID_API_KEY = functions.config().sendgrid?.key;
 if (SENDGRID_API_KEY) {
     sgMail.setApiKey(SENDGRID_API_KEY);
 } else {
-    // Affiche un avertissement si la clé n'est pas configurée, sans faire planter le déploiement
     console.warn("Clé API SendGrid non configurée. Les notifications par e-mail seront désactivées.");
 }
 
-// ==========================================================
-// CONFIGURATION GLOBALE
-// ==========================================================
 const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr";
 const ADMIN_EMAIL = "joanw.2hr@gmail.com";
 const APP_URL = "https://suivi-chantier-societe.web.app/";
-// ==========================================================
 
-
-// ==========================================================
-// FONCTIONS DE NOTIFICATION (MIGRÉES EN V2)
-// ==========================================================
-
-/**
- * Se déclenche à la création d'un nouveau message dans le chat.
- */
 exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{chantierId}/messages/{messageId}", async (event) => {
     const snap = event.data;
     if (!snap) {
@@ -61,14 +48,14 @@ exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{cha
 
         let mailOptions;
 
-        if (messageData.senderId !== clientId) { // Message de l'admin vers le client
+        if (messageData.senderId !== clientId) {
             mailOptions = {
                 to: clientInfo.email,
                 from: APP_SENDER_EMAIL,
                 subject: `Nouvelle réponse sur votre chantier : ${chantierInfo.adresse}`,
                 html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${APP_URL}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
             };
-        } else { // Message du client vers l'admin
+        } else {
             mailOptions = {
                 to: ADMIN_EMAIL,
                 from: APP_SENDER_EMAIL,
@@ -84,9 +71,6 @@ exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{cha
     }
 });
 
-/**
- * Se déclenche à l'ajout d'une nouvelle photo sur un chantier.
- */
 exports.notifyOnNewPhoto = onDocumentUpdated("clients/{clientId}/chantier/{chantierId}", async (event) => {
     const change = event.data;
     if (!change) {
@@ -121,10 +105,6 @@ exports.notifyOnNewPhoto = onDocumentUpdated("clients/{clientId}/chantier/{chant
         }
     }
 });
-
-// ==========================================================
-// AUTRES FONCTIONS DE GESTION (DÉJÀ EN V2)
-// ==========================================================
 
 exports.setUserAsAdmin = onCall(async (request) => {
     if (!request.auth || !request.auth.token.admin) {
