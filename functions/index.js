@@ -9,8 +9,8 @@ const { setGlobalOptions } = require("firebase-functions/v2");
 admin.initializeApp();
 
 // --- MODIFICATION APPLIQUÉE ICI ---
-// On change la région pour forcer une nouvelle création et éviter le bug de cache
-setGlobalOptions({ region: "us-central1" });
+// On change la région pour forcer une nouvelle création et éviter le bug de cache.
+setGlobalOptions({ region: "europe-west1" });
 
 const SENDGRID_API_KEY = functions.config().sendgrid?.key;
 if (SENDGRID_API_KEY) {
@@ -220,4 +220,3 @@ exports.deleteChantier = onCall(async (request) => {
         throw new HttpsError("internal", "Erreur interne lors de la suppression du chantier.");
     }
 });
-
