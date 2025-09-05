@@ -14,11 +14,13 @@ const SENDGRID_API_KEY = functions.config().sendgrid.key;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 // ==========================================================
-// CONFIGURATION DES E-MAILS
+// CONFIGURATION GLOBALE
 // ==========================================================
-// MODIFIÉ : Utilisation de votre adresse de domaine authentifiée comme expéditeur
 const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr"; 
-const ADMIN_EMAIL = "joanw.2hr@gmail.com"; // Votre adresse de réception
+const ADMIN_EMAIL = "joanw.2hr@gmail.com"; 
+// --- MODIFICATION APPLIQUÉE ICI ---
+// On définit l'URL de l'application une seule fois pour tout le fichier.
+const APP_URL = "https://suivi-chantier-societe.web.app/";
 // ==========================================================
 
 
@@ -47,8 +49,7 @@ exports.notifyOnNewMessage = functions.firestore
             
             const chantierInfo = chantierDoc.data();
             const clientInfo = clientDoc.data();
-            const appUrl = "https://suividechantier2hr.netlify.app/";
-
+            
             let mailOptions;
 
             // Si le message vient de l'admin, on notifie le client
@@ -57,7 +58,7 @@ exports.notifyOnNewMessage = functions.firestore
                     to: clientInfo.email,
                     from: APP_SENDER_EMAIL,
                     subject: `Nouvelle réponse sur votre chantier : ${chantierInfo.adresse}`,
-                    html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${appUrl}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
+                    html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${APP_URL}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
                 };
             } 
             // Si le message vient du client, on notifie l'admin
@@ -66,7 +67,7 @@ exports.notifyOnNewMessage = functions.firestore
                     to: ADMIN_EMAIL,
                     from: APP_SENDER_EMAIL,
                     subject: `Nouvelle question client : ${clientInfo.nom}`,
-                    html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${appUrl}">Accéder à l'espace Admin</a>`
+                    html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${APP_URL}">Accéder à l'espace Admin</a>`
                 };
             }
             
@@ -99,13 +100,12 @@ exports.notifyOnNewPhoto = functions.firestore
 
                 const clientInfo = clientDoc.data();
                 const chantierInfo = dataAfter; 
-                const appUrl = "https://suividechantier2hr.netlify.app/";
 
                 const mailOptions = {
                     to: clientInfo.email,
                     from: APP_SENDER_EMAIL,
                     subject: `Nouvelles photos de votre chantier : ${chantierInfo.adresse}`,
-                    html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${appUrl}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
+                    html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${APP_URL}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
                 };
 
                 await sgMail.send(mailOptions);
