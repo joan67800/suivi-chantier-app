@@ -293,7 +293,8 @@
             apiKey: "AIzaSyDMRyfYvujCFP3cdmm8UssoMD6crTR3Gp8",
             authDomain: "suivi-chantier-societe.firebaseapp.com",
             projectId: "suivi-chantier-societe",
-            storageBucket: "suivi-chantier-societe.appspot.com",
+            // --- CORRECTION APPLIQUÉE ICI ---
+            storageBucket: "suivi-chantier-societe.firebasestorage.app",
             messagingSenderId: "888449140099",
             appId: "1:888449140099:web:a11dd777d9aa2a839662b6",
             measurementId: "G-2KTWHDGT3S"
@@ -338,8 +339,6 @@
 
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
-                // --- CORRECTION APPLIQUÉE ICI ---
                 const emailInput = document.getElementById('email');
                 const passwordInput = document.getElementById('password');
                 const errorEl = document.getElementById('login-error');
@@ -348,7 +347,6 @@
                 errorEl.textContent = '';
                 
                 try {
-                    // On utilise les variables qu'on vient de définir
                     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
                 } catch (error) {
                     console.error("Erreur de connexion détaillée:", error);
@@ -359,8 +357,6 @@
 
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
             
-            // --- TOUT LE RESTE DU CODE (FONCTIONS, GESTION DES ÉVÉNEMENTS, ETC.) RESTE IDENTIQUE ---
-
             function renderChantier(chantierDoc, isAdmin, clientInfo) {
                 const chantierData = chantierDoc.data();
                 const chantierId = chantierDoc.id;
