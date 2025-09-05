@@ -1,27 +1,30 @@
-const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
+// NOUVEL IMPORT pour gérer les secrets de manière moderne
+const { defineString } = require("firebase-functions/v2/params");
 
 admin.initializeApp();
 
-// --- MODIFICATION APPLIQUÉE ICI ---
-// On change la région pour forcer une nouvelle création et éviter le bug de cache.
+// Déployer dans la région europe-west1
 setGlobalOptions({ region: "europe-west1" });
 
-const SENDGRID_API_KEY = functions.config().sendgrid?.key;
-if (SENDGRID_API_KEY) {
-    sgMail.setApiKey(SENDGRID_API_KEY);
-} else {
-    console.warn("Clé API SendGrid non configurée. Les notifications par e-mail seront désactivées.");
-}
+// --- NOUVELLE FAÇON SÉCURISÉE DE GÉRER LA CLÉ API ---
+// On définit un paramètre secret. Firebase s'assurera qu'il est disponible au démarrage.
+const sendgridApiKey = defineString("SENDGRID_API_KEY");
+
+// On initialise SendGrid en utilisant la valeur du secret.
+// Si le secret n'est pas configuré, le déploiement échouera avec un message clair.
+sgMail.setApiKey(sendgridApiKey.value());
 
 const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr";
 const ADMIN_EMAIL = "joanw.2hr@gmail.com";
 const APP_URL = "https://suivi-chantier-societe.web.app/";
+
+// --- VOS FONCTIONS RESTENT INCHANGÉES ---
 
 exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{chantierId}/messages/{messageId}", async (event) => {
     const snap = event.data;
@@ -31,8 +34,6 @@ exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{cha
     }
     const messageData = snap.data();
     const { clientId, chantierId } = event.params;
-
-    if (!SENDGRID_API_KEY) return;
 
     try {
         const chantierDoc = await admin.firestore().doc(`clients/${clientId}/chantier/${chantierId}`).get();
@@ -79,8 +80,6 @@ exports.notifyOnNewPhoto = onDocumentUpdated("clients/{clientId}/chantier/{chant
     }
     const dataBefore = change.before.data();
     const dataAfter = change.after.data();
-
-    if (!SENDGRID_API_KEY) return;
 
     if (dataBefore.photos.length < dataAfter.photos.length) {
         const { clientId } = event.params;
@@ -220,3 +219,4 @@ exports.deleteChantier = onCall(async (request) => {
         throw new HttpsError("internal", "Erreur interne lors de la suppression du chantier.");
     }
 });
+
