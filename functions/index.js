@@ -9,7 +9,7 @@ const { setGlobalOptions } = require("firebase-functions/v2");
 
 admin.initializeApp();
 // On définit la région pour toutes les fonctions
-setGlobalOptions({ region: "europe-west1" }); // Changé pour une région en Europe, plus proche de vous
+setGlobalOptions({ region: "europe-west1" });
 
 // --- MODIFICATION : Initialisation de SendGrid plus sécurisée ---
 const SENDGRID_API_KEY = functions.config().sendgrid?.key;
@@ -23,8 +23,8 @@ if (SENDGRID_API_KEY) {
 // ==========================================================
 // CONFIGURATION GLOBALE
 // ==========================================================
-const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr"; 
-const ADMIN_EMAIL = "joanw.2hr@gmail.com"; 
+const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr";
+const ADMIN_EMAIL = "joanw.2hr@gmail.com";
 const APP_URL = "https://suivi-chantier-societe.web.app/";
 // ==========================================================
 
@@ -36,7 +36,7 @@ const APP_URL = "https://suivi-chantier-societe.web.app/";
 /**
  * Se déclenche à la création d'un nouveau message dans le chat.
  */
-exports.notifyOnNewMessage = onDocumentCreated('clients/{clientId}/chantier/{chantierId}/messages/{messageId}', async (event) => {
+exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{chantierId}/messages/{messageId}", async (event) => {
     const snap = event.data;
     if (!snap) {
         console.log("Aucune donnée associée à l'événement.");
@@ -45,20 +45,20 @@ exports.notifyOnNewMessage = onDocumentCreated('clients/{clientId}/chantier/{cha
     const messageData = snap.data();
     const { clientId, chantierId } = event.params;
 
-    if (!SENDGRID_API_KEY) return; // Ne rien faire si la clé SendGrid n'est pas là
+    if (!SENDGRID_API_KEY) return;
 
     try {
         const chantierDoc = await admin.firestore().doc(`clients/${clientId}/chantier/${chantierId}`).get();
         const clientDoc = await admin.firestore().doc(`clients/${clientId}`).get();
-        
+
         if (!chantierDoc.exists || !clientDoc.exists) {
             console.log("Document client ou chantier non trouvé.");
             return;
         }
-        
+
         const chantierInfo = chantierDoc.data();
         const clientInfo = clientDoc.data();
-        
+
         let mailOptions;
 
         if (messageData.senderId !== clientId) { // Message de l'admin vers le client
@@ -66,20 +66,19 @@ exports.notifyOnNewMessage = onDocumentCreated('clients/{clientId}/chantier/{cha
                 to: clientInfo.email,
                 from: APP_SENDER_EMAIL,
                 subject: `Nouvelle réponse sur votre chantier : ${chantierInfo.adresse}`,
-                html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${APP_URL}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
+                html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${APP_URL}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
             };
         } else { // Message du client vers l'admin
             mailOptions = {
                 to: ADMIN_EMAIL,
                 from: APP_SENDER_EMAIL,
                 subject: `Nouvelle question client : ${clientInfo.nom}`,
-                html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${APP_URL}">Accéder à l'espace Admin</a>`
+                html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${APP_URL}">Accéder à l'espace Admin</a>`,
             };
         }
-        
+
         await sgMail.send(mailOptions);
         console.log("Email de notification envoyé avec succès !");
-
     } catch (error) {
         console.error("Erreur lors de l'envoi de l'email de notification:", error);
     }
@@ -88,7 +87,7 @@ exports.notifyOnNewMessage = onDocumentCreated('clients/{clientId}/chantier/{cha
 /**
  * Se déclenche à l'ajout d'une nouvelle photo sur un chantier.
  */
-exports.notifyOnNewPhoto = onDocumentUpdated('clients/{clientId}/chantier/{chantierId}', async (event) => {
+exports.notifyOnNewPhoto = onDocumentUpdated("clients/{clientId}/chantier/{chantierId}", async (event) => {
     const change = event.data;
     if (!change) {
         console.log("Aucune donnée associée à l'événement.");
@@ -97,7 +96,7 @@ exports.notifyOnNewPhoto = onDocumentUpdated('clients/{clientId}/chantier/{chant
     const dataBefore = change.before.data();
     const dataAfter = change.after.data();
 
-    if (!SENDGRID_API_KEY) return; // Ne rien faire si la clé SendGrid n'est pas là
+    if (!SENDGRID_API_KEY) return;
 
     if (dataBefore.photos.length < dataAfter.photos.length) {
         const { clientId } = event.params;
@@ -106,13 +105,13 @@ exports.notifyOnNewPhoto = onDocumentUpdated('clients/{clientId}/chantier/{chant
             if (!clientDoc.exists) return;
 
             const clientInfo = clientDoc.data();
-            const chantierInfo = dataAfter; 
+            const chantierInfo = dataAfter;
 
             const mailOptions = {
                 to: clientInfo.email,
                 from: APP_SENDER_EMAIL,
                 subject: `Nouvelles photos de votre chantier : ${chantierInfo.adresse}`,
-                html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${APP_URL}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`
+                html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${APP_URL}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
             };
 
             await sgMail.send(mailOptions);
@@ -132,7 +131,7 @@ exports.setUserAsAdmin = onCall(async (request) => {
         throw new HttpsError("permission-denied", "Action non autorisée.");
     }
     const { targetUid, isAdmin } = request.data;
-    if (!targetUid || typeof isAdmin !== 'boolean') {
+    if (!targetUid || typeof isAdmin !== "boolean") {
         throw new HttpsError("invalid-argument", "UID et statut isAdmin requis.");
     }
     try {
@@ -158,8 +157,8 @@ exports.createClientUser = onCall(async (request) => {
     }
     let formattedPhoneNumber;
     if (telephone) {
-        let cleanedPhone = telephone.replace(/[\s-()]/g, '');
-        if (cleanedPhone.startsWith('0')) {
+        const cleanedPhone = telephone.replace(/[\s-()]/g, "");
+        if (cleanedPhone.startsWith("0")) {
             formattedPhoneNumber = `+33${cleanedPhone.substring(1)}`;
         } else {
             formattedPhoneNumber = cleanedPhone;
@@ -170,22 +169,22 @@ exports.createClientUser = onCall(async (request) => {
             email: email,
             password: password,
             displayName: nom,
-            phoneNumber: formattedPhoneNumber || undefined
+            phoneNumber: formattedPhoneNumber || undefined,
         });
-        await admin.firestore().collection('clients').doc(userRecord.uid).set({
+        await admin.firestore().collection("clients").doc(userRecord.uid).set({
             nom: nom,
             email: email,
-            telephone: telephone || '',
-            adresse: adresse || ''
+            telephone: telephone || "",
+            adresse: adresse || "",
         });
-        return { message: `Le client '${nom}' a été créé avec succès.` };
+        return { message: `Le client "${nom}" a été créé avec succès.` };
     } catch (error) {
         console.error("Erreur lors de la création du client :", error);
-        if (error.code === 'auth/invalid-phone-number') {
-             throw new HttpsError('invalid-argument', 'Le format du numéro de téléphone est invalide.');
+        if (error.code === "auth/invalid-phone-number") {
+             throw new HttpsError("invalid-argument", "Le format du numéro de téléphone est invalide.");
         }
-        if (error.code === 'auth/email-already-exists') {
-            throw new HttpsError('already-exists', 'Cet email est déjà utilisé.');
+        if (error.code === "auth/email-already-exists") {
+            throw new HttpsError("already-exists", "Cet email est déjà utilisé.");
         }
         throw new HttpsError("internal", "Erreur interne lors de la création du client.");
     }
