@@ -1,154 +1,129 @@
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
-const { setGlobalOptions } = require("firebase-functions/v2");
-// NOUVEL IMPORT pour gérer les secrets de manière moderne
-const { defineString } = require("firebase-functions/v2/params");
-
 admin.initializeApp();
 
-// Déployer dans la région europe-west1
-setGlobalOptions({ region: "europe-west1" });
-
-// --- NOUVELLE FAÇON SÉCURISÉE DE GÉRER LA CLÉ API ---
-// On définit un paramètre secret. Firebase s'assurera qu'il est disponible au démarrage.
-const sendgridApiKey = defineString("SENDGRID_API_KEY");
-
-// On initialise SendGrid en utilisant la valeur du secret.
-// Si le secret n'est pas configuré, le déploiement échouera avec un message clair.
-sgMail.setApiKey(sendgridApiKey.value());
+// Configuration SendGrid et e-mails
+const SENDGRID_API_KEY = functions.config().sendgrid.key;
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 const APP_SENDER_EMAIL = "mail@2-hr-habitatrenovation.fr";
 const ADMIN_EMAIL = "joanw.2hr@gmail.com";
 const APP_URL = "https://suivi-chantier-societe.web.app/";
 
-// --- VOS FONCTIONS RESTENT INCHANGÉES ---
 
-exports.notifyOnNewMessage = onDocumentCreated("clients/{clientId}/chantier/{chantierId}/messages/{messageId}", async (event) => {
-    const snap = event.data;
-    if (!snap) {
-        console.log("Aucune donnée associée à l'événement.");
-        return;
-    }
-    const messageData = snap.data();
-    const { clientId, chantierId } = event.params;
+// ==========================================================
+// FONCTIONS DE NOTIFICATION (STABLES)
+// ==========================================================
 
-    try {
-        const chantierDoc = await admin.firestore().doc(`clients/${clientId}/chantier/${chantierId}`).get();
-        const clientDoc = await admin.firestore().doc(`clients/${clientId}`).get();
+exports.notifyOnNewMessage = functions.region("europe-west1").firestore
+    .document("clients/{clientId}/chantier/{chantierId}/messages/{messageId}")
+    .onCreate(async (snap, context) => {
+        const messageData = snap.data();
+        const { clientId, chantierId } = context.params;
 
-        if (!chantierDoc.exists || !clientDoc.exists) {
-            console.log("Document client ou chantier non trouvé.");
-            return;
-        }
-
-        const chantierInfo = chantierDoc.data();
-        const clientInfo = clientDoc.data();
-
-        let mailOptions;
-
-        if (messageData.senderId !== clientId) {
-            mailOptions = {
-                to: clientInfo.email,
-                from: APP_SENDER_EMAIL,
-                subject: `Nouvelle réponse sur votre chantier : ${chantierInfo.adresse}`,
-                html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${APP_URL}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
-            };
-        } else {
-            mailOptions = {
-                to: ADMIN_EMAIL,
-                from: APP_SENDER_EMAIL,
-                subject: `Nouvelle question client : ${clientInfo.nom}`,
-                html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${APP_URL}">Accéder à l'espace Admin</a>`,
-            };
-        }
-
-        await sgMail.send(mailOptions);
-        console.log("Email de notification envoyé avec succès !");
-    } catch (error) {
-        console.error("Erreur lors de l'envoi de l'email de notification:", error);
-    }
-});
-
-exports.notifyOnNewPhoto = onDocumentUpdated("clients/{clientId}/chantier/{chantierId}", async (event) => {
-    const change = event.data;
-    if (!change) {
-        console.log("Aucune donnée associée à l'événement.");
-        return;
-    }
-    const dataBefore = change.before.data();
-    const dataAfter = change.after.data();
-
-    if (dataBefore.photos.length < dataAfter.photos.length) {
-        const { clientId } = event.params;
         try {
+            const chantierDoc = await admin.firestore().doc(`clients/${clientId}/chantier/${chantierId}`).get();
             const clientDoc = await admin.firestore().doc(`clients/${clientId}`).get();
-            if (!clientDoc.exists) return;
-
+            
+            if (!chantierDoc.exists || !clientDoc.exists) {
+                console.log("Document client ou chantier non trouvé.");
+                return null;
+            }
+            
+            const chantierInfo = chantierDoc.data();
             const clientInfo = clientDoc.data();
-            const chantierInfo = dataAfter;
+            
+            let mailOptions;
 
-            const mailOptions = {
-                to: clientInfo.email,
-                from: APP_SENDER_EMAIL,
-                subject: `Nouvelles photos de votre chantier : ${chantierInfo.adresse}`,
-                html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${APP_URL}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
-            };
-
+            if (messageData.senderId !== clientId) { 
+                mailOptions = {
+                    to: clientInfo.email,
+                    from: APP_SENDER_EMAIL,
+                    subject: `Nouvelle réponse sur votre chantier : ${chantierInfo.adresse}`,
+                    html: `<p>Bonjour ${clientInfo.nom},</p><p>Vous avez reçu une nouvelle réponse de notre part concernant votre chantier situé à ${chantierInfo.adresse}.</p><p><strong>Message :</strong> "${messageData.text}"</p><p>Pour consulter le suivi complet, connectez-vous à votre espace :</p><a href="${APP_URL}">Accéder à mon espace client</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
+                };
+            } else {
+                mailOptions = {
+                    to: ADMIN_EMAIL,
+                    from: APP_SENDER_EMAIL,
+                    subject: `Nouvelle question client : ${clientInfo.nom}`,
+                    html: `<p>Une nouvelle question a été posée par le client <strong>${clientInfo.nom}</strong>.</p><p><strong>Chantier :</strong> ${chantierInfo.adresse}</p><p><strong>Question :</strong> "${messageData.text}"</p><a href="${APP_URL}">Accéder à l'espace Admin</a>`,
+                };
+            }
+            
             await sgMail.send(mailOptions);
-            console.log("Email de notification de nouvelle photo envoyé !");
-        } catch (error) {
-            console.error("Erreur lors de l'envoi de l'email (nouvelle photo):", error);
-        }
-    }
-});
+            console.log("Email de notification envoyé avec succès !");
 
-exports.setUserAsAdmin = onCall(async (request) => {
-    if (!request.auth || !request.auth.token.admin) {
-        throw new HttpsError("permission-denied", "Action non autorisée.");
+        } catch (error) {
+            console.error("Erreur lors de l'envoi de l'email de notification:", error);
+        }
+        return null;
+    });
+
+exports.notifyOnNewPhoto = functions.region("europe-west1").firestore
+    .document("clients/{clientId}/chantier/{chantierId}")
+    .onUpdate(async (change, context) => {
+        const dataBefore = change.before.data();
+        const dataAfter = change.after.data();
+
+        if (dataBefore.photos.length < dataAfter.photos.length) {
+            const { clientId } = context.params;
+
+            try {
+                const clientDoc = await admin.firestore().doc(`clients/${clientId}`).get();
+                if (!clientDoc.exists) return null;
+
+                const clientInfo = clientDoc.data();
+                const chantierInfo = dataAfter; 
+
+                const mailOptions = {
+                    to: clientInfo.email,
+                    from: APP_SENDER_EMAIL,
+                    subject: `Nouvelles photos de votre chantier : ${chantierInfo.adresse}`,
+                    html: `<p>Bonjour ${clientInfo.nom},</p><p>De nouvelles photos de l'avancement de votre chantier à ${chantierInfo.adresse} ont été ajoutées.</p><p>Connectez-vous à votre espace pour les découvrir :</p><a href="${APP_URL}">Voir les nouvelles photos</a><p>Cordialement,<br>L'équipe 2HR Habitat Rénovation</p>`,
+                };
+
+                await sgMail.send(mailOptions);
+                console.log("Email de notification de nouvelle photo envoyé !");
+
+            } catch (error) {
+                console.error("Erreur lors de l'envoi de l'email (nouvelle photo):", error);
+            }
+        }
+        return null;
+    });
+
+// ==========================================================
+// AUTRES FONCTIONS DE GESTION (STABLES)
+// ==========================================================
+
+exports.setUserAsAdmin = functions.region("europe-west1").https.onCall(async (data, context) => {
+    if (!context.auth || !context.auth.token.admin) {
+        throw new functions.https.HttpsError("permission-denied", "Action non autorisée.");
     }
-    const { targetUid, isAdmin } = request.data;
-    if (!targetUid || typeof isAdmin !== "boolean") {
-        throw new HttpsError("invalid-argument", "UID et statut isAdmin requis.");
-    }
+    const { targetUid, isAdmin } = data;
     try {
         await admin.auth().setCustomUserClaims(targetUid, { admin: isAdmin });
         const role = isAdmin ? "admin" : "user";
         await admin.firestore().collection("clients").doc(targetUid).set({ role: role }, { merge: true });
         return { message: `Succès ! Le rôle de l'utilisateur ${targetUid} est : ${role}.` };
     } catch (error) {
-        throw new HttpsError("internal", "Erreur lors de la mise à jour du rôle.");
+        throw new functions.https.HttpsError("internal", "Erreur lors de la mise à jour du rôle.");
     }
 });
 
-exports.createClientUser = onCall(async (request) => {
-    if (!request.auth || !request.auth.token.admin) {
-        throw new HttpsError("permission-denied", "Seul un administrateur peut créer un client.");
+exports.createClientUser = functions.region("europe-west1").https.onCall(async (data, context) => {
+    if (!context.auth || !context.auth.token.admin) {
+        throw new functions.https.HttpsError("permission-denied", "Seul un administrateur peut créer un client.");
     }
-    const { email, password, nom, telephone, adresse } = request.data;
-    if (!email || !password || !nom) {
-        throw new HttpsError("invalid-argument", "Email, password, et nom sont requis.");
-    }
-    if (password.length < 6) {
-        throw new HttpsError("invalid-argument", "Le mot de passe doit faire au moins 6 caractères.");
-    }
-    let formattedPhoneNumber;
-    if (telephone) {
-        const cleanedPhone = telephone.replace(/[\s-()]/g, "");
-        if (cleanedPhone.startsWith("0")) {
-            formattedPhoneNumber = `+33${cleanedPhone.substring(1)}`;
-        } else {
-            formattedPhoneNumber = cleanedPhone;
-        }
-    }
+    const { email, password, nom, telephone, adresse } = data;
     try {
         const userRecord = await admin.auth().createUser({
             email: email,
             password: password,
             displayName: nom,
-            phoneNumber: formattedPhoneNumber || undefined,
         });
         await admin.firestore().collection("clients").doc(userRecord.uid).set({
             nom: nom,
@@ -156,56 +131,33 @@ exports.createClientUser = onCall(async (request) => {
             telephone: telephone || "",
             adresse: adresse || "",
         });
-        return { message: `Le client "${nom}" a été créé avec succès.` };
+        return { message: `Le client '${nom}' a été créé avec succès.` };
     } catch (error) {
-        console.error("Erreur lors de la création du client :", error);
-        if (error.code === "auth/invalid-phone-number") {
-             throw new HttpsError("invalid-argument", "Le format du numéro de téléphone est invalide.");
-        }
-        if (error.code === "auth/email-already-exists") {
-            throw new HttpsError("already-exists", "Cet email est déjà utilisé.");
-        }
-        throw new HttpsError("internal", "Erreur interne lors de la création du client.");
+        throw new functions.https.HttpsError("internal", "Erreur interne lors de la création du client.");
     }
 });
 
-exports.deleteClient = onCall(async (request) => {
-    if (!request.auth || !request.auth.token.admin) {
-        throw new HttpsError("permission-denied", "Seul un administrateur peut supprimer un client.");
+exports.deleteClient = functions.region("europe-west1").https.onCall(async (data, context) => {
+    if (!context.auth || !context.auth.token.admin) {
+        throw new functions.https.HttpsError("permission-denied", "Seul un administrateur peut supprimer un client.");
     }
-    const clientId = request.data.clientId;
-    if (!clientId) {
-        throw new HttpsError("invalid-argument", "L'ID du client est manquant.");
-    }
+    const { clientId } = data;
     const db = admin.firestore();
-    const bucket = admin.storage().bucket();
     const clientRef = db.collection("clients").doc(clientId);
     try {
-        const chantiersSnapshot = await clientRef.collection("chantier").get();
-        if (!chantiersSnapshot.empty) {
-            for (const chantierDoc of chantiersSnapshot.docs) {
-                const chantierId = chantierDoc.id;
-                await bucket.deleteFiles({ prefix: `chantier-photos/${chantierId}/` });
-                await bucket.deleteFiles({ prefix: `chantier-documents/${chantierId}/` });
-            }
-        }
         await db.recursiveDelete(clientRef);
         await admin.auth().deleteUser(clientId);
         return { success: true, message: `Le client ${clientId} a été supprimé.` };
     } catch (error) {
-        console.error("Erreur lors de la suppression du client:", error);
-        throw new HttpsError("internal", "Erreur interne lors de la suppression du client.");
+        throw new functions.https.HttpsError("internal", "Erreur interne lors de la suppression du client.");
     }
 });
 
-exports.deleteChantier = onCall(async (request) => {
-    if (!request.auth || !request.auth.token.admin) {
-        throw new HttpsError("permission-denied", "Seul un administrateur peut supprimer un chantier.");
+exports.deleteChantier = functions.region("europe-west1").https.onCall(async (data, context) => {
+    if (!context.auth || !context.auth.token.admin) {
+        throw new functions.https.HttpsError("permission-denied", "Seul un administrateur peut supprimer un chantier.");
     }
-    const { clientId, chantierId } = request.data;
-    if (!clientId || !chantierId) {
-        throw new HttpsError("invalid-argument", "IDs client et chantier manquants.");
-    }
+    const { clientId, chantierId } = data;
     const db = admin.firestore();
     const bucket = admin.storage().bucket();
     const chantierRef = db.collection("clients").doc(clientId).collection("chantier").doc(chantierId);
@@ -215,8 +167,7 @@ exports.deleteChantier = onCall(async (request) => {
         await db.recursiveDelete(chantierRef);
         return { success: true, message: `Le chantier ${chantierId} a été supprimé.` };
     } catch (error) {
-        console.error("Erreur lors de la suppression du chantier:", error);
-        throw new HttpsError("internal", "Erreur interne lors de la suppression du chantier.");
+        throw new functions.https.HttpsError("internal", "Erreur interne lors de la suppression du chantier.");
     }
 });
 
